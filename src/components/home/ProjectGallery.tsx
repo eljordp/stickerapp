@@ -33,8 +33,8 @@ export default function ProjectGallery() {
           className="flex flex-col md:flex-row md:items-end md:justify-between gap-4"
         >
           <div>
-            <h2 className="text-3xl md:text-5xl font-black mb-2">Our Work</h2>
-            <p className="text-muted-foreground text-lg">Real projects from real Bay Area businesses</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-2">More Than Stickers</h2>
+            <p className="text-muted-foreground text-lg">Vehicle wraps, signage, packaging & more for Bay Area businesses</p>
           </div>
           <Link to="/projects" className="flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all">
             View All Projects<ArrowRight size={18} />
