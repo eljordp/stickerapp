@@ -16,6 +16,7 @@ export default function Contact() {
       <div className="section-container max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-black mb-4">Get a Free Quote</h1>
+          <div className="mx-auto w-24 h-1 rounded-full bg-gradient-to-r from-primary to-primary/40 mb-4" />
           <p className="text-muted-foreground text-lg">Tell us about your project and we'll get back to you within 24 hours</p>
         </motion.div>
         <div className="grid md:grid-cols-3 gap-8">

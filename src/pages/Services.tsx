@@ -18,6 +18,7 @@ export default function Services() {
       <div className="section-container">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-black mb-4">Our Services</h1>
+          <div className="mx-auto w-24 h-1 rounded-full bg-gradient-to-r from-primary to-primary/40 mb-4" />
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Full-service print and branding for Bay Area businesses</p>
         </motion.div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
