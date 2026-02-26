@@ -5,7 +5,7 @@ const footerLinks = {
   products: [
     { label: 'Die-Cut Stickers', href: '/order' },
     { label: 'Kiss-Cut Stickers', href: '/order' },
-    { label: 'Sticker Sheets', href: '/services/sticker-sheets' },
+    { label: 'Sticker Sheets', href: '/order' },
     { label: 'Holographic Stickers', href: '/order' },
   ],
   services: [

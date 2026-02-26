@@ -1,10 +1,9 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Car, Tent, Printer, Store, Film, Package, Sticker, Layers } from 'lucide-react'
+import { ArrowRight, Car, Tent, Printer, Store, Film, Package, Sticker } from 'lucide-react'
 
 const services = [
   { icon: Sticker, title: 'Custom Stickers', description: 'Die-cut, kiss-cut, clear, holographic, and vinyl stickers.', href: '/order' },
-  { icon: Layers, title: 'Sticker Sheets', description: 'Multiple designs on one sheet — perfect for giveaways and branding.', href: '/services/sticker-sheets' },
   { icon: Car, title: 'Vehicle Graphics', description: 'Full wraps, partial wraps, fleet branding, and door/spot graphics.', href: '/services/vehicle-graphics' },
   { icon: Tent, title: 'Event Canopies & Displays', description: 'Custom tents, feather flags, table covers, retractable banners.', href: '/services/event-canopies' },
   { icon: Printer, title: 'Business Print', description: 'Business cards, flyers, brochures, marketing collateral.', href: '/services/business-print' },
@@ -20,7 +19,6 @@ export default function Services() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-black mb-4">Our Services</h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Full-service print and branding for Bay Area businesses</p>
-          <div className="mt-6 mx-auto w-24 h-1 rounded-full bg-gradient-to-r from-primary to-primary/40" />
         </motion.div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {services.map((service, index) => (

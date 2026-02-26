@@ -10,7 +10,6 @@ import EventCanopies from '@/pages/EventCanopies'
 import BusinessPrint from '@/pages/BusinessPrint'
 import WindowFilm from '@/pages/WindowFilm'
 import MylarPackaging from '@/pages/MylarPackaging'
-import StickerSheets from '@/pages/StickerSheets'
 import Cart from '@/pages/Cart'
 import Contact from '@/pages/Contact'
 import About from '@/pages/About'
@@ -32,7 +31,6 @@ export default function App() {
             <Route path="/services/business-print" element={<BusinessPrint />} />
             <Route path="/services/window-film" element={<WindowFilm />} />
             <Route path="/services/mylar-packaging" element={<MylarPackaging />} />
-            <Route path="/services/sticker-sheets" element={<StickerSheets />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />
