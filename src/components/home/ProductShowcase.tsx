@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 
-import curatedBarbershop from '@/assets/projects/curated-barbershop.jpeg'
-import safewayTruck from '@/assets/projects/safeway-truck.jpeg'
+import customStickersShowcase from '@/assets/stickers/custom-stickers-showcase.png'
+import customLabelsShowcase from '@/assets/stickers/custom-labels-showcase.png'
 
 const showcases = [
   {
@@ -12,7 +12,7 @@ const showcases = [
     description: 'From die-cut vinyl to holographic finishes, our stickers are built to stick anywhere and withstand anything. Perfect for branding, packaging, and personal expression.',
     cta: 'Shop Stickers',
     href: '/order',
-    image: curatedBarbershop,
+    image: customStickersShowcase,
   },
   {
     title: 'The Perfect Fit for Products',
@@ -20,7 +20,7 @@ const showcases = [
     description: 'Professional product labels, packaging stickers, and custom mylar bags. Printed with precision for a flawless finish on every product you ship.',
     cta: 'Shop Labels',
     href: '/order',
-    image: safewayTruck,
+    image: customLabelsShowcase,
   },
 ]
 

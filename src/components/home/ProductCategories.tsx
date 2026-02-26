@@ -1,35 +1,35 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
-import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
-import featherFlags from '@/assets/projects/feather-flags.jpg'
-import plu2o from '@/assets/projects/plu2o-dispensary.jpg'
-import elevated from '@/assets/projects/elevated925-storefront.jpg'
+import dieCutCategory from '@/assets/stickers/die-cut-category.png'
+import stickerSheetsCategory from '@/assets/stickers/sticker-sheets-category.png'
+import samplePacksCategory from '@/assets/stickers/sample-packs-category.png'
+import labelsRollCategory from '@/assets/stickers/labels-roll-category.png'
 
 const categories = [
   {
-    title: 'Die-Cut Stickers',
-    description: 'Any shape, precision cut to your design',
+    title: 'Sample Packs',
+    description: 'Pick your perfect match',
     href: '/order',
-    image: eventBooth,
+    image: samplePacksCategory,
+  },
+  {
+    title: 'Die-Cut',
+    description: 'Any shape',
+    href: '/order',
+    image: dieCutCategory,
   },
   {
     title: 'Sticker Sheets',
-    description: 'Multiple designs on one sheet',
+    description: 'Multiple designs',
     href: '/order',
-    image: featherFlags,
+    image: stickerSheetsCategory,
   },
   {
-    title: 'Holographic Stickers',
-    description: 'Eye-catching holographic finishes',
+    title: 'Labels on Roll',
+    description: 'Fast, pro-level labeling',
     href: '/order',
-    image: plu2o,
-  },
-  {
-    title: 'Custom Packaging',
-    description: 'Branded mylar bags & boxes',
-    href: '/order',
-    image: elevated,
+    image: labelsRollCategory,
   },
 ]
 
@@ -48,21 +48,21 @@ export default function ProductCategories() {
             >
               <Link
                 to={cat.href}
-                className="group block relative overflow-hidden rounded-2xl border border-border aspect-[3/4] hover:border-primary/40 transition-all duration-300"
+                className="group block overflow-hidden rounded-2xl border border-border bg-gray-100 hover:border-primary/40 hover:shadow-lg transition-all duration-300"
               >
-                {/* Background image */}
-                <img
-                  src={cat.image}
-                  alt={cat.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                {/* Dark overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 group-hover:from-black/90 transition-all duration-300" />
+                {/* Image */}
+                <div className="flex items-center justify-center p-6 md:p-8 aspect-square">
+                  <img
+                    src={cat.image}
+                    alt={cat.title}
+                    className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
 
-                {/* Content at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
-                  <h3 className="font-black text-lg md:text-xl text-white mb-1">{cat.title}</h3>
-                  <p className="text-white/70 text-sm">{cat.description}</p>
+                {/* Content below */}
+                <div className="text-center pb-5 md:pb-6 px-4">
+                  <h3 className="font-black text-lg md:text-xl mb-1">{cat.title}</h3>
+                  <p className="text-muted-foreground text-sm">{cat.description}</p>
                 </div>
               </Link>
             </motion.div>
