@@ -4,6 +4,12 @@ import Layout from '@/components/layout/Layout'
 import Home from '@/pages/Home'
 import Order from '@/pages/Order'
 import Services from '@/pages/Services'
+import VehicleGraphics from '@/pages/VehicleGraphics'
+import BusinessSignage from '@/pages/BusinessSignage'
+import EventCanopies from '@/pages/EventCanopies'
+import BusinessPrint from '@/pages/BusinessPrint'
+import WindowFilm from '@/pages/WindowFilm'
+import MylarPackaging from '@/pages/MylarPackaging'
 import Cart from '@/pages/Cart'
 import Contact from '@/pages/Contact'
 import About from '@/pages/About'
@@ -19,6 +25,12 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/order" element={<Order />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/services/vehicle-graphics" element={<VehicleGraphics />} />
+            <Route path="/services/business-signage" element={<BusinessSignage />} />
+            <Route path="/services/event-canopies" element={<EventCanopies />} />
+            <Route path="/services/business-print" element={<BusinessPrint />} />
+            <Route path="/services/window-film" element={<WindowFilm />} />
+            <Route path="/services/mylar-packaging" element={<MylarPackaging />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />

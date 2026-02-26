@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Car, Tent, Printer, Store, Film, Package } from 'lucide-react'
 
 const services = [
-  { icon: Car, title: 'Vehicle Graphics', description: 'Wraps, fleet branding & door graphics', href: '/services' },
-  { icon: Tent, title: 'Event Canopies', description: 'Tents, flags, banners & displays', href: '/services' },
-  { icon: Printer, title: 'Business Print', description: 'Cards, flyers & marketing materials', href: '/services' },
-  { icon: Store, title: 'Business Signage', description: 'Storefront, wall graphics & A-frames', href: '/services' },
-  { icon: Film, title: 'Window Film', description: 'Frosted, solar, security & graphics', href: '/services' },
-  { icon: Package, title: 'Mylar Packaging', description: 'Custom branded packaging bags', href: '/services' },
+  { icon: Car, title: 'Vehicle Graphics', description: 'Wraps, fleet branding & door graphics', href: '/services/vehicle-graphics' },
+  { icon: Tent, title: 'Event Canopies', description: 'Tents, flags, banners & displays', href: '/services/event-canopies' },
+  { icon: Printer, title: 'Business Print', description: 'Cards, flyers & marketing materials', href: '/services/business-print' },
+  { icon: Store, title: 'Business Signage', description: 'Storefront, wall graphics & A-frames', href: '/services/business-signage' },
+  { icon: Film, title: 'Window Film', description: 'Frosted, solar, security & graphics', href: '/services/window-film' },
+  { icon: Package, title: 'Mylar Packaging', description: 'Custom branded packaging bags', href: '/services/mylar-packaging' },
 ]
 
 export default function ServicesOverview() {

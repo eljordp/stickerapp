@@ -43,22 +43,22 @@ export default function Hero() {
             </motion.div>
 
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="text-5xl md:text-7xl lg:text-7xl font-black mb-6 leading-[1.05] tracking-tight">
-              Print Custom<br /><span className="text-gradient">Stickers & Labels</span>
+              The Sticker Smith<br /><span className="text-gradient">The Bay's Trusted</span><br />Print & Branding
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="text-lg md:text-xl text-muted-foreground max-w-xl mb-8">
-              Express delivery as fast as 2-4 business days. Waterproof, durable, precision cut. Serving Bay Area businesses and beyond.
+              Serving Bay Area businesses with custom stickers, labels, packaging, signage, and vehicle graphics.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Link to="/order" className="btn-primary text-lg px-10 py-4">Make Custom Stickers<ArrowRight size={20} /></Link>
-              <Link to="/services" className="btn-secondary text-lg px-10 py-4">All Products</Link>
+              <Link to="/order" className="btn-primary text-lg px-10 py-4">Order Stickers<ArrowRight size={20} /></Link>
+              <Link to="/contact" className="btn-secondary text-lg px-10 py-4">Start My Project</Link>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" />Free Shipping on $50+</div>
-              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" />24hr Proofs</div>
-              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" />100% Guaranteed</div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" />24hr Proof Turnaround</div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" />Free Shipping Available</div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" />Quality Guaranteed</div>
             </motion.div>
           </div>
 

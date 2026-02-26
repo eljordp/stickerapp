@@ -20,8 +20,8 @@ const categories = [
     image: featherFlags,
   },
   {
-    title: 'Labels on Roll',
-    description: 'Fast, pro-level product labeling',
+    title: 'Holographic Stickers',
+    description: 'Eye-catching holographic finishes',
     href: '/order',
     image: plu2o,
   },

@@ -6,39 +6,21 @@ import { useCart } from '@/context/CartContext'
 import tssLogo from '@/assets/tss-logo-new.png'
 
 const navLinks = [
-  {
-    label: 'Stickers',
-    href: '/order',
-    submenu: [
-      { label: 'Die-Cut Stickers', href: '/order' },
-      { label: 'Kiss-Cut Stickers', href: '/order' },
-      { label: 'Sticker Sheets', href: '/order' },
-      { label: 'Bumper Stickers', href: '/order' },
-      { label: 'Clear Stickers', href: '/order' },
-      { label: 'Holographic Stickers', href: '/order' },
-    ],
-  },
-  {
-    label: 'Labels',
-    href: '/order',
-    submenu: [
-      { label: 'Labels on Roll', href: '/order' },
-      { label: 'Product Labels', href: '/order' },
-    ],
-  },
+  { label: 'Order Stickers', href: '/order' },
   {
     label: 'Services',
     href: '/services',
     submenu: [
-      { label: 'Vehicle Graphics', href: '/services' },
-      { label: 'Business Signage', href: '/services' },
-      { label: 'Event Canopies', href: '/services' },
-      { label: 'Business Print', href: '/services' },
+      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics' },
+      { label: 'Business Signage', href: '/services/business-signage' },
+      { label: 'Event Canopies', href: '/services/event-canopies' },
+      { label: 'Business Print', href: '/services/business-print' },
+      { label: 'Window Film & Tint', href: '/services/window-film' },
+      { label: 'Mylar Packaging', href: '/services/mylar-packaging' },
     ],
   },
   { label: 'Projects', href: '/projects' },
-  { label: 'Quote', href: '/contact' },
-  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export default function Header() {
@@ -94,7 +76,7 @@ export default function Header() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">{cartCount}</span>}
               </Link>
-              <Link to="/order" className="btn-primary text-sm px-6 py-2.5">Make Custom Stickers</Link>
+              <Link to="/contact" className="btn-primary text-sm px-6 py-2.5">Start My Project</Link>
             </div>
             <div className="flex items-center gap-2 lg:hidden">
               <Link to="/cart" className="relative p-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Shopping cart">
@@ -126,7 +108,7 @@ export default function Header() {
                 </motion.div>
               ))}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-6">
-                <Link to="/order" className="btn-primary w-full text-center">Make Custom Stickers</Link>
+                <Link to="/contact" className="btn-primary w-full text-center">Start My Project</Link>
               </motion.div>
             </motion.nav>
           </motion.div>

@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Car, Tent, Printer, Store, Film, Package, Sticker } from 'lucide-react'
 
 const services = [
-  { icon: Sticker, title: 'Custom Stickers & Labels', description: 'Die-cut, kiss-cut, clear, holographic, and vinyl stickers. Labels on roll for products.', href: '/order' },
-  { icon: Car, title: 'Vehicle Graphics', description: 'Full wraps, partial wraps, fleet branding, and door/spot graphics.', href: '/services' },
-  { icon: Tent, title: 'Event Canopies & Displays', description: 'Custom tents, feather flags, table covers, retractable banners.', href: '/services' },
-  { icon: Printer, title: 'Business Print', description: 'Business cards, flyers, brochures, marketing collateral.', href: '/services' },
-  { icon: Store, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, retractable banners.', href: '/services' },
-  { icon: Film, title: 'Window Film & Tint', description: 'Frosted film, solar film, security film, decorative graphics.', href: '/services' },
-  { icon: Package, title: 'Mylar Packaging', description: 'Custom branded mylar bags for products, edibles, and retail.', href: '/services' },
+  { icon: Sticker, title: 'Custom Stickers', description: 'Die-cut, kiss-cut, clear, holographic, and vinyl stickers.', href: '/order' },
+  { icon: Car, title: 'Vehicle Graphics', description: 'Full wraps, partial wraps, fleet branding, and door/spot graphics.', href: '/services/vehicle-graphics' },
+  { icon: Tent, title: 'Event Canopies & Displays', description: 'Custom tents, feather flags, table covers, retractable banners.', href: '/services/event-canopies' },
+  { icon: Printer, title: 'Business Print', description: 'Business cards, flyers, brochures, marketing collateral.', href: '/services/business-print' },
+  { icon: Store, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, retractable banners.', href: '/services/business-signage' },
+  { icon: Film, title: 'Window Film & Tint', description: 'Frosted film, solar film, security film, decorative graphics.', href: '/services/window-film' },
+  { icon: Package, title: 'Mylar Packaging', description: 'Custom branded mylar bags for products, edibles, and retail.', href: '/services/mylar-packaging' },
 ]
 
 export default function Services() {

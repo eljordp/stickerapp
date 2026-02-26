@@ -6,19 +6,19 @@
   --color-foreground: hsl(0 0% 98%);
   --color-card: hsl(220 12% 11%);
   --color-card-foreground: hsl(0 0% 98%);
-  --color-primary: hsl(160 84% 44%);
+  --color-primary: hsl(199 89% 64%);
   --color-primary-foreground: hsl(0 0% 100%);
-  --color-primary-glow: hsl(160 84% 38%);
+  --color-primary-glow: hsl(199 89% 55%);
   --color-secondary: hsl(220 12% 14%);
   --color-secondary-foreground: hsl(0 0% 98%);
   --color-muted: hsl(220 10% 18%);
   --color-muted-foreground: hsl(220 10% 55%);
-  --color-accent: hsl(160 84% 44%);
+  --color-accent: hsl(199 89% 64%);
   --color-accent-foreground: hsl(0 0% 100%);
   --color-destructive: hsl(0 62% 50%);
   --color-border: hsl(220 10% 16%);
   --color-input: hsl(220 10% 16%);
-  --color-ring: hsl(160 84% 44%);
+  --color-ring: hsl(199 89% 64%);
   --color-surface-elevated: hsl(220 12% 12%);
   --color-surface-overlay: hsl(220 15% 6%);
 
@@ -27,7 +27,7 @@
   --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.3);
   --shadow-md: 0 4px 16px hsl(0 0% 0% / 0.4);
   --shadow-lg: 0 8px 32px hsl(0 0% 0% / 0.5);
-  --shadow-glow: 0 0 40px hsl(160 84% 44% / 0.15);
+  --shadow-glow: 0 0 40px hsl(199 89% 64% / 0.15);
 }
 
 * { border-color: var(--color-border); }
@@ -79,17 +79,17 @@ h1, h2, h3, h4, h5, h6 { font-weight: 900; letter-spacing: -0.02em; }
 
 .text-gradient {
   background-clip: text; -webkit-background-clip: text; color: transparent;
-  background-image: linear-gradient(135deg, var(--color-primary), hsl(180 60% 60%));
+  background-image: linear-gradient(135deg, var(--color-primary), hsl(210 80% 70%));
 }
 
 .upload-zone {
   position: relative; border: 2px dashed var(--color-border); border-radius: 1rem;
   padding: 2rem; transition: all 250ms; cursor: pointer;
 }
-.upload-zone:hover { border-color: hsl(160 84% 44% / 0.5); background-color: hsl(160 84% 44% / 0.05); }
+.upload-zone:hover { border-color: hsl(199 89% 64% / 0.5); background-color: hsl(199 89% 64% / 0.05); }
 
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--color-background); }
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #444; }
-::selection { background-color: hsl(160 84% 44% / 0.3); color: white; }
+::selection { background-color: hsl(199 89% 64% / 0.3); color: white; }
