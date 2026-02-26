@@ -26,13 +26,13 @@ export default function Services() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {services.map((service, index) => (
               <motion.div key={service.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}>
-                <Link to={service.href} className="group block bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300 h-full">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <service.icon className="w-7 h-7 text-primary" />
+                <Link to={service.href} className="group block rounded-2xl p-6 hover:brightness-110 transition-all duration-300 h-full" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
+                    <service.icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg mb-2">{service.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{service.description}</p>
-                  <div className="flex items-center gap-1 text-primary text-sm font-bold group-hover:gap-2 transition-all">Learn More<ArrowRight size={14} /></div>
+                  <h3 className="font-bold text-lg mb-2 text-white">{service.title}</h3>
+                  <p className="text-white/70 text-sm mb-4">{service.description}</p>
+                  <div className="flex items-center gap-1 text-white text-sm font-bold group-hover:gap-2 transition-all">Learn More<ArrowRight size={14} /></div>
                 </Link>
               </motion.div>
             ))}
