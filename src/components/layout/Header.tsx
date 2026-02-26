@@ -11,6 +11,7 @@ const navLinks = [
     label: 'Services',
     href: '/services',
     submenu: [
+      { label: 'Sticker Sheets', href: '/services/sticker-sheets' },
       { label: 'Vehicle Graphics', href: '/services/vehicle-graphics' },
       { label: 'Business Signage', href: '/services/business-signage' },
       { label: 'Event Canopies', href: '/services/event-canopies' },

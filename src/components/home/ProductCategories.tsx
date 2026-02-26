@@ -16,7 +16,7 @@ const categories = [
   {
     title: 'Sticker Sheets',
     description: 'Multiple designs on one sheet',
-    href: '/order',
+    href: '/services/sticker-sheets',
     image: featherFlags,
   },
   {

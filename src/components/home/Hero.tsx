@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Clock, MapPin, Shield } from 'lucide-react'
 
 import stickerGroup from '@/assets/stickers/sticker-group.png'
-import stickerPack from '@/assets/stickers/sticker-pack.png'
 
 export default function Hero() {
   return (
@@ -61,15 +60,6 @@ export default function Hero() {
                 className="absolute inset-0 flex items-center justify-center z-20"
               >
                 <img src={stickerGroup} alt="Custom sticker collection" className="w-full h-auto drop-shadow-2xl" />
-              </motion.div>
-
-              {/* Sticker pack accent */}
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-                className="absolute -bottom-4 -left-8 w-[40%] z-30"
-              >
-                <img src={stickerPack} alt="Sticker pack" className="w-full h-auto drop-shadow-xl" />
               </motion.div>
 
               {/* Decorative glows */}
