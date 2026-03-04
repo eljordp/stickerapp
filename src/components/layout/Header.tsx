@@ -69,7 +69,7 @@ export default function Header() {
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <div key={link.label} className="relative" onMouseEnter={() => { if (link.submenu) setOpenDropdown(link.label) }} onMouseLeave={() => { setOpenDropdown(null); setHoveredService(null) }}>
-                  <Link to={link.href} className={`nav-link flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-white/5 ${link.label === 'Order Stickers' ? 'text-primary font-bold' : ''} ${location.pathname === link.href ? 'active' : ''}`}>
+                  <Link to={link.href} className={`nav-link flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-white/5 ${location.pathname === link.href ? 'active' : ''}`} style={link.label === 'Order Stickers' ? { color: 'var(--color-primary)', fontWeight: 700 } : undefined}>
                     {link.label}
                     {link.submenu && <ChevronDown size={14} className="opacity-50" />}
                   </Link>
