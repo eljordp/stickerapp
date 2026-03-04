@@ -39,7 +39,7 @@ export default function Projects() {
       </div>
       <section className="py-8 md:py-16">
         <div className="section-container">
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {categories.map((cat) => (
               <button
                 key={cat}
