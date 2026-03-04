@@ -1,11 +1,30 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Check, Plus } from 'lucide-react'
+import { ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
-import { getPricing, type ProductCategory } from '@/lib/pricing'
+import { getPricing, type ProductCategory, type ProductTier } from '@/lib/pricing'
 
 interface Props {
   categoryNames: string[]
+}
+
+/** Group items by their prefix before " – " (e.g. "Business Cards – Standard" → "Business Cards") */
+function groupItems(items: ProductTier[]) {
+  const groups: { label: string; items: { item: ProductTier; globalIndex: number }[] }[] = []
+  const map = new Map<string, { item: ProductTier; globalIndex: number }[]>()
+
+  items.forEach((item, i) => {
+    const dashIdx = item.size.indexOf(' – ')
+    const prefix = dashIdx > -1 ? item.size.substring(0, dashIdx) : item.size
+    if (!map.has(prefix)) {
+      const arr: { item: ProductTier; globalIndex: number }[] = []
+      map.set(prefix, arr)
+      groups.push({ label: prefix, items: arr })
+    }
+    map.get(prefix)!.push({ item, globalIndex: i })
+  })
+
+  return groups
 }
 
 export default function ProductOrder({ categoryNames }: Props) {
@@ -27,6 +46,9 @@ export default function ProductOrder({ categoryNames }: Props) {
 
   const item = category.items[selectedItem]
   if (!item) return null
+
+  const groups = useMemo(() => groupItems(category.items), [category])
+  const hasGroups = groups.length > 1 || groups[0]?.label !== groups[0]?.items[0]?.item.size
 
   const qtyOption = item.quantities[selectedQtyIndex] || item.quantities[0]
   const addOnTotal = category.addOns
@@ -68,6 +90,12 @@ export default function ProductOrder({ categoryNames }: Props) {
     setSelectedAddOns(new Set())
   }
 
+  /** Display name: strip the group prefix if grouped */
+  const displayName = (size: string) => {
+    const dashIdx = size.indexOf(' – ')
+    return dashIdx > -1 ? size.substring(dashIdx + 3) : size
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -99,28 +127,58 @@ export default function ProductOrder({ categoryNames }: Props) {
       <div className="grid md:grid-cols-2 gap-8">
         {/* Left: Product selection */}
         <div className="space-y-6">
+          {/* Products - grouped by sub-category */}
           <div>
             <label className="block text-sm font-bold mb-3 uppercase tracking-wider">Select Product</label>
-            <div className="grid gap-2">
-              {category.items.map((p, i) => (
-                <button
-                  key={p.size}
-                  onClick={() => { setSelectedItem(i); setSelectedQtyIndex(0) }}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium border transition-all text-left ${
-                    selectedItem === i
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/30'
-                  }`}
-                >
-                  <span>{p.size}</span>
-                  <span className="float-right text-muted-foreground">
-                    from ${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}
-                  </span>
-                </button>
-              ))}
-            </div>
+            {hasGroups ? (
+              <div className="space-y-4">
+                {groups.map(group => (
+                  <div key={group.label}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 pl-1">{group.label}</p>
+                    <div className="grid gap-2">
+                      {group.items.map(({ item: p, globalIndex }) => (
+                        <button
+                          key={p.size}
+                          onClick={() => { setSelectedItem(globalIndex); setSelectedQtyIndex(0) }}
+                          className={`px-4 py-3 rounded-xl text-sm font-medium border transition-all text-left ${
+                            selectedItem === globalIndex
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary/30'
+                          }`}
+                        >
+                          <span>{displayName(p.size)}</span>
+                          <span className="float-right text-muted-foreground">
+                            from ${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                {category.items.map((p, i) => (
+                  <button
+                    key={p.size}
+                    onClick={() => { setSelectedItem(i); setSelectedQtyIndex(0) }}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium border transition-all text-left ${
+                      selectedItem === i
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border hover:border-primary/30'
+                    }`}
+                  >
+                    <span>{p.size}</span>
+                    <span className="float-right text-muted-foreground">
+                      from ${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
+          {/* Quantity */}
           <div>
             <label className="block text-sm font-bold mb-3 uppercase tracking-wider">Quantity</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -141,9 +199,14 @@ export default function ProductOrder({ categoryNames }: Props) {
             </div>
           </div>
 
+          {/* Add-Ons - separated into its own card */}
           {category.addOns.length > 0 && (
-            <div>
-              <label className="block text-sm font-bold mb-3 uppercase tracking-wider">Add-Ons</label>
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles size={16} className="text-primary" />
+                <label className="text-sm font-bold uppercase tracking-wider">Premium Add-Ons</label>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">Enhance your order with premium finishes and upgrades.</p>
               <div className="grid grid-cols-2 gap-2">
                 {category.addOns.map(addon => (
                   <button
