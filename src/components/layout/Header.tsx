@@ -12,12 +12,12 @@ const navLinks = [
     label: 'Services',
     href: '/services',
     submenu: [
-      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics' },
-      { label: 'Business Signage', href: '/services/business-signage' },
-      { label: 'Event Canopies', href: '/services/event-canopies' },
-      { label: 'Business Print', href: '/services/business-print' },
-      { label: 'Window Film & Tint', href: '/services/window-film' },
-      { label: 'Mylar Packaging', href: '/services/mylar-packaging' },
+      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics', products: ['Full Vehicle Wraps', 'Partial Wraps & Accents', 'Fleet Branding', 'Door & Spot Graphics', 'Perforated Window Graphics', 'Vinyl Lettering & Decals'] },
+      { label: 'Business Signage', href: '/services/business-signage', products: ['Storefront & Building Signs', 'Wall Graphics & Murals', 'A-Frame Sidewalk Signs', 'Retractable Banners', 'Acrylic & Metal Signs', 'LED & Illuminated Signs'] },
+      { label: 'Event Canopies', href: '/services/event-canopies', products: ['Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
+      { label: 'Business Print', href: '/services/business-print', products: ['Business Cards', 'Flyers', 'Door Hangers', 'Postcards & Mailers', 'Vehicle Magnets'] },
+      { label: 'Window Film & Tint', href: '/services/window-film', products: ['Frosted Privacy Film', 'Solar & Heat Rejection', 'Security & Safety Film', 'Decorative Graphics', 'Custom Cut Logos'] },
+      { label: 'Mylar Packaging', href: '/services/mylar-packaging', products: ['Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', 'Jar Labels'] },
     ],
   },
   { label: 'Projects', href: '/projects' },
@@ -28,6 +28,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [hoveredService, setHoveredService] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const location = useLocation()
   const { items } = useCart()
@@ -42,6 +43,7 @@ export default function Header() {
   useEffect(() => {
     setIsMobileMenuOpen(false)
     setOpenDropdown(null)
+    setHoveredService(null)
     setIsSearchOpen(false)
   }, [location])
 
@@ -66,7 +68,7 @@ export default function Header() {
             </Link>
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
-                <div key={link.label} className="relative" onMouseEnter={() => link.submenu && setOpenDropdown(link.label)} onMouseLeave={() => setOpenDropdown(null)}>
+                <div key={link.label} className="relative" onMouseEnter={() => { if (link.submenu) setOpenDropdown(link.label) }} onMouseLeave={() => { setOpenDropdown(null); setHoveredService(null) }}>
                   <Link to={link.href} className={`nav-link flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-white/5 ${location.pathname === link.href ? 'active' : ''}`}>
                     {link.label}
                     {link.submenu && <ChevronDown size={14} className="opacity-50" />}
@@ -76,7 +78,30 @@ export default function Header() {
                       {openDropdown === link.label && (
                         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.15 }} className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-xl overflow-hidden shadow-lg z-50">
                           {link.submenu.map((sub) => (
-                            <Link key={sub.label} to={sub.href} className="block px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">{sub.label}</Link>
+                            <div key={sub.label} className="relative" onMouseEnter={() => setHoveredService(sub.label)} onMouseLeave={() => setHoveredService(null)}>
+                              <Link to={sub.href} className={`flex items-center justify-between px-4 py-3 text-sm transition-colors ${hoveredService === sub.label ? 'text-foreground bg-white/5' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
+                                {sub.label}
+                                {sub.products && <ChevronDown size={12} className="opacity-40 -rotate-90" />}
+                              </Link>
+                              {sub.products && (
+                                <AnimatePresence>
+                                  {hoveredService === sub.label && (
+                                    <motion.div
+                                      initial={{ opacity: 0, x: -4 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      exit={{ opacity: 0, x: -4 }}
+                                      transition={{ duration: 0.12 }}
+                                      className="absolute left-full top-0 ml-1 w-52 bg-card border border-border rounded-xl overflow-hidden shadow-lg z-50"
+                                    >
+                                      <p className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{sub.label}</p>
+                                      {sub.products.map(product => (
+                                        <Link key={product} to={sub.href} className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">{product}</Link>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              )}
+                            </div>
                           ))}
                         </motion.div>
                       )}
