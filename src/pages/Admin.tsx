@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LogOut, Package, DollarSign, Users, ChevronDown, ChevronUp, Truck, Clock, CheckCircle, Settings, RotateCcw, Save } from 'lucide-react'
-import { getPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
+import { getPricing, savePricing, defaultPricing, type PricingConfig, type AddOn } from '@/lib/pricing'
 
 const ADMIN_EMAIL = 'thestickersmith@gmail.com'
 const ADMIN_PASSWORD = 'Lolasdad22!'
@@ -92,18 +92,100 @@ const statusConfig = {
   processing: { label: 'Processing', icon: Clock, color: 'text-yellow-400 bg-yellow-400/10' },
 }
 
+const categoryTabs = [
+  { id: 'stickers', label: 'Stickers' },
+  { id: 'mylar', label: 'Mylar Packaging', productIndex: 0 },
+  { id: 'canopies', label: 'Event Canopies', productIndex: 1 },
+  { id: 'backdrops', label: 'Backdrops', productIndex: 2 },
+  { id: 'tablecovers', label: 'Table Covers', productIndex: 3 },
+  { id: 'banners', label: 'Banners', productIndex: 4 },
+  { id: 'cards', label: 'Business Cards', productIndex: 5 },
+]
+
+function AddOnEditor({ addOns, onChange }: { addOns: AddOn[]; onChange: (addOns: AddOn[]) => void }) {
+  const update = (index: number, value: string) => {
+    onChange(addOns.map((a, i) => i === index ? { ...a, value: parseFloat(value) || 0 } : a))
+  }
+  if (addOns.length === 0) return null
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {addOns.map((addon, i) => (
+        <div key={addon.name} className="bg-muted/30 rounded-xl p-3">
+          <label className="block text-xs font-medium text-foreground mb-1.5">{addon.name}</label>
+          <div className="relative">
+            {addon.type === 'flat' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>}
+            <input
+              type="number" step={addon.type === 'flat' ? '0.01' : '0.05'} min="0" value={addon.value}
+              onChange={e => update(i, e.target.value)}
+              className={`w-full ${addon.type === 'flat' ? 'pl-7 pr-3' : 'px-3'} py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all`}
+            />
+            {addon.type === 'multiplier' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">x</span>}
+          </div>
+          <span className="block text-[10px] text-muted-foreground mt-1">{addon.type === 'multiplier' ? 'Multiplier' : 'Flat fee per unit'}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ProductPriceTable({ cat, catIndex, onPriceChange }: {
+  cat: PricingConfig['products'][number]
+  catIndex: number
+  onPriceChange: (catIndex: number, itemIndex: number, qtyIndex: number, value: string) => void
+}) {
+  return (
+    <div className="space-y-3">
+      {cat.items.map((item, itemIndex) => (
+        <div key={item.size} className="bg-muted/30 rounded-xl p-4">
+          <p className="text-sm font-bold mb-3">{item.size}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {item.quantities.map((q, qtyIndex) => (
+              <div key={q.qty}>
+                <label className="block text-[11px] text-muted-foreground mb-1">{q.qty === 1 ? 'Per unit' : `${q.qty}+ pcs`}</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                  <input
+                    type="number" step="0.01" min="0" value={q.price}
+                    onChange={e => onPriceChange(catIndex, itemIndex, qtyIndex, e.target.value)}
+                    className="w-full pl-6 pr-2 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function PricingEditor() {
   const [config, setConfig] = useState<PricingConfig>(() => getPricing())
   const [saved, setSaved] = useState(false)
+  const [activeTab, setActiveTab] = useState('stickers')
 
   const updateTierPrice = (index: number, value: string) => {
-    const updated = { ...config, basePrices: config.basePrices.map((t, i) => i === index ? { ...t, price: parseFloat(value) || 0 } : t) }
-    setConfig(updated)
+    setConfig({ ...config, basePrices: config.basePrices.map((t, i) => i === index ? { ...t, price: parseFloat(value) || 0 } : t) })
   }
 
   const updateMultiplier = (index: number, value: string) => {
-    const updated = { ...config, materialMultipliers: config.materialMultipliers.map((m, i) => i === index ? { ...m, multiplier: parseFloat(value) || 1 } : m) }
-    setConfig(updated)
+    setConfig({ ...config, materialMultipliers: config.materialMultipliers.map((m, i) => i === index ? { ...m, multiplier: parseFloat(value) || 1 } : m) })
+  }
+
+  const updateProductPrice = (catIndex: number, itemIndex: number, qtyIndex: number, value: string) => {
+    const products = config.products.map((cat, ci) => {
+      if (ci !== catIndex) return cat
+      return { ...cat, items: cat.items.map((item, ii) => {
+        if (ii !== itemIndex) return item
+        return { ...item, quantities: item.quantities.map((q, qi) => qi === qtyIndex ? { ...q, price: parseFloat(value) || 0 } : q) }
+      }) }
+    })
+    setConfig({ ...config, products })
+  }
+
+  const updateProductAddOns = (catIndex: number, addOns: AddOn[]) => {
+    const products = config.products.map((cat, ci) => ci === catIndex ? { ...cat, addOns } : cat)
+    setConfig({ ...config, products })
   }
 
   const handleSave = () => {
@@ -120,63 +202,121 @@ function PricingEditor() {
   }
 
   const tierLabels = ['1–50', '51–100', '101–200', '201–500', '501+']
+  const activeProduct = categoryTabs.find(t => t.id === activeTab)
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Settings size={20} className="text-primary" />
-          <h2 className="text-xl font-bold">Pricing</h2>
+          <h2 className="text-xl font-bold">Pricing Manager</h2>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleReset} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg border border-border hover:border-primary/30">
-            <RotateCcw size={14} /> Reset
+            <RotateCcw size={14} /> Reset All
           </button>
           <button onClick={handleSave} className={`flex items-center gap-1.5 text-sm font-bold px-4 py-1.5 rounded-lg transition-all ${saved ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:brightness-110'}`}>
-            <Save size={14} /> {saved ? 'Saved!' : 'Save'}
+            <Save size={14} /> {saved ? 'Saved!' : 'Save Changes'}
           </button>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <h3 className="font-bold mb-1">Base Price Per Sticker</h3>
-        <p className="text-sm text-muted-foreground mb-4">Price per unit at each quantity tier</p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {config.basePrices.map((tier, i) => (
-            <div key={i}>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">{tierLabels[i]} pcs</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                <input
-                  type="number" step="0.01" min="0" value={tier.price}
-                  onChange={e => updateTierPrice(i, e.target.value)}
-                  className="w-full pl-7 pr-3 py-2.5 bg-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Category Tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+        {categoryTabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              activeTab === tab.id
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <h3 className="font-bold mb-1">Material Multipliers</h3>
-        <p className="text-sm text-muted-foreground mb-4">Price multiplier applied per material type (1.0 = no change)</p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {config.materialMultipliers.map((mat, i) => (
-            <div key={mat.name}>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">{mat.name}</label>
-              <div className="relative">
-                <input
-                  type="number" step="0.1" min="0.1" value={mat.multiplier}
-                  onChange={e => updateMultiplier(i, e.target.value)}
-                  className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">x</span>
-              </div>
+      {/* Stickers Tab */}
+      {activeTab === 'stickers' && (
+        <div className="space-y-6">
+          {/* Base Prices */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="font-bold mb-1">Base Price Per Sticker</h3>
+            <p className="text-sm text-muted-foreground mb-4">Price per unit at each quantity tier</p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {config.basePrices.map((tier, i) => (
+                <div key={i} className="bg-muted/30 rounded-xl p-3">
+                  <label className="block text-xs font-medium text-foreground mb-1.5">{tierLabels[i]} pcs</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                    <input
+                      type="number" step="0.01" min="0" value={tier.price}
+                      onChange={e => updateTierPrice(i, e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Materials */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="font-bold mb-1">Materials</h3>
+            <p className="text-sm text-muted-foreground mb-4">Price multiplier per material type (1.0x = base price)</p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {config.materialMultipliers.map((mat, i) => (
+                <div key={mat.name} className="bg-muted/30 rounded-xl p-3">
+                  <label className="block text-xs font-medium text-foreground mb-1.5">{mat.name}</label>
+                  <div className="relative">
+                    <input
+                      type="number" step="0.05" min="0.1" value={mat.multiplier}
+                      onChange={e => updateMultiplier(i, e.target.value)}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">x</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Finish Add-Ons */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="font-bold mb-1">Finish Add-Ons</h3>
+            <p className="text-sm text-muted-foreground mb-4">Special finishes applied on top of material pricing</p>
+            <AddOnEditor addOns={config.stickerAddOns} onChange={addOns => setConfig({ ...config, stickerAddOns: addOns })} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Product Category Tabs */}
+      {activeProduct && activeProduct.productIndex !== undefined && config.products[activeProduct.productIndex] && (() => {
+        const catIndex = activeProduct.productIndex!
+        const cat = config.products[catIndex]
+        return (
+          <div className="space-y-6">
+            {/* Product Sizes & Prices */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <h3 className="font-bold mb-1">Sizes & Pricing</h3>
+              <p className="text-sm text-muted-foreground mb-4">{cat.items.length} products — edit price per quantity tier</p>
+              <ProductPriceTable cat={cat} catIndex={catIndex} onPriceChange={updateProductPrice} />
+            </div>
+
+            {/* Product Add-Ons */}
+            {cat.addOns.length > 0 && (
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <h3 className="font-bold mb-1">Add-Ons</h3>
+                <p className="text-sm text-muted-foreground mb-4">Optional upgrades for {cat.name.toLowerCase()}</p>
+                <AddOnEditor addOns={cat.addOns} onChange={addOns => updateProductAddOns(catIndex, addOns)} />
+              </div>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }
