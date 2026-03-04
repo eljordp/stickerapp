@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
-import { ArrowRight, Store, CheckCircle } from 'lucide-react'
+import { Store, CheckCircle } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 
 const features = [
@@ -36,14 +35,7 @@ export default function BusinessSignage() {
             </div>
           </motion.div>
 
-          <ProductOrder categoryNames={['Retractable Banners']} />
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-center mt-12">
-            <p className="text-muted-foreground mb-4">Need custom signage, wall graphics, or LED signs?</p>
-            <Link to="/contact" className="btn-secondary inline-flex items-center gap-2">
-              Get a Custom Quote <ArrowRight size={18} />
-            </Link>
-          </motion.div>
+          <ProductOrder categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']} />
         </div>
       </section>
     </>

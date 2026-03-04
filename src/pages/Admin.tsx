@@ -94,12 +94,21 @@ const statusConfig = {
 
 const categoryTabs = [
   { id: 'stickers', label: 'Stickers' },
-  { id: 'mylar', label: 'Mylar Packaging', productIndex: 0 },
-  { id: 'canopies', label: 'Event Canopies', productIndex: 1 },
+  { id: 'mylar', label: 'Mylar', productIndex: 0 },
+  { id: 'canopies', label: 'Canopies', productIndex: 1 },
   { id: 'backdrops', label: 'Backdrops', productIndex: 2 },
   { id: 'tablecovers', label: 'Table Covers', productIndex: 3 },
   { id: 'banners', label: 'Banners', productIndex: 4 },
-  { id: 'businessprint', label: 'Business Print', productIndex: 5 },
+  { id: 'businessprint', label: 'Biz Print', productIndex: 5 },
+  { id: 'storefront', label: 'Storefront', productIndex: 6 },
+  { id: 'aframes', label: 'A-Frames', productIndex: 7 },
+  { id: 'wallgraphics', label: 'Wall Graphics', productIndex: 8 },
+  { id: 'decals', label: 'Decals', productIndex: 9 },
+  { id: 'fullwraps', label: 'Full Wraps', productIndex: 10 },
+  { id: 'partialwraps', label: 'Partial Wraps', productIndex: 11 },
+  { id: 'frosted', label: 'Frosted Film', productIndex: 12 },
+  { id: 'solar', label: 'Solar Film', productIndex: 13 },
+  { id: 'security', label: 'Security Film', productIndex: 14 },
   { id: 'addons', label: 'Add-Ons' },
 ]
 
