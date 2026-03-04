@@ -91,7 +91,7 @@ export default function Order() {
   return (
     <>
       <div className="relative -mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20h40M20 0v40' stroke='%23000' stroke-width='.5'/%3E%3C/svg%3E")`, backgroundSize: '40px 40px', opacity: 0.02 }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(var(--color-foreground) 1px, transparent 1px), linear-gradient(90deg, var(--color-foreground) 1px, transparent 1px)`, backgroundSize: '60px 60px', opacity: 0.02 }} />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
           <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Order Custom Stickers</h1>
           <p className="text-white/80 text-lg">Configure your stickers and add to cart</p>
