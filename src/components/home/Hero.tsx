@@ -11,6 +11,9 @@ export default function Hero() {
       {/* Subtle background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
 
+      {/* Grid pattern */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(var(--color-foreground) 1px, transparent 1px), linear-gradient(90deg, var(--color-foreground) 1px, transparent 1px)`, backgroundSize: '60px 60px', opacity: 0.02 }} />
+
       {/* Content */}
       <div className="section-container relative z-10 w-full">
         <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-12 items-center">
