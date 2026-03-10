@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, ChevronDown, Search } from 'lucide-react'
+import { Menu, X, ChevronDown, Search, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import SearchModal from '@/components/SearchModal'
 import tssLogo from '@/assets/tss-logo-new.png'
@@ -31,6 +32,7 @@ export default function Header() {
   const [hoveredService, setHoveredService] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const location = useLocation()
+  const { user } = useAuth()
   const { items } = useCart()
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
 
@@ -114,6 +116,9 @@ export default function Header() {
               <button onClick={() => setIsSearchOpen(true)} className="p-2.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-white/5" aria-label="Search">
                 <Search size={20} />
               </button>
+              <Link to="/account" className={`p-2.5 transition-colors rounded-lg hover:bg-white/5 ${user ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} aria-label="Account">
+                <User size={20} />
+              </Link>
               <Link to="/cart" className="relative p-2.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-white/5" aria-label="Shopping cart">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">{cartCount}</span>}
@@ -124,6 +129,9 @@ export default function Header() {
               <button onClick={() => setIsSearchOpen(true)} className="p-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Search">
                 <Search size={20} />
               </button>
+              <Link to="/account" className={`p-2 transition-colors ${user ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`} aria-label="Account">
+                <User size={20} />
+              </Link>
               <Link to="/cart" className="relative p-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Shopping cart">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">{cartCount}</span>}
