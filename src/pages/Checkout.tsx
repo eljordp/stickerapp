@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
-import { ArrowLeft, Lock, ShieldCheck, Loader2 } from 'lucide-react'
+import { ArrowLeft, Lock, ShieldCheck, Loader2, Tag, X, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { checkoutSchema, type CheckoutFormErrors } from '@/lib/validation'
 import { supabase } from '@/lib/supabase'
@@ -24,7 +24,7 @@ interface CustomerInfo {
 }
 
 export default function Checkout() {
-  const { items, total, clearCart, markConverted } = useCart()
+  const { items, total, clearCart, markConverted, promoCode, promoDiscount, promoLabel, applyPromo, removePromo, finalizePromo } = useCart()
   const navigate = useNavigate()
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     firstName: '', lastName: '', email: '', phone: '',
@@ -34,6 +34,11 @@ export default function Checkout() {
   const [errors, setErrors] = useState<CheckoutFormErrors>({})
   const [paymentError, setPaymentError] = useState('')
   const [processing, setProcessing] = useState(false)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoError, setPromoError] = useState('')
+  const [promoSuccess, setPromoSuccess] = useState(false)
+
+  const finalTotal = Math.max(0, +(total - promoDiscount).toFixed(2))
 
   if (items.length === 0) {
     return (
@@ -74,6 +79,18 @@ export default function Checkout() {
     }
   }
 
+  const handleApplyPromo = () => {
+    if (!promoInput.trim()) return
+    const result = applyPromo(promoInput.trim())
+    if (result.valid) {
+      setPromoError('')
+      setPromoSuccess(true)
+      setTimeout(() => setPromoSuccess(false), 2000)
+    } else {
+      setPromoError(result.error || 'Invalid code')
+    }
+  }
+
   const orderDescription = items
     .map(i => `${i.name} (${i.option}, ${i.size}) x${i.quantity}`)
     .join(', ')
@@ -84,7 +101,10 @@ export default function Checkout() {
       date: new Date().toISOString(),
       customer: { ...customerInfo },
       items: items.map(i => ({ ...i })),
-      total: total.toFixed(2),
+      total: finalTotal.toFixed(2),
+      subtotal: total.toFixed(2),
+      promoCode: promoCode || undefined,
+      promoDiscount: promoDiscount > 0 ? promoDiscount.toFixed(2) : undefined,
       status: 'completed' as const,
     }
 
@@ -103,7 +123,7 @@ export default function Checkout() {
         customer_state: customerInfo.state.trim(),
         customer_zip: customerInfo.zip.trim(),
         items: items.map(i => ({ ...i })),
-        total: parseFloat(total.toFixed(2)),
+        total: parseFloat(finalTotal.toFixed(2)),
         status: 'completed',
       })
     } catch {
@@ -234,6 +254,54 @@ export default function Checkout() {
                 </div>
               </div>
 
+              {/* Promo Code */}
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Tag size={18} className="text-primary" />
+                  <h2 className="text-xl font-bold">Promo Code</h2>
+                </div>
+
+                {promoCode ? (
+                  <div className="flex items-center justify-between bg-green-400/10 border border-green-400/30 rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Check size={16} className="text-green-400" />
+                      <span className="font-bold text-green-400">{promoCode}</span>
+                      <span className="text-sm text-muted-foreground">— {promoLabel}</span>
+                    </div>
+                    <button onClick={removePromo} className="text-muted-foreground hover:text-foreground transition-colors">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError('') }}
+                        onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
+                        placeholder="Enter promo code"
+                        className="flex-1 px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all uppercase tracking-wider"
+                      />
+                      <button
+                        onClick={handleApplyPromo}
+                        className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+                          promoSuccess
+                            ? 'bg-green-600 text-white'
+                            : 'bg-primary text-primary-foreground hover:brightness-110'
+                        }`}
+                      >
+                        {promoSuccess ? 'Applied!' : 'Apply'}
+                      </button>
+                    </div>
+                    {promoError && (
+                      <p className="text-sm text-destructive mt-2">{promoError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* PayPal Payment */}
               <div className="bg-card border border-border rounded-2xl p-6">
                 <h2 className="text-xl font-bold mb-2">Payment</h2>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
@@ -270,8 +338,13 @@ export default function Checkout() {
                           description: orderDescription.substring(0, 127),
                           amount: {
                             currency_code: 'USD',
-                            value: total.toFixed(2),
-                            breakdown: { item_total: { currency_code: 'USD', value: total.toFixed(2) } },
+                            value: finalTotal.toFixed(2),
+                            breakdown: {
+                              item_total: { currency_code: 'USD', value: total.toFixed(2) },
+                              discount: promoDiscount > 0
+                                ? { currency_code: 'USD', value: promoDiscount.toFixed(2) }
+                                : undefined,
+                            },
                           },
                           items: items.map(item => ({
                             name: item.name.substring(0, 127),
@@ -298,6 +371,7 @@ export default function Checkout() {
                       setPaymentError('')
                       try {
                         const details = await actions.order!.capture()
+                        finalizePromo()
                         await saveOrder(details.id!)
                         await markConverted()
 
@@ -315,7 +389,7 @@ export default function Checkout() {
                             await supabase.rpc('record_purchase', {
                               _email: customerInfo.email.trim(),
                               _order_id: details.id!,
-                              _total: parseFloat(total.toFixed(2)),
+                              _total: parseFloat(finalTotal.toFixed(2)),
                             })
                           }
                         } catch { /* CRM is non-blocking */ }
@@ -326,7 +400,7 @@ export default function Checkout() {
                           customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
                           email: customerInfo.email.trim(),
                           items: items.map(i => ({ ...i })),
-                          total: total.toFixed(2),
+                          total: finalTotal.toFixed(2),
                           address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zip}`,
                         })
 
@@ -336,7 +410,7 @@ export default function Checkout() {
                             orderId: details.id!,
                             payerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
                             email: customerInfo.email,
-                            total: total.toFixed(2),
+                            total: finalTotal.toFixed(2),
                           },
                         })
                       } catch (err) {
@@ -381,8 +455,17 @@ export default function Checkout() {
                 </div>
                 <div className="border-t border-border pt-4 space-y-2">
                   <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>${total.toFixed(2)}</span></div>
+                  {promoCode && promoDiscount > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span className="flex items-center gap-1.5">
+                        <Tag size={12} />
+                        Promo ({promoCode})
+                      </span>
+                      <span>-${promoDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-muted-foreground"><span>Shipping</span><span className="text-green-400">Free</span></div>
-                  <div className="flex justify-between text-xl font-black pt-2 border-t border-border"><span>Total</span><span className="text-primary">${total.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-xl font-black pt-2 border-t border-border"><span>Total</span><span className="text-primary">${finalTotal.toFixed(2)}</span></div>
                 </div>
                 <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
                   <ShieldCheck size={16} className="text-green-400 shrink-0" aria-hidden="true" />

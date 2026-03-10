@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ShoppingBag, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { validatePromoCode, applyPromoCode, type PromoResult } from '@/lib/promoCodes'
 
 interface CartItem {
   id: string
@@ -26,6 +27,13 @@ interface CartContextType {
   total: number
   totalItems: number
   cartEmail: string | null
+  // Promo code
+  promoCode: string | null
+  promoDiscount: number
+  promoLabel: string | null
+  applyPromo: (code: string) => PromoResult
+  removePromo: () => void
+  finalizePromo: () => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -124,6 +132,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartEmail, setCartEmail] = useState<string | null>(() => localStorage.getItem('tss-cart-email'))
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [pendingItem, setPendingItem] = useState<CartItem | null>(null)
+  const [promoCode, setPromoCode] = useState<string | null>(null)
+  const [promoDiscount, setPromoDiscount] = useState(0)
+  const [promoLabel, setPromoLabel] = useState<string | null>(null)
 
   // Sync to localStorage
   useEffect(() => {
@@ -214,7 +225,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, quantity } : i))
   }
 
-  const clearCart = () => setItems([])
+  const clearCart = () => {
+    setItems([])
+    setPromoCode(null)
+    setPromoDiscount(0)
+    setPromoLabel(null)
+  }
 
   const markConverted = async () => {
     const sessionId = localStorage.getItem('tss-cart-session-id')
@@ -235,8 +251,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
 
+  // Re-validate promo when cart changes
+  useEffect(() => {
+    if (promoCode) {
+      const result = validatePromoCode(promoCode, total)
+      if (result.valid && result.discount !== undefined) {
+        setPromoDiscount(result.discount)
+      } else {
+        setPromoCode(null)
+        setPromoDiscount(0)
+        setPromoLabel(null)
+      }
+    }
+  }, [total, promoCode])
+
+  const applyPromo = (code: string): PromoResult => {
+    const result = validatePromoCode(code, total)
+    if (result.valid && result.code && result.discount !== undefined) {
+      setPromoCode(result.code.code)
+      setPromoDiscount(result.discount)
+      setPromoLabel(
+        result.code.type === 'percent'
+          ? `${result.code.value}% off`
+          : `$${result.code.value} off`
+      )
+    }
+    return result
+  }
+
+  const removePromo = () => {
+    setPromoCode(null)
+    setPromoDiscount(0)
+    setPromoLabel(null)
+  }
+
+  const finalizePromo = () => {
+    if (promoCode) {
+      applyPromoCode(promoCode)
+    }
+  }
+
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, markConverted, total, totalItems, cartEmail }}>
+    <CartContext.Provider value={{
+      items, addItem, removeItem, updateQuantity, clearCart, markConverted,
+      total, totalItems, cartEmail,
+      promoCode, promoDiscount, promoLabel,
+      applyPromo, removePromo, finalizePromo,
+    }}>
       {children}
       <EmailCaptureModal
         isOpen={showEmailModal}

@@ -15,7 +15,7 @@ export default function Reviews() {
         <div className="elfsight-app-5915ab6d-ea02-4841-9033-e6c905f52098" data-elfsight-app-lazy />
         <noscript>
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Check out our reviews on <a href="https://www.google.com/search?q=the+sticker+smith+hayward" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google</a></p>
+            <p className="text-muted-foreground">Check out our reviews on <a href="https://share.google/N0wDi6Y8eFK5EaR5v" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google</a></p>
           </div>
         </noscript>
       </div>

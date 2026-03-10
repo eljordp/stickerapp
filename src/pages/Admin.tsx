@@ -4,12 +4,13 @@ import {
   LogOut, Package, DollarSign, Users, ChevronDown, ChevronUp,
   Truck, Clock, CheckCircle, Settings, RotateCcw, Save, Loader2,
   ShoppingCart, BarChart3, UserPlus, Eye, MousePointer, ArrowRight,
-  Copy, ExternalLink, Mail,
+  Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import { getPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
 import { getReferralUrl } from '@/lib/referrals'
 import { toast } from 'sonner'
+import { getPromoCodes, savePromoCodes, categoryLabels, type PromoCode } from '@/lib/promoCodes'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -533,6 +534,165 @@ function PricingTab() {
   )
 }
 
+function PromoCodeManager() {
+  const [codes, setCodes] = useState<PromoCode[]>(() => getPromoCodes())
+  const [showAdd, setShowAdd] = useState(false)
+  const [newCode, setNewCode] = useState({
+    code: '',
+    type: 'percent' as 'percent' | 'fixed',
+    value: 10,
+    label: '',
+    category: 'custom' as PromoCode['category'],
+    minOrder: 0,
+    maxUses: 0,
+    expiresAt: '',
+  })
+
+  const toggleActive = (index: number) => {
+    const updated = codes.map((c, i) => i === index ? { ...c, active: !c.active } : c)
+    setCodes(updated)
+    savePromoCodes(updated)
+  }
+
+  const deleteCode = (index: number) => {
+    const updated = codes.filter((_, i) => i !== index)
+    setCodes(updated)
+    savePromoCodes(updated)
+  }
+
+  const addCode = () => {
+    if (!newCode.code.trim() || !newCode.label.trim()) return
+    const code: PromoCode = {
+      code: newCode.code.toUpperCase().trim().replace(/\s/g, ''),
+      type: newCode.type,
+      value: newCode.value,
+      label: newCode.label,
+      category: newCode.category,
+      minOrder: newCode.minOrder || undefined,
+      maxUses: newCode.maxUses || undefined,
+      uses: 0,
+      active: true,
+      expiresAt: newCode.expiresAt || undefined,
+      createdAt: new Date().toISOString(),
+    }
+    const updated = [...codes, code]
+    setCodes(updated)
+    savePromoCodes(updated)
+    setNewCode({ code: '', type: 'percent', value: 10, label: '', category: 'custom', minOrder: 0, maxUses: 0, expiresAt: '' })
+    setShowAdd(false)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Tag size={20} className="text-primary" />
+          <h2 className="text-xl font-bold">Promo Codes</h2>
+          <span className="text-sm text-muted-foreground">({codes.filter(c => c.active).length} active)</span>
+        </div>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="flex items-center gap-1.5 text-sm font-bold px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:brightness-110 transition-all"
+        >
+          <Plus size={14} /> New Code
+        </button>
+      </div>
+
+      {showAdd && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="bg-card border border-primary/30 rounded-2xl p-6 space-y-4"
+        >
+          <h3 className="font-bold">Create Promo Code</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Code *</label>
+              <input type="text" value={newCode.code} onChange={e => setNewCode({ ...newCode, code: e.target.value.toUpperCase() })} placeholder="e.g. TRADESHOW2026" className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 uppercase tracking-wider" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Label *</label>
+              <input type="text" value={newCode.label} onChange={e => setNewCode({ ...newCode, label: e.target.value })} placeholder="e.g. Bay Area Trade Show 2026" className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Category</label>
+              <select value={newCode.category} onChange={e => setNewCode({ ...newCode, category: e.target.value as PromoCode['category'] })} className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <option value="friends_family">Friends & Family</option>
+                <option value="first_time">First Time Customer</option>
+                <option value="event">Trade Show / Event</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Discount Type</label>
+              <select value={newCode.type} onChange={e => setNewCode({ ...newCode, type: e.target.value as 'percent' | 'fixed' })} className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <option value="percent">Percentage Off</option>
+                <option value="fixed">Fixed Amount Off</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Value ({newCode.type === 'percent' ? '%' : '$'})</label>
+              <input type="number" min="0" step={newCode.type === 'percent' ? '1' : '0.01'} value={newCode.value} onChange={e => setNewCode({ ...newCode, value: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Min Order ($)</label>
+              <input type="number" min="0" step="1" value={newCode.minOrder} onChange={e => setNewCode({ ...newCode, minOrder: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Max Uses (0 = unlimited)</label>
+              <input type="number" min="0" step="1" value={newCode.maxUses} onChange={e => setNewCode({ ...newCode, maxUses: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Expires (optional)</label>
+              <input type="date" value={newCode.expiresAt} onChange={e => setNewCode({ ...newCode, expiresAt: e.target.value })} className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={addCode} className="btn-primary text-sm">Create Code</button>
+            <button onClick={() => setShowAdd(false)} className="text-sm text-muted-foreground hover:text-foreground px-4 py-2">Cancel</button>
+          </div>
+        </motion.div>
+      )}
+
+      {codes.length === 0 ? (
+        <div className="bg-card border border-border rounded-2xl p-12 text-center">
+          <Tag size={48} className="mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No promo codes yet. Create one above.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {codes.map((code, i) => (
+            <div key={code.code} className={`bg-card border rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${code.active ? 'border-border' : 'border-border opacity-50'}`}>
+              <div className="flex items-center gap-4 min-w-0">
+                <button onClick={() => toggleActive(i)} className="shrink-0">
+                  {code.active ? <ToggleRight size={28} className="text-green-400" /> : <ToggleLeft size={28} className="text-muted-foreground" />}
+                </button>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black tracking-wider">{code.code}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">{code.type === 'percent' ? `${code.value}% off` : `$${code.value} off`}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{categoryLabels[code.category]}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5">{code.label}</p>
+                  <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                    <span>{code.uses} uses</span>
+                    {code.maxUses ? <span>max {code.maxUses}</span> : null}
+                    {code.minOrder ? <span>min ${code.minOrder}</span> : null}
+                    {code.expiresAt ? <span>expires {new Date(code.expiresAt).toLocaleDateString()}</span> : null}
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => deleteCode(i)} className="text-muted-foreground hover:text-destructive transition-colors shrink-0 self-end sm:self-center">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Carts Tab ───────────────────────────────────────────────────────────────
 
 function CartsTab() {
@@ -973,6 +1133,7 @@ function CRMTab() {
 const mainTabs = [
   { id: 'orders', label: 'Orders', icon: Package },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
+  { id: 'promos', label: 'Promos', icon: Tag },
   { id: 'carts', label: 'Carts', icon: ShoppingCart },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'crm', label: 'CRM', icon: Users },
@@ -1016,6 +1177,7 @@ function Dashboard() {
 
         {activeTab === 'orders' && <OrdersTab />}
         {activeTab === 'pricing' && <PricingTab />}
+        {activeTab === 'promos' && <PromoCodeManager />}
         {activeTab === 'carts' && <CartsTab />}
         {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'crm' && <CRMTab />}

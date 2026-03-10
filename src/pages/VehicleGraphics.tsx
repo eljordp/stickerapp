@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Car, CheckCircle } from 'lucide-react'
+import { Car, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 
 const features = [
@@ -9,6 +9,20 @@ const features = [
   'Door & Spot Graphics',
   'Perforated Window Graphics',
   'Vinyl Lettering & Decals',
+]
+
+const specs = [
+  { icon: Shield, label: 'Material', value: 'Premium 3M & Avery cast vinyl' },
+  { icon: Clock, label: 'Turnaround', value: '5-10 business days (design + print + install)' },
+  { icon: Wrench, label: 'Installation', value: 'Professional install included (Bay Area)' },
+  { icon: Zap, label: 'Durability', value: '5-7 year outdoor rating with laminate' },
+]
+
+const process = [
+  { step: '1', title: 'Consultation', desc: 'Tell us about your vehicle, branding goals, and budget. We\'ll recommend the right solution.' },
+  { step: '2', title: 'Design & Proof', desc: 'Our team creates a digital mockup on your exact vehicle model. Revisions until you love it.' },
+  { step: '3', title: 'Production', desc: 'Printed on premium vinyl with protective laminate. Quality checked before install.' },
+  { step: '4', title: 'Installation', desc: 'Professional installation at our Bay Area shop. Most wraps completed in 1-2 days.' },
 ]
 
 export default function VehicleGraphics() {
@@ -23,13 +37,36 @@ export default function VehicleGraphics() {
       </div>
       <section className="py-8 md:py-16">
         <div className="section-container">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-12">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
             <h2 className="text-2xl font-black mb-6">What We Offer</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               {features.map((feature) => (
                 <div key={feature} className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-primary shrink-0" />
                   <span className="text-foreground">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {specs.map(s => (
+              <div key={s.label} className="bg-card border border-border rounded-xl p-4 text-center">
+                <s.icon className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</p>
+                <p className="text-sm font-semibold">{s.value}</p>
+              </div>
+            ))}
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-12">
+            <h2 className="text-2xl font-black mb-6">How It Works</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {process.map(p => (
+                <div key={p.step}>
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black mb-3">{p.step}</div>
+                  <h3 className="font-bold mb-1">{p.title}</h3>
+                  <p className="text-sm text-muted-foreground">{p.desc}</p>
                 </div>
               ))}
             </div>
