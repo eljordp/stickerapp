@@ -21,8 +21,8 @@ export default function Home() {
       <ProjectGallery />
       <SamplePackCTA />
       <ServicesOverview />
-      <Reviews />
       <FAQ />
+      <Reviews />
       <QuickContact />
     </>
   )
