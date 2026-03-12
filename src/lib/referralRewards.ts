@@ -5,9 +5,11 @@ const REFERRAL_LOG_KEY = 'tss-referral-log'
 
 // --- Reward config ---
 const BUYER_DISCOUNT_PERCENT = 10 // Person using a referral code gets 10% off
-const REFERRER_REWARD_TYPE: 'percent' | 'fixed' = 'fixed'
-const REFERRER_REWARD_VALUE = 10 // Referrer gets $10 off next order
+const BASE_COMMISSION_RATE = 0.05 // Regular referrers earn 5% of the order
+const PARTNER_COMMISSION_RATE = 0.10 // Official partners earn 10%
 const REFERRER_REWARD_MIN_ORDER = 25
+
+export type ReferrerTier = 'standard' | 'partner'
 
 export interface Referrer {
   id: string
@@ -15,9 +17,10 @@ export interface Referrer {
   email: string
   phone: string
   code: string // unique personal referral code (works at checkout)
+  tier: ReferrerTier // 'standard' = 5%, 'partner' = 10%
   clicks: number // how many times the link was visited
   conversions: number // how many purchases used this code
-  totalEarned: number // total reward value earned
+  totalEarned: number // total reward value earned (based on % of referred orders)
   rewardCodes: string[] // promo codes generated as rewards for them
   createdAt: string
 }
@@ -68,7 +71,7 @@ function generateCode(name: string): string {
 }
 
 // Register a new referrer — returns existing if email already registered
-export function registerReferrer(name: string, email: string, phone: string): Referrer {
+export function registerReferrer(name: string, email: string, phone: string, tier: ReferrerTier = 'standard'): Referrer {
   const existing = findReferrerByEmail(email)
   if (existing) return existing
 
@@ -80,6 +83,7 @@ export function registerReferrer(name: string, email: string, phone: string): Re
     email: email.trim().toLowerCase(),
     phone: phone.trim(),
     code: generateCode(name),
+    tier,
     clicks: 0,
     conversions: 0,
     totalEarned: 0,
@@ -143,13 +147,17 @@ export function processReferralConversion(
   const referrer = all[idx]
   referrer.conversions++
 
+  // Calculate commission based on tier
+  const commissionRate = referrer.tier === 'partner' ? PARTNER_COMMISSION_RATE : BASE_COMMISSION_RATE
+  const rewardValue = Math.round(orderTotal * commissionRate * 100) / 100 // e.g. $100 order × 5% = $5
+
   // Generate a unique reward code for the REFERRER
   const rewardCode = `THANKS${referrer.code}${referrer.conversions}`
   const reward: PromoCode = {
     code: rewardCode,
-    type: REFERRER_REWARD_TYPE,
-    value: REFERRER_REWARD_VALUE,
-    label: `Referral Reward — Thanks for sharing, ${referrer.name}!`,
+    type: 'fixed',
+    value: rewardValue,
+    label: `Referral Reward — $${rewardValue.toFixed(2)} from a $${orderTotal.toFixed(2)} order`,
     category: 'friends_family',
     minOrder: REFERRER_REWARD_MIN_ORDER,
     maxUses: 1,
@@ -164,7 +172,7 @@ export function processReferralConversion(
   savePromoCodes(codes)
 
   // Update referrer
-  referrer.totalEarned += REFERRER_REWARD_VALUE
+  referrer.totalEarned += rewardValue
   referrer.rewardCodes.push(rewardCode)
   all[idx] = referrer
   saveReferrers(all)

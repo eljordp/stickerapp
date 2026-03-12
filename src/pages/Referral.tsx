@@ -44,7 +44,7 @@ export default function Referral() {
     { icon: Users, title: 'Sign Up', desc: 'Register with your name & email to get your unique referral code' },
     { icon: Share2, title: 'Share Your Code', desc: 'Send your code or link to friends, family, or anyone you know' },
     { icon: Gift, title: 'They Save', desc: 'When they use your code at checkout, they get 10% off their order' },
-    { icon: DollarSign, title: 'You Earn', desc: 'You get $10 off your next order every time someone buys with your code' },
+    { icon: DollarSign, title: 'You Earn', desc: 'You earn 5% commission on every order placed with your code' },
   ]
 
   const activeReferrer = referrer || lookupResult
@@ -61,7 +61,7 @@ export default function Referral() {
             Share & Earn
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Get your own unique code. When someone uses it to place an order, <strong className="text-foreground">they save 10%</strong> and <strong className="text-foreground">you get $10 off</strong> your next order.
+            Get your own unique code. When someone uses it to place an order, <strong className="text-foreground">they save 10%</strong> and <strong className="text-foreground">you earn 5% commission</strong> on the sale.
           </p>
         </motion.div>
 
@@ -124,8 +124,8 @@ export default function Referral() {
                   <p className="text-xs text-muted-foreground mt-1">Orders Made</p>
                 </div>
                 <div className="p-6 text-center">
-                  <p className="text-3xl font-black text-yellow-400">${activeReferrer.totalEarned}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Total Earned</p>
+                  <p className="text-3xl font-black text-yellow-400">${activeReferrer.totalEarned.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Commission Earned</p>
                 </div>
               </div>
 
@@ -143,7 +143,7 @@ export default function Referral() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3">Use these codes at checkout for $10 off (min $25 order)</p>
+                  <p className="text-xs text-muted-foreground mt-3">Use these codes at checkout (min $25 order)</p>
                 </div>
               )}
             </div>
@@ -236,7 +236,7 @@ export default function Referral() {
         >
           <h2 className="text-2xl font-black mb-2">No Limit on Earnings</h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Every friend who orders with your code earns you $10 off. Refer 5 friends? That's $50 in savings. There's no cap.
+            You earn 5% commission on every order placed with your code. The more you share, the more you earn. No cap, no limits.
           </p>
         </motion.div>
       </div>

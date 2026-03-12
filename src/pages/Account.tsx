@@ -320,7 +320,8 @@ function AccountDashboard() {
                         {copied ? <Check size={20} className="text-green-400" /> : <Copy size={20} />}
                       </button>
                     </div>
-                    <p className="text-muted-foreground mb-4">Anyone who uses this code gets 10% off their order</p>
+                    <p className="text-muted-foreground mb-1">Anyone who uses this code gets 10% off their order</p>
+                    <p className="text-sm font-semibold text-primary mb-4">You earn {referrer.tier === 'partner' ? '10%' : '5%'} of every sale{referrer.tier === 'partner' ? ' (Partner)' : ''}</p>
                     <button onClick={() => handleCopy(getReferralShareUrl(referrer.code))}
                       className="btn-primary inline-flex items-center gap-2">
                       <ExternalLink size={16} /> Copy Share Link
@@ -339,8 +340,8 @@ function AccountDashboard() {
                       <p className="text-xs text-muted-foreground mt-1">Orders Made</p>
                     </div>
                     <div className="p-6 text-center">
-                      <p className="text-3xl font-black text-yellow-400">${referrer.totalEarned}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Total Earned</p>
+                      <p className="text-3xl font-black text-yellow-400">${referrer.totalEarned.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Commission Earned</p>
                     </div>
                   </div>
                 </div>

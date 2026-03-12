@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { getReferralUrl } from '@/lib/referrals'
 import { toast } from 'sonner'
 import { getPromoCodes, savePromoCodes, categoryLabels, type PromoCode } from '@/lib/promoCodes'
-import { getReferrers, getReferralLog, getReferralShareUrl, type Referrer } from '@/lib/referralRewards'
+import { getReferrers, saveReferrers, getReferralLog, getReferralShareUrl, type Referrer, type ReferrerTier } from '@/lib/referralRewards'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1270,6 +1270,20 @@ function ReferralsTab() {
     toast.success('Referral link copied!')
   }
 
+  const toggleTier = (referrerId: string) => {
+    const updated = referrers.map(r => {
+      if (r.id === referrerId) {
+        const newTier: ReferrerTier = r.tier === 'partner' ? 'standard' : 'partner'
+        return { ...r, tier: newTier }
+      }
+      return r
+    })
+    saveReferrers(updated)
+    setReferrers(updated)
+    const ref = updated.find(r => r.id === referrerId)
+    toast.success(`${ref?.name} is now ${ref?.tier === 'partner' ? 'a Partner (10%)' : 'Standard (5%)'}`)
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -1278,7 +1292,7 @@ function ReferralsTab() {
           { label: 'Referrers', value: referrers.length, icon: Users },
           { label: 'Total Clicks', value: totalClicks, icon: MousePointer },
           { label: 'Conversions', value: totalConversions, icon: CheckCircle },
-          { label: 'Rewards Given', value: `$${totalEarned}`, icon: Gift },
+          { label: 'Commission Paid', value: `$${totalEarned.toFixed(2)}`, icon: Gift },
         ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-2xl p-5">
             <div className="flex items-center gap-2 text-muted-foreground mb-2"><s.icon size={16} /><span className="text-xs font-medium">{s.label}</span></div>
@@ -1309,6 +1323,7 @@ function ReferralsTab() {
                 <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
                   <th className="text-left px-4 py-3">Name</th>
                   <th className="text-left px-4 py-3">Code</th>
+                  <th className="text-center px-4 py-3">Tier</th>
                   <th className="text-center px-4 py-3">Clicks</th>
                   <th className="text-center px-4 py-3">Sales</th>
                   <th className="text-center px-4 py-3">Earned</th>
@@ -1331,9 +1346,17 @@ function ReferralsTab() {
                         </button>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => toggleTier(r.id)} className="group flex items-center gap-1.5 mx-auto" title={`Click to ${r.tier === 'partner' ? 'demote to Standard' : 'promote to Partner'}`}>
+                        {r.tier === 'partner'
+                          ? <><ToggleRight size={20} className="text-primary" /><span className="text-xs font-bold text-primary">10%</span></>
+                          : <><ToggleLeft size={20} className="text-muted-foreground group-hover:text-foreground transition-colors" /><span className="text-xs font-medium text-muted-foreground">5%</span></>
+                        }
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-center">{r.clicks}</td>
                     <td className="px-4 py-3 text-center font-bold text-green-400">{r.conversions}</td>
-                    <td className="px-4 py-3 text-center font-bold text-yellow-400">${r.totalEarned}</td>
+                    <td className="px-4 py-3 text-center font-bold text-yellow-400">${r.totalEarned.toFixed(2)}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
                   </motion.tr>
                 ))}
