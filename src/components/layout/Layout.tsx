@@ -4,7 +4,7 @@ import Header from './Header'
 import Footer from './Footer'
 import MobileBar from './MobileBar'
 import PromoBanner from './PromoBanner'
-import sideStrip from '@/assets/side-strip-1.png'
+import sideStrip from '@/assets/side-strip-2.png'
 
 export default function Layout() {
   const { pathname } = useLocation()
