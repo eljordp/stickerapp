@@ -22,9 +22,9 @@ export default function Hero() {
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-6 leading-[1.1] tracking-tight">
               The Sticker Smith
               <br />
-              <span className="text-gradient">The Bay's Trusted</span>
+              <span className="text-gradient">Bay Area's Full-Service</span>
               <br />
-              Print & Branding
+              Print & Branding Studio
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="text-base md:text-xl text-muted-foreground max-w-xl mb-6 md:mb-8">
