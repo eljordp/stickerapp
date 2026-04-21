@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Tag, Copy, Check } from 'lucide-react'
 import { getPromoCodes } from '@/lib/promoCodes'
 import { isReferralCode } from '@/lib/referralRewards'
@@ -6,8 +6,39 @@ import { isReferralCode } from '@/lib/referralRewards'
 export default function PromoBanner() {
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem('tss-promo-dismissed') === 'true')
   const [copied, setCopied] = useState(false)
+  const [visible, setVisible] = useState(false)
 
-  if (dismissed) return null
+  useEffect(() => {
+    if (dismissed) return
+
+    let timerDone = false
+    let scrollDone = false
+
+    const tryShow = () => {
+      if (timerDone && scrollDone) setVisible(true)
+    }
+
+    const timer = setTimeout(() => {
+      timerDone = true
+      tryShow()
+    }, 5000)
+
+    const onScroll = () => {
+      if (window.scrollY > 100) {
+        scrollDone = true
+        tryShow()
+        window.removeEventListener('scroll', onScroll)
+      }
+    }
+
+    window.addEventListener('scroll', onScroll)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [dismissed])
+
+  if (dismissed || !visible) return null
 
   // Only show general promos — no personal referral codes or reward codes
   const codes = getPromoCodes().filter(c =>
