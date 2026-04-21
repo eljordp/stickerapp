@@ -16,10 +16,10 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <TrustedBy />
       <ProductCategories />
       <ProductShowcase />
       <HowItWorks />
+      <TrustedBy />
       <ProjectGallery />
       <SamplePackCTA />
       <ServicesOverview />

@@ -10,7 +10,7 @@ import Order from '@/pages/Order'
 import Services from '@/pages/Services'
 import VehicleGraphics from '@/pages/VehicleGraphics'
 import BusinessSignage from '@/pages/BusinessSignage'
-import EventCanopies from '@/pages/EventCanopies'
+import EventDisplays from '@/pages/EventDisplays'
 import BusinessPrint from '@/pages/BusinessPrint'
 import WindowFilm from '@/pages/WindowFilm'
 import MylarPackaging from '@/pages/MylarPackaging'
@@ -50,7 +50,8 @@ export default function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/services/vehicle-graphics" element={<VehicleGraphics />} />
             <Route path="/services/business-signage" element={<BusinessSignage />} />
-            <Route path="/services/event-canopies" element={<EventCanopies />} />
+            <Route path="/services/event-displays" element={<EventDisplays />} />
+            <Route path="/services/event-canopies" element={<EventDisplays />} />
             <Route path="/services/business-print" element={<BusinessPrint />} />
             <Route path="/services/window-film" element={<WindowFilm />} />
             <Route path="/services/mylar-packaging" element={<MylarPackaging />} />

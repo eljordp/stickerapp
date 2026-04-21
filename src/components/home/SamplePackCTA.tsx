@@ -40,9 +40,6 @@ export default function SamplePackCTA() {
                   Request a Quote
                   <ArrowRight size={20} />
                 </Link>
-                <Link to="/order" className="btn-secondary text-lg px-8 py-4">
-                  Order Stickers
-                </Link>
               </div>
 
               {/* Material tags */}

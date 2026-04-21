@@ -27,15 +27,15 @@ const searchItems: SearchItem[] = [
   { name: 'Mylar Bags – Pound', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['mylar', 'bag', 'pound', 'lb', '14x16', 'packaging'] },
   { name: 'Jar Labels', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['jar', 'label', '2oz', 'container'] },
 
-  // Event Canopies
-  { name: 'Custom Canopy Tents', category: 'Event Canopies', href: '/services/event-canopies', keywords: ['canopy', 'tent', 'popup', 'pop-up', 'event', 'booth', 'trade show', 'steel', 'aluminum', '5x5', '10x10', '10x15', '10x20'] },
-  { name: 'Sidewalls & Half Walls', category: 'Event Canopies', href: '/services/event-canopies', keywords: ['sidewall', 'half wall', 'wall', 'tent wall', 'enclosure'] },
+  // Event Displays
+  { name: 'Custom Canopy Tents', category: 'Event Displays', href: '/services/event-displays', keywords: ['canopy', 'tent', 'popup', 'pop-up', 'event', 'booth', 'trade show', 'steel', 'aluminum', '5x5', '10x10', '10x15', '10x20'] },
+  { name: 'Sidewalls & Half Walls', category: 'Event Displays', href: '/services/event-displays', keywords: ['sidewall', 'half wall', 'wall', 'tent wall', 'enclosure'] },
 
   // Backdrops
-  { name: 'Backdrop Displays', category: 'Backdrops & Displays', href: '/services/event-canopies', keywords: ['backdrop', 'display', 'banner', 'step and repeat', 'photo', 'background', 'fabric', 'vinyl', 'pop-up', 'tension'] },
+  { name: 'Backdrop Displays', category: 'Backdrops & Displays', href: '/services/event-displays', keywords: ['backdrop', 'display', 'banner', 'step and repeat', 'photo', 'background', 'fabric', 'vinyl', 'pop-up', 'tension'] },
 
   // Table Covers
-  { name: 'Table Covers & Throws', category: 'Table Covers', href: '/services/event-canopies', keywords: ['table', 'cover', 'throw', 'tablecloth', 'fitted', 'draped', '6ft', '8ft', 'round', 'rectangular'] },
+  { name: 'Table Covers & Throws', category: 'Table Covers', href: '/services/event-displays', keywords: ['table', 'cover', 'throw', 'tablecloth', 'fitted', 'draped', '6ft', '8ft', 'round', 'rectangular'] },
 
   // Retractable Banners
   { name: 'Retractable Banners', category: 'Banners', href: '/services/business-signage', keywords: ['retractable', 'banner', 'roll up', 'pull up', 'stand', 'portable', 'display', 'economy', 'standard', 'premium', 'wide'] },

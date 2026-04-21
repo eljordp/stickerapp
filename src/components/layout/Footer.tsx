@@ -10,7 +10,7 @@ const footerLinks = {
   ],
   services: [
     { label: 'Vehicle Graphics', href: '/services/vehicle-graphics' },
-    { label: 'Event Canopies', href: '/services/event-canopies' },
+    { label: 'Event Displays', href: '/services/event-displays' },
     { label: 'Business Print', href: '/services/business-print' },
     { label: 'Business Signage', href: '/services/business-signage' },
     { label: 'Window Film & Tint', href: '/services/window-film' },

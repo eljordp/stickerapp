@@ -61,8 +61,8 @@ export const defaultPricing: PricingConfig = {
       { name: 'Window Cutout', type: 'flat', value: 0.10 },
       { name: 'Foil Finish', type: 'flat', value: 0.10 },
     ]},
-    // 1: Event Canopies
-    { name: 'Event Canopies', items: [
+    // 1: Event Displays
+    { name: 'Event Displays', items: [
       { size: '5\'×5\' Steel', quantities: [{ qty: 1, price: 399 }] },
       { size: '5\'×5\' Aluminum', quantities: [{ qty: 1, price: 549 }] },
       { size: '10\'×10\' Steel', quantities: [{ qty: 1, price: 728 }] },

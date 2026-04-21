@@ -4,7 +4,7 @@ import { ArrowRight, Car, Tent, Printer, Store, Film, Package } from 'lucide-rea
 
 const services = [
   { icon: Car, title: 'Vehicle Graphics', description: 'Wraps, fleet branding & door graphics', href: '/services/vehicle-graphics' },
-  { icon: Tent, title: 'Event Canopies', description: 'Tents, flags, banners & displays', href: '/services/event-canopies' },
+  { icon: Tent, title: 'Event Displays', description: 'Tents, flags, banners & displays', href: '/services/event-displays' },
   { icon: Printer, title: 'Business Print', description: 'Cards, flyers & marketing materials', href: '/services/business-print' },
   { icon: Store, title: 'Business Signage', description: 'Storefront, wall graphics & A-frames', href: '/services/business-signage' },
   { icon: Film, title: 'Window Film', description: 'Frosted, solar, security & graphics', href: '/services/window-film' },

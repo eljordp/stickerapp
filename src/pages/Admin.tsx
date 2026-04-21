@@ -325,7 +325,7 @@ function OrdersTab() {
 const categoryTabs = [
   { id: 'stickers', label: 'Stickers' },
   { id: 'mylar', label: 'Mylar', productIndex: 0 },
-  { id: 'canopies', label: 'Canopies', productIndex: 1 },
+  { id: 'displays', label: 'Displays', productIndex: 1 },
   { id: 'backdrops', label: 'Backdrops', productIndex: 2 },
   { id: 'tablecovers', label: 'Table Covers', productIndex: 3 },
   { id: 'banners', label: 'Banners', productIndex: 4 },

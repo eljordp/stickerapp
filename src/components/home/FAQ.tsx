@@ -43,9 +43,9 @@ const faqCategories = [
   {
     title: 'Services & Capabilities',
     faqs: [
-      { question: 'What services do you offer beyond stickers?', answer: 'We\'re a full-service print and branding shop: custom stickers & labels, vehicle wraps & graphics, business signage, event canopies & displays, business print (cards, flyers, postcards), window film & tint, and mylar packaging.' },
+      { question: 'What services do you offer beyond stickers?', answer: 'We\'re a full-service print and branding shop: custom stickers & labels, vehicle wraps & graphics, business signage, event displays (tents, flags, banners), business print (cards, flyers, postcards), window film & tint, and mylar packaging.' },
       { question: 'Do you do vehicle wraps?', answer: 'Yes! We do full wraps, partial wraps, fleet branding, door/spot graphics, vinyl lettering, and perforated window graphics. We use premium 3M/Avery materials and offer professional installation in the Bay Area.' },
-      { question: 'Do you handle event setups (canopies, banners)?', answer: 'Absolutely. We print custom canopies (5x5 to 10x20), retractable banners, backdrops, table covers, and feather flags. Perfect for trade shows, pop-ups, farmers markets, and events.' },
+      { question: 'Do you handle event displays (tents, banners, flags)?', answer: 'Absolutely. We print custom canopy tents (5x5 to 10x20), retractable banners, backdrops, table covers, and feather flags. Perfect for trade shows, pop-ups, farmers markets, and events.' },
       { question: 'Do you install window film and tint?', answer: 'Yes — we do frosted/decorative film, solar/UV film, security film, and automotive window tint. Commercial and residential. Bay Area installation included.' },
     ],
   },
