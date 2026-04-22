@@ -1,8 +1,31 @@
 import { useState, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette } from 'lucide-react'
+import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, CheckCircle } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
+import PortfolioStrip from '@/components/PortfolioStrip'
+import stkDieCut from '@/assets/projects/stickers-die-cut-stack.jpg'
+import stkHolo from '@/assets/projects/stickers-holographic.jpg'
+import stkLaptop from '@/assets/projects/stickers-on-laptop.jpg'
+import stkSheet from '@/assets/projects/stickers-sheet.jpg'
+import stkRoll from '@/assets/projects/stickers-roll.jpg'
+import stkMatte from '@/assets/projects/stickers-matte-detail.jpg'
+
+const stickerFeatures = [
+  'Die-Cut & Kiss-Cut',
+  'Sheets & Rolls',
+  'Custom Shapes + Sizes',
+  'Matte, Gloss, Clear, Holographic',
+  'Paper, Embossed & UV Finish',
+  'Weatherproof + UV-Resistant',
+]
+
+const stickerSpecs = [
+  { icon: Droplets, label: 'Material', value: 'Premium 3M & Avery cast vinyl' },
+  { icon: Clock, label: 'Turnaround', value: '3-5 business days + 24hr proof' },
+  { icon: Shield, label: 'Durability', value: '3-5 years outdoor · waterproof' },
+  { icon: MapPin, label: 'Shipping', value: 'Free US shipping · Bay pickup' },
+]
 
 const shapeData = [
   { name: 'Die-Cut', value: 'Die-Cut' },
@@ -37,6 +60,75 @@ function ShapeIcon({ shape }: { shape: string }) {
       {shape === 'Die-Cut' && <path d="M12 3L21 12L12 21L3 12Z" />}
       {shape === 'Kiss-Cut' && <path d="M12 3L21 12L12 21L3 12Z" strokeDasharray="3 2" />}
     </svg>
+  )
+}
+
+// Render a single sticker (as placeholder or real artwork)
+function Sticker({ shape, artworkUrl, size = 96, dashed = false }: { shape: string; artworkUrl: string; size?: number; dashed?: boolean }) {
+  const isCircle = shape === 'Circle'
+  const isRect = shape === 'Rectangle'
+  const w = isRect ? size * 1.4 : size
+  const h = isRect ? size * 0.85 : size
+  const radius = isCircle ? '50%' : shape === 'Die-Cut' ? '24%' : shape === 'Kiss-Cut' ? '18%' : '8%'
+  return (
+    <div
+      className={`relative flex items-center justify-center shadow-[0_6px_18px_rgba(0,0,0,0.45)] overflow-hidden ${dashed ? 'border-2 border-dashed border-white/30' : ''}`}
+      style={{
+        width: w,
+        height: h,
+        borderRadius: radius,
+        background: artworkUrl ? undefined : 'linear-gradient(135deg, hsl(199 89% 64% / 0.18), hsl(199 89% 40% / 0.08))',
+      }}
+    >
+      {artworkUrl ? (
+        <img src={artworkUrl} alt="Artwork" className="w-full h-full object-cover" />
+      ) : (
+        <span className="text-[10px] text-white/50 font-semibold leading-tight text-center px-1">Your<br/>Design</span>
+      )}
+    </div>
+  )
+}
+
+function StickerMockup({ shape, artworkUrl, variant }: { shape: string; artworkUrl: string; variant: 'single' | 'sheet' | 'roll' }) {
+  if (variant === 'single') {
+    return (
+      <div className="relative flex flex-col items-center">
+        <Sticker shape={shape} artworkUrl={artworkUrl} size={130} />
+        {/* Soft floor shadow */}
+        <div className="mt-4 w-28 h-3 rounded-full bg-black/50 blur-md opacity-60" />
+      </div>
+    )
+  }
+  if (variant === 'sheet') {
+    return (
+      <div
+        className="relative p-3 rounded-md bg-gradient-to-b from-white/95 to-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+        style={{ transform: 'perspective(800px) rotateX(18deg)' }}
+      >
+        <div className="grid grid-cols-3 gap-2">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Sticker key={i} shape={shape} artworkUrl={artworkUrl} size={38} dashed />
+          ))}
+        </div>
+      </div>
+    )
+  }
+  // roll
+  return (
+    <div className="relative flex items-center" style={{ transform: 'perspective(600px) rotateY(-10deg)' }}>
+      {/* Roll edge */}
+      <div className="relative w-5 h-20 rounded-l-full bg-neutral-800 border border-neutral-700 shadow-inner">
+        <div className="absolute inset-y-2 left-1.5 w-0.5 rounded-full bg-neutral-500/40" />
+      </div>
+      {/* Paper strip with stickers */}
+      <div className="flex items-center gap-1 bg-gradient-to-r from-white/90 via-white to-white/70 px-2 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Sticker key={i} shape={shape} artworkUrl={artworkUrl} size={48} />
+        ))}
+      </div>
+      {/* Soft end shadow */}
+      <div className="w-6 h-16 bg-gradient-to-l from-transparent to-black/10" />
+    </div>
   )
 }
 
@@ -106,13 +198,53 @@ export default function Order() {
       <div className="relative -mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(var(--color-foreground) 1px, transparent 1px), linear-gradient(90deg, var(--color-foreground) 1px, transparent 1px)`, backgroundSize: '60px 60px', opacity: 0.02 }} />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Order Custom Stickers</h1>
-          <p className="text-white/80 text-lg">Configure your stickers and add to cart</p>
+          <StickerIcon className="w-10 h-10 text-white/80 mx-auto mb-4" />
+          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Custom Stickers</h1>
+          <p className="text-white/80 text-lg">Die-cut, kiss-cut, holographic, matte — all on premium vinyl, with a proof before we print.</p>
         </motion.div>
       </div>
 
-      <section className="py-8 md:py-16">
+      {/* What We Offer + Specs */}
+      <section className="py-8 md:py-12">
         <div className="section-container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-6"
+          >
+            <h2 className="text-2xl font-black mb-6">What We Offer</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {stickerFeatures.map((feature) => (
+                <div key={feature} className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-foreground">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4"
+          >
+            {stickerSpecs.map((s) => (
+              <div key={s.label} className="bg-card border border-border rounded-xl p-4 text-center">
+                <s.icon className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</p>
+                <p className="text-sm font-semibold leading-snug">{s.value}</p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="py-6 md:py-10">
+        <div className="section-container">
+          <h2 className="text-2xl md:text-3xl font-black text-center mb-8">Build your order</h2>
           {/* 4-column configurator */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -306,62 +438,33 @@ export default function Order() {
               </div>
 
               {/* Preview area */}
-              <div className="flex-1 flex items-center justify-center w-full min-h-[220px]">
-                {artworkUrl ? (
-                  <div className="relative">
-                    <img
-                      src={artworkUrl}
-                      alt="Preview"
-                      className={`max-w-[140px] max-h-[140px] object-cover shadow-xl ${
-                        shape === 'Circle' ? 'rounded-full' :
-                        shape === 'Rectangle' ? 'rounded-lg aspect-[1.6/1]' :
-                        (shape === 'Die-Cut' || shape === 'Kiss-Cut') ? 'rounded-2xl rotate-6' :
-                        'rounded-lg'
-                      }`}
-                    />
-                    {mockupView === 'handheld' && (
-                      <div className="text-4xl absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-30 select-none">&#x1F91A;</div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="relative flex flex-col items-center">
-                    <div
-                      className={`border-2 border-dashed border-muted-foreground/20 flex items-center justify-center ${
-                        shape === 'Circle' ? 'w-28 h-28 rounded-full' :
-                        (shape === 'Die-Cut' || shape === 'Kiss-Cut') ? 'w-28 h-28 rounded-xl rotate-45' :
-                        shape === 'Rectangle' ? 'w-36 h-24 rounded-lg' :
-                        'w-28 h-28 rounded-lg'
-                      }`}
-                      style={{ background: 'hsl(199 89% 64% / 0.06)' }}
-                    >
-                      <span className={`text-[10px] text-muted-foreground/40 font-semibold text-center leading-tight ${
-                        (shape === 'Die-Cut' || shape === 'Kiss-Cut') ? '-rotate-45' : ''
-                      }`}>
-                        Your<br/>Design
-                      </span>
-                    </div>
-                    {mockupView === 'handheld' && (
-                      <div className="text-5xl opacity-15 mt-1 select-none">&#x1F91A;</div>
-                    )}
-                    {mockupView === 'sheet' && (
-                      <div className="grid grid-cols-4 gap-1.5 mt-4 opacity-15">
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className={`w-5 h-5 border border-muted-foreground/40 ${shape === 'Circle' ? 'rounded-full' : 'rounded-sm'}`} />
-                        ))}
-                      </div>
-                    )}
-                    {mockupView === 'roll' && (
-                      <div className="flex items-center gap-1 mt-4 opacity-15">
-                        {[...Array(6)].map((_, i) => (
-                          <div key={i} className={`w-5 h-5 border border-muted-foreground/40 ${shape === 'Circle' ? 'rounded-full' : 'rounded-sm'}`} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+              <div className="flex-1 flex items-center justify-center w-full min-h-[240px] py-4">
+                {mockupView === 'handheld' && (
+                  <StickerMockup
+                    shape={shape}
+                    artworkUrl={artworkUrl}
+                    variant="single"
+                  />
+                )}
+                {mockupView === 'sheet' && (
+                  <StickerMockup
+                    shape={shape}
+                    artworkUrl={artworkUrl}
+                    variant="sheet"
+                  />
+                )}
+                {mockupView === 'roll' && (
+                  <StickerMockup
+                    shape={shape}
+                    artworkUrl={artworkUrl}
+                    variant="roll"
+                  />
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground mt-4">Upload artwork to preview</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {artworkUrl ? 'Preview of your design' : 'Upload artwork to see your design applied'}
+              </p>
             </div>
 
             {/* Order Summary */}
@@ -461,29 +564,24 @@ export default function Order() {
             </div>
           </motion.div>
 
-          {/* Trust strip */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="max-w-6xl mx-auto mt-8 grid grid-cols-2 md:grid-cols-4 gap-3"
-          >
-            {[
-              { Icon: Clock, label: '24hr Proof Turnaround' },
-              { Icon: Shield, label: 'Quality Guaranteed' },
-              { Icon: MapPin, label: 'Bay Area · Free Shipping' },
-              { Icon: Sparkles, label: 'Proof Before Print' },
-            ].map(({ Icon, label }) => (
-              <div
-                key={label}
-                className="flex items-center gap-2 bg-card/60 border border-border rounded-xl px-3 py-2.5 text-xs md:text-sm"
-              >
-                <Icon size={14} className="text-primary shrink-0" />
-                <span className="text-muted-foreground truncate">{label}</span>
-              </div>
-            ))}
-          </motion.div>
+        </div>
+      </section>
 
+      {/* Portfolio */}
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <PortfolioStrip
+            title="Sticker Work"
+            subtitle="Die-cut, holographic, sheets, rolls — we've printed them all."
+            projects={[
+              { src: stkDieCut, alt: 'Die-cut sticker stack', caption: 'Die-cut vinyl' },
+              { src: stkHolo, alt: 'Holographic stickers', caption: 'Holographic' },
+              { src: stkLaptop, alt: 'Stickers on laptop', caption: 'In the wild' },
+              { src: stkSheet, alt: 'Sticker sheet', caption: 'Kiss-cut sheets' },
+              { src: stkRoll, alt: 'Sticker roll', caption: 'Rolls for retail' },
+              { src: stkMatte, alt: 'Matte sticker detail', caption: 'Matte detail' },
+            ]}
+          />
         </div>
       </section>
     </>
