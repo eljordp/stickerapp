@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import Layout from '@/components/layout/Layout'
+import PrinterIntro from '@/components/PrinterIntro'
 import { trackPageView, setupClickTracking } from '@/lib/analytics'
 import { captureReferralCode } from '@/lib/referrals'
 import Home from '@/pages/Home'
@@ -40,6 +41,7 @@ function AnalyticsTracker() {
 export default function App() {
   return (
     <BrowserRouter>
+      <PrinterIntro />
       <AnalyticsTracker />
       <AuthProvider>
       <CartProvider>
