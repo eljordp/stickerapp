@@ -1,16 +1,20 @@
 import { useState, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, FileUp, Check } from 'lucide-react'
+import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
 
 const shapeData = [
+  { name: 'Die-Cut', value: 'Die-Cut' },
+  { name: 'Kiss-Cut', value: 'Kiss-Cut' },
   { name: 'Square', value: 'Square' },
   { name: 'Circle', value: 'Circle' },
   { name: 'Rectangle', value: 'Rectangle' },
-  { name: 'Hand-held', value: 'Die-Cut' },
-  { name: 'Kiss Cut', value: 'Kiss-Cut' },
 ]
+
+// Order-level add-ons (per-piece material upgrades are handled by Material column)
+const ADDON_RUSH = { id: 'rush', label: 'Rush (2-day)', description: 'Skip the line — 2-day production', icon: Zap, price: 65 }
+const ADDON_DESIGN = { id: 'design', label: 'Design Assist', description: 'Our designer helps shape your artwork', icon: Palette, price: 75 }
 
 const materialData = [
   { value: 'Matte Vinyl', label: 'Matte', bg: 'radial-gradient(circle at 35% 35%, #f0ece8, #ccc7c0)' },
@@ -22,7 +26,7 @@ const materialData = [
 ]
 
 const sizeOptions = ['2" x 2"', '3" x 3"', '4" x 4"', '5" x 5"', '6" x 6"', '7" x 7"']
-const qtyOptions = [50, 100, 250, 500, 1000]
+const qtyOptions = [50, 100, 250, 500, 1000, 2500]
 
 function ShapeIcon({ shape }: { shape: string }) {
   return (
@@ -47,6 +51,8 @@ export default function Order() {
   const [artworkFile, setArtworkFile] = useState<File | null>(null)
   const [artworkUrl, setArtworkUrl] = useState('')
   const [added, setAdded] = useState(false)
+  const [rushAddon, setRushAddon] = useState(false)
+  const [designAddon, setDesignAddon] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const pricingConfig = useMemo(() => getPricing(), [])
@@ -55,7 +61,9 @@ export default function Order() {
   const basePrice = getBasePrice(effectiveQty, pricingConfig)
   const matMult = getMaterialMultiplier(material, pricingConfig)
   const sizeMult = getSizeMultiplier(size, pricingConfig)
-  const totalPrice = +(basePrice * matMult * sizeMult * effectiveQty).toFixed(2)
+  const stickerSubtotal = +(basePrice * matMult * sizeMult * effectiveQty).toFixed(2)
+  const addonsTotal = (rushAddon ? ADDON_RUSH.price : 0) + (designAddon ? ADDON_DESIGN.price : 0)
+  const totalPrice = +(stickerSubtotal + addonsTotal).toFixed(2)
   const perUnit = +(basePrice * matMult * sizeMult).toFixed(3)
 
   const refPerUnit = getBasePrice(50, pricingConfig) * matMult * sizeMult
@@ -74,16 +82,20 @@ export default function Order() {
   }
 
   const handleAddToCart = () => {
+    const addOns: { name: string; price: number }[] = []
+    if (rushAddon) addOns.push({ name: ADDON_RUSH.label, price: ADDON_RUSH.price })
+    if (designAddon) addOns.push({ name: ADDON_DESIGN.label, price: ADDON_DESIGN.price })
     addItem({
       id: `sticker-${Date.now()}`,
       name: `${shapeLabel} ${materialLabel} Stickers`,
       size,
       option: `${effectiveQty} pcs`,
-      price: totalPrice,
+      price: stickerSubtotal,
       quantity: 1,
       material,
       shape,
       dimensions: size,
+      addOns: addOns.length > 0 ? addOns : undefined,
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -238,8 +250,16 @@ export default function Order() {
               <h3 className="font-bold text-lg mb-1">Do you have artwork ready?</h3>
               <p className="text-sm text-muted-foreground mb-6">Let us know so we can help you best</p>
               <div className="space-y-3 w-full max-w-xs">
-                <button className="w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl bg-muted border border-border text-sm font-medium hover:border-primary/30 transition-all">
-                  <Sparkles size={16} className="text-primary" /> I need a design
+                <button
+                  onClick={() => setDesignAddon(!designAddon)}
+                  className={`w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl border text-sm font-medium transition-all ${
+                    designAddon
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-muted border-border hover:border-primary/30'
+                  }`}
+                >
+                  <Sparkles size={16} className={designAddon ? 'text-primary' : 'text-primary'} />
+                  {designAddon ? <span>Design help added · +${ADDON_DESIGN.price}</span> : <span>I need a design · +${ADDON_DESIGN.price}</span>}
                 </button>
                 <button
                   onClick={() => fileRef.current?.click()}
@@ -346,22 +366,75 @@ export default function Order() {
 
             {/* Order Summary */}
             <div className="bg-card border border-border rounded-2xl p-6 flex flex-col">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-center text-muted-foreground mb-5">
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-center text-muted-foreground mb-4">
                 Order Summary
               </h3>
-              <div className="text-center space-y-1 mb-5">
+              <div className="text-center mb-4">
                 <p className="text-xl font-black">{effectiveQty} stickers</p>
                 <p className="text-sm text-muted-foreground">{shapeLabel} &middot; {size}</p>
                 <p className="text-sm text-muted-foreground">{materialLabel}</p>
               </div>
-              <div className="border-t border-border pt-5 text-center flex-1 flex flex-col justify-center">
+
+              {/* Price breakdown */}
+              <div className="border-t border-border/60 pt-4 space-y-1.5 text-xs">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>{effectiveQty} × ${basePrice.toFixed(2)} base</span>
+                  <span className="tabular-nums">${(basePrice * effectiveQty).toFixed(2)}</span>
+                </div>
+                {sizeMult !== 1 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>{size} size (×{sizeMult.toFixed(1)})</span>
+                    <span className="tabular-nums">+${(basePrice * effectiveQty * (sizeMult - 1)).toFixed(2)}</span>
+                  </div>
+                )}
+                {matMult !== 1 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>{materialLabel} (×{matMult.toFixed(1)})</span>
+                    <span className="tabular-nums">+${(basePrice * effectiveQty * sizeMult * (matMult - 1)).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1 border-t border-border/40 mt-1">
+                  <span>Stickers subtotal</span>
+                  <span className="font-semibold tabular-nums">${stickerSubtotal.toFixed(2)}</span>
+                </div>
+                {rushAddon && (
+                  <div className="flex justify-between text-primary">
+                    <span>+ Rush (2-day)</span>
+                    <span className="tabular-nums">+${ADDON_RUSH.price}</span>
+                  </div>
+                )}
+                {designAddon && (
+                  <div className="flex justify-between text-primary">
+                    <span>+ Design Assist</span>
+                    <span className="tabular-nums">+${ADDON_DESIGN.price}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Rush toggle inline */}
+              <button
+                onClick={() => setRushAddon(!rushAddon)}
+                className={`mt-4 flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                  rushAddon
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border hover:border-primary/40 text-muted-foreground'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Zap size={13} />
+                  Add Rush · 2-day production
+                </span>
+                <span className="tabular-nums">+${ADDON_RUSH.price}</span>
+              </button>
+
+              <div className="border-t border-border pt-4 mt-4 text-center">
                 <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Total</p>
                 <p className="text-4xl font-black">${totalPrice.toFixed(2)}</p>
                 <p className="text-xs text-primary mt-1.5">&asymp; ${perUnit.toFixed(3)}/ea</p>
               </div>
               <button
                 onClick={handleAddToCart}
-                className={`btn-primary w-full mt-6 ${added ? 'bg-green-600' : ''}`}
+                className={`btn-primary w-full mt-5 ${added ? 'bg-green-600' : ''}`}
               >
                 {added ? (
                   <><Check size={18} /> Added to Cart!</>
@@ -387,6 +460,30 @@ export default function Order() {
               </p>
             </div>
           </motion.div>
+
+          {/* Trust strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="max-w-6xl mx-auto mt-8 grid grid-cols-2 md:grid-cols-4 gap-3"
+          >
+            {[
+              { Icon: Clock, label: '24hr Proof Turnaround' },
+              { Icon: Shield, label: 'Quality Guaranteed' },
+              { Icon: MapPin, label: 'Bay Area · Free Shipping' },
+              { Icon: Sparkles, label: 'Proof Before Print' },
+            ].map(({ Icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2 bg-card/60 border border-border rounded-xl px-3 py-2.5 text-xs md:text-sm"
+              >
+                <Icon size={14} className="text-primary shrink-0" />
+                <span className="text-muted-foreground truncate">{label}</span>
+              </div>
+            ))}
+          </motion.div>
+
         </div>
       </section>
     </>
