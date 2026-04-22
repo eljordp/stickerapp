@@ -93,3 +93,14 @@ h1, h2, h3, h4, h5, h6 { font-weight: 900; letter-spacing: -0.02em; }
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #444; }
 ::selection { background-color: hsl(199 89% 64% / 0.3); color: white; }
+
+@keyframes intro-droplet {
+  0%   { opacity: 0; transform: translateY(-4px) scale(0.6); }
+  20%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(18px) scale(0.7); }
+}
+.intro-droplet {
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: intro-droplet 0.55s ease-out forwards;
+}

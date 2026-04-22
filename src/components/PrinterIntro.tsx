@@ -67,15 +67,16 @@ export default function PrinterIntro() {
   const headStart = FRAME_H
   const headEnd = vh - HEAD_H
 
-  // Ink droplets — random offsets, random colors
-  const droplets = Array.from({ length: 40 }, (_, i) => {
-    const colors = ['#22d3ee', '#ec4899', '#facc15', '#111111']
+  // Ink droplets — spaced across the scan, use CSS keyframes so they don't
+  // share the main JS anim thread with framer-motion
+  const droplets = Array.from({ length: 16 }, (_, i) => {
+    const colors = ['#22d3ee', '#ec4899', '#facc15']
     return {
       id: i,
-      x: Math.random() * 100,
-      delay: 0.3 + Math.random() * HEAD_TRAVEL_S,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      size: 2 + Math.random() * 3,
+      x: 4 + Math.random() * 92,
+      progress: i / 16 + Math.random() * 0.04,
+      color: colors[i % colors.length],
+      size: 2 + Math.random() * 2,
     }
   })
 
@@ -167,17 +168,9 @@ export default function PrinterIntro() {
             initial={{ top: headStart }}
             animate={{ top: headEnd }}
             exit={{ top: vh, opacity: 0 }}
-            transition={{ duration: HEAD_TRAVEL_S, ease: [0.55, 0.1, 0.4, 1], delay: 0.3 }}
+            transition={{ duration: HEAD_TRAVEL_S, ease: [0.65, 0.05, 0.36, 1], delay: 0.3 }}
           >
-            {/* Paper grain — SVG noise */}
-            <svg className="absolute inset-0 w-full h-full opacity-[0.08]" xmlns="http://www.w3.org/2000/svg">
-              <filter id="paperNoise">
-                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
-                <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0" />
-              </filter>
-              <rect width="100%" height="100%" filter="url(#paperNoise)" />
-            </svg>
-            {/* Scan lines */}
+            {/* Scan lines — lightweight, GPU-paintable */}
             <div
               className="absolute inset-0 opacity-[0.05]"
               style={{
@@ -187,30 +180,26 @@ export default function PrinterIntro() {
             />
           </motion.div>
 
-          {/* Ink droplets — spawn along the vertical scan path */}
-          {droplets.map((d) => (
-            <motion.div
-              key={d.id}
-              className="absolute rounded-full pointer-events-none z-[2]"
-              style={{
-                left: `${d.x}%`,
-                width: d.size,
-                height: d.size,
-                backgroundColor: d.color,
-                boxShadow: `0 0 6px ${d.color}`,
-              }}
-              initial={{ top: headStart, opacity: 0 }}
-              animate={{
-                top: [headStart, headStart + (headEnd - headStart) * (d.delay / (0.3 + HEAD_TRAVEL_S)) + 40],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: 0.5,
-                delay: d.delay,
-                ease: 'easeOut',
-              }}
-            />
-          ))}
+          {/* Ink droplets — CSS-keyframed so they don't share the JS anim thread */}
+          {droplets.map((d) => {
+            const y = headStart + (headEnd - headStart) * d.progress
+            const startDelay = 0.3 + d.progress * HEAD_TRAVEL_S
+            return (
+              <div
+                key={d.id}
+                className="absolute rounded-full pointer-events-none z-[2] intro-droplet"
+                style={{
+                  left: `${d.x}%`,
+                  top: y,
+                  width: d.size,
+                  height: d.size,
+                  backgroundColor: d.color,
+                  boxShadow: `0 0 6px ${d.color}`,
+                  animationDelay: `${startDelay}s`,
+                }}
+              />
+            )
+          })}
 
           {/* Print head carriage */}
           <motion.div
@@ -220,7 +209,7 @@ export default function PrinterIntro() {
             exit={{ top: -HEAD_H, opacity: [1, 1, 0] }}
             transition={{
               duration: HEAD_TRAVEL_S,
-              ease: [0.55, 0.1, 0.4, 1],
+              ease: [0.65, 0.05, 0.36, 1],
               delay: 0.3,
             }}
           >
@@ -319,16 +308,18 @@ function startPrinterSound(refStore: React.MutableRefObject<Array<() => void>>) 
     motor.start()
     motorLfo.start()
 
-    // Carriage click track — short noise bursts at nozzle oscillation rate (~every 400ms)
+    // Pre-build click noise buffer once, reuse it (avoids per-tick GC pressure)
+    const clickBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate)
+    const clickData = clickBuffer.getChannelData(0)
+    for (let i = 0; i < clickData.length; i++) {
+      clickData[i] = (Math.random() * 2 - 1) * (1 - i / clickData.length)
+    }
+
+    // Carriage click track — short noise bursts at nozzle oscillation rate
     const clickInterval = setInterval(() => {
       const now = ctx.currentTime
-      const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate)
-      const data = buffer.getChannelData(0)
-      for (let i = 0; i < data.length; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length)
-      }
       const src = ctx.createBufferSource()
-      src.buffer = buffer
+      src.buffer = clickBuffer
       const clickFilter = ctx.createBiquadFilter()
       clickFilter.type = 'highpass'
       clickFilter.frequency.value = 2000
