@@ -94,6 +94,25 @@ h1, h2, h3, h4, h5, h6 { font-weight: 900; letter-spacing: -0.02em; }
 ::-webkit-scrollbar-thumb:hover { background: #444; }
 ::selection { background-color: hsl(199 89% 64% / 0.3); color: white; }
 
+.input-base {
+  width: 100%;
+  background-color: hsl(220 12% 9%);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--color-foreground);
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.input-base::placeholder { color: hsl(220 10% 45%); }
+.input-base:focus {
+  outline: none;
+  border-color: hsl(199 89% 64% / 0.6);
+  box-shadow: 0 0 0 3px hsl(199 89% 64% / 0.12);
+}
+.input-base:disabled { opacity: 0.5; cursor: not-allowed; }
+select.input-base { cursor: pointer; }
+
 @keyframes intro-droplet {
   0%   { opacity: 0; transform: translateY(-4px) scale(0.6); }
   20%  { opacity: 1; transform: translateY(0) scale(1); }

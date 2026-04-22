@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Tent, CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
+import EstimateForm from '@/components/EstimateForm'
 
 const features = [
   'Custom Printed Canopy Tents',
@@ -73,6 +74,27 @@ export default function EventCanopies() {
           </motion.div>
 
           <ProductOrder categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <EstimateForm
+            service="Event Displays"
+            title="Get an Event Display Estimate"
+            subtitle="Trade show, pop-up, conference — give us the event date and scope, we'll make sure it arrives on time."
+            fields={[
+              {
+                name: 'displayType',
+                label: 'What do you need?',
+                type: 'select',
+                required: true,
+                options: ['Canopy Tent', 'Backdrop / Step & Repeat', 'Retractable Banner', 'Table Cover', 'Feather Flag', 'Full Booth Setup', 'Not sure yet'],
+              },
+              { name: 'eventDate', label: 'Event date', type: 'text', required: true, placeholder: 'MM/DD/YYYY' },
+              { name: 'quantity', label: 'How many of each?', type: 'text', placeholder: 'e.g. 1 tent + 2 flags + 1 table cover' },
+              { name: 'eventLocation', label: 'Event location', type: 'text', placeholder: 'Moscone Center, SF' },
+            ]}
+          />
         </div>
       </section>
     </>

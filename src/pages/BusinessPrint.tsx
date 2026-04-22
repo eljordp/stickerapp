@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Printer, CheckCircle, Clock, Shield, Layers, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
+import EstimateForm from '@/components/EstimateForm'
 
 const features = [
   'Business Cards',
@@ -73,6 +74,37 @@ export default function BusinessPrint() {
           </motion.div>
 
           <ProductOrder categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <EstimateForm
+            service="Business Print"
+            title="Bulk or Custom Print Quote"
+            subtitle="Ordering 2,500+ cards, custom shapes, specialty finishes? Tell us the job and we'll send a sharper price."
+            fields={[
+              {
+                name: 'printType',
+                label: 'What are you printing?',
+                type: 'select',
+                required: true,
+                options: ['Business Cards', 'Flyers / Brochures', 'Postcards', 'Door Hangers', 'Letterhead / Envelopes', 'Vehicle Magnets', 'Multiple / Not sure'],
+              },
+              { name: 'quantity', label: 'Approximate quantity', type: 'text', required: true, placeholder: 'e.g. 2,500 cards · 1,000 flyers' },
+              {
+                name: 'finish',
+                label: 'Finish preference (if any)',
+                type: 'select',
+                options: ['Standard (matte or gloss)', 'Soft-touch', 'Spot UV', 'Foil stamping', 'Embossed', 'Not sure'],
+              },
+              {
+                name: 'turnaround',
+                label: 'Turnaround',
+                type: 'select',
+                options: ['Standard (5–7 days)', 'Rush (2–3 days)', 'Flexible'],
+              },
+            ]}
+          />
         </div>
       </section>
     </>

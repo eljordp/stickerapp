@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, AlertCircle } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+
+const MIN_ORDER = 35
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, total } = useCart()
+  const belowMin = total > 0 && total < MIN_ORDER
+  const shortfall = +(MIN_ORDER - total).toFixed(2)
   if (items.length === 0) {
     return (
       <section className="py-16 md:py-24">
@@ -40,9 +44,31 @@ export default function Cart() {
             </div>
           ))}
         </div>
+        {belowMin && (
+          <div className="mb-4 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex items-start gap-3">
+            <AlertCircle size={20} className="text-yellow-400 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-bold text-yellow-400">
+                ${MIN_ORDER} minimum order
+              </p>
+              <p className="text-muted-foreground">
+                Add ${shortfall.toFixed(2)} more to check out. Bumping quantities or adding a sample pack is an easy way there.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="bg-card border border-border rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-2xl font-black">Total: <span className="text-primary">${total.toFixed(2)}</span></div>
-          <Link to="/checkout" className="btn-primary">Proceed to Checkout</Link>
+          {belowMin ? (
+            <button
+              disabled
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-muted/50 text-muted-foreground font-bold text-sm cursor-not-allowed"
+            >
+              Minimum ${MIN_ORDER} to checkout
+            </button>
+          ) : (
+            <Link to="/checkout" className="btn-primary">Proceed to Checkout</Link>
+          )}
         </div>
       </div>
     </section>

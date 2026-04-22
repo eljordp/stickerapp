@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Car, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
+import EstimateForm from '@/components/EstimateForm'
 
 const features = [
   'Full Vehicle Wraps',
@@ -73,6 +74,32 @@ export default function VehicleGraphics() {
           </motion.div>
 
           <ProductOrder categoryNames={['Decals & Lettering', 'Full Wraps', 'Partial Wraps']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <EstimateForm
+            service="Vehicle Graphics"
+            title="Get a Custom Vehicle Wrap Estimate"
+            subtitle="Every vehicle is different. Tell us the details and we'll send a tailored estimate with turnaround in 24 hours."
+            fields={[
+              { name: 'vehicle', label: 'Vehicle (year, make, model)', type: 'text', required: true, placeholder: '2023 Ford Transit 250' },
+              {
+                name: 'wrapType',
+                label: 'Wrap type',
+                type: 'select',
+                required: true,
+                options: ['Full Wrap', 'Partial Wrap (half, quarter)', 'Decals / Lettering / Door Graphics', 'Fleet (multiple vehicles)', 'Not sure yet'],
+              },
+              {
+                name: 'timeline',
+                label: 'Timeline',
+                type: 'select',
+                options: ['ASAP / Within 2 weeks', '2–4 weeks', '1–2 months', 'Flexible'],
+              },
+              { name: 'inspiration', label: 'Reference links (Dropbox, Google Drive, Instagram)', type: 'text', placeholder: 'Paste a link' },
+            ]}
+          />
         </div>
       </section>
     </>

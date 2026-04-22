@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Film, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
+import EstimateForm from '@/components/EstimateForm'
 
 const features = [
   'Frosted Privacy Film',
@@ -74,6 +75,32 @@ export default function WindowFilm() {
           </motion.div>
 
           <ProductOrder categoryNames={['Frosted & Decorative', 'Solar & UV Protection', 'Security Film', 'Automotive Window Tint']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <EstimateForm
+            service="Window Film & Tint"
+            title="Get a Window Film Estimate"
+            subtitle="Frosted, solar, security, or auto tint — tell us the scope and we'll send a tailored estimate in 24 hours."
+            fields={[
+              {
+                name: 'filmType',
+                label: 'Film type',
+                type: 'select',
+                required: true,
+                options: ['Frosted / Decorative', 'Solar / UV Protection', 'Security Film', 'Automotive Window Tint', 'Custom Logo Cutout', 'Not sure yet'],
+              },
+              {
+                name: 'propertyType',
+                label: 'Residential or commercial?',
+                type: 'select',
+                options: ['Residential', 'Commercial / Office', 'Retail / Storefront', 'Automotive'],
+              },
+              { name: 'windowCount', label: 'How many windows (approx)?', type: 'text', placeholder: 'e.g. 6 windows · or ~80 sq ft' },
+              { name: 'location', label: 'Install location / city', type: 'text', placeholder: 'Oakland, CA' },
+            ]}
+          />
         </div>
       </section>
     </>

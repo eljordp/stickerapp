@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Store, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
+import EstimateForm from '@/components/EstimateForm'
 
 const features = [
   'Storefront & Building Signs',
@@ -73,6 +74,32 @@ export default function BusinessSignage() {
           </motion.div>
 
           <ProductOrder categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <EstimateForm
+            service="Business Signage"
+            title="Get a Custom Signage Estimate"
+            subtitle="Storefront, wall, window — tell us the scope and we'll send a tailored estimate in 24 hours."
+            fields={[
+              {
+                name: 'signageType',
+                label: 'Signage type',
+                type: 'select',
+                required: true,
+                options: ['Storefront / Exterior', 'Wall Graphics / Mural', 'Window Graphics', 'A-Frame / Sidewalk Sign', 'Retractable Banner', 'Multiple / Not sure'],
+              },
+              { name: 'size', label: 'Approximate size (sq ft or dimensions)', type: 'text', placeholder: "e.g. 8'x4'  or  ~30 sq ft" },
+              { name: 'location', label: 'Install location / city', type: 'text', placeholder: 'San Leandro, CA' },
+              {
+                name: 'install',
+                label: 'Do you need us to install it?',
+                type: 'select',
+                options: ["Yes — need professional install", "No — just print, I'll install", 'Not sure'],
+              },
+            ]}
+          />
         </div>
       </section>
     </>

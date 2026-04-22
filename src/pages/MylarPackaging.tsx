@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Upload, X, Package, Sparkles, Box, ShoppingCart, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
+import EstimateForm from '@/components/EstimateForm'
 
 type MockupType = 'pouch' | 'foil' | 'jar'
 
@@ -361,6 +362,38 @@ export default function MylarPackaging() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <EstimateForm
+            service="Mylar Packaging"
+            title="Custom Mylar Quote"
+            subtitle="Bulk, custom sizes, or complex artwork? Tell us the product and quantity and we'll send a tailored estimate in 24 hours."
+            fields={[
+              {
+                name: 'productType',
+                label: 'What are you packaging?',
+                type: 'select',
+                required: true,
+                options: ['Food / Snacks', 'Coffee / Tea', 'Cannabis / CBD', 'Retail / Consumer Goods', 'Supplements / Health', 'Other'],
+              },
+              {
+                name: 'bagSize',
+                label: 'Bag size',
+                type: 'select',
+                required: true,
+                options: ['Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce (5"×8")', 'Half Pound (10"×12")', 'Pound (14"×16")', 'Custom size', 'Jar labels instead'],
+              },
+              { name: 'quantity', label: 'Estimated quantity', type: 'text', required: true, placeholder: 'e.g. 1,000 · 5,000 · 10,000+' },
+              {
+                name: 'artwork',
+                label: 'Do you have artwork ready?',
+                type: 'select',
+                options: ['Yes — print-ready file', 'Have logo but need design help', 'Need full custom design'],
+              },
+            ]}
+          />
         </div>
       </section>
     </>

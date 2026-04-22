@@ -126,9 +126,9 @@ export const defaultPricing: PricingConfig = {
     ]},
     // 5: Business Cards
     { name: 'Business Cards', items: [
-      { size: 'Standard (3.5"×2")', quantities: [{ qty: 250, price: 49 }, { qty: 500, price: 79 }, { qty: 1000, price: 129 }] },
-      { size: 'Square (2.5"×2.5")', quantities: [{ qty: 250, price: 59 }, { qty: 500, price: 89 }, { qty: 1000, price: 149 }] },
-      { size: 'Mini (3"×1")', quantities: [{ qty: 250, price: 39 }, { qty: 500, price: 59 }, { qty: 1000, price: 99 }] },
+      { size: 'Standard (3.5"×2")', quantities: [{ qty: 250, price: 49 }, { qty: 500, price: 79 }, { qty: 1000, price: 129 }, { qty: 2500, price: 279 }, { qty: 5000, price: 499 }] },
+      { size: 'Square (2.5"×2.5")', quantities: [{ qty: 250, price: 59 }, { qty: 500, price: 89 }, { qty: 1000, price: 149 }, { qty: 2500, price: 329 }, { qty: 5000, price: 589 }] },
+      { size: 'Mini (3"×1")', quantities: [{ qty: 250, price: 39 }, { qty: 500, price: 59 }, { qty: 1000, price: 99 }, { qty: 2500, price: 219 }, { qty: 5000, price: 389 }] },
     ], addOns: [
       { name: 'Soft-Touch', type: 'flat', value: 15 },
       { name: 'Spot UV', type: 'flat', value: 25 },
@@ -266,17 +266,17 @@ export const defaultPricing: PricingConfig = {
     ]},
     // 16: Flyers & Door Hangers
     { name: 'Flyers & Door Hangers', items: [
-      { size: '8.5"×11" Flyer', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 99 }, { qty: 500, price: 159 }, { qty: 1000, price: 249 }] },
-      { size: '5.5"×8.5" Half-Page Flyer', quantities: [{ qty: 100, price: 39 }, { qty: 250, price: 69 }, { qty: 500, price: 109 }, { qty: 1000, price: 179 }] },
-      { size: 'Door Hangers', quantities: [{ qty: 100, price: 69 }, { qty: 250, price: 119 }, { qty: 500, price: 189 }, { qty: 1000, price: 299 }] },
+      { size: '8.5"×11" Flyer', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 99 }, { qty: 500, price: 159 }, { qty: 1000, price: 249 }, { qty: 2500, price: 549 }, { qty: 5000, price: 969 }] },
+      { size: '5.5"×8.5" Half-Page Flyer', quantities: [{ qty: 100, price: 39 }, { qty: 250, price: 69 }, { qty: 500, price: 109 }, { qty: 1000, price: 179 }, { qty: 2500, price: 399 }, { qty: 5000, price: 699 }] },
+      { size: 'Door Hangers', quantities: [{ qty: 100, price: 69 }, { qty: 250, price: 119 }, { qty: 500, price: 189 }, { qty: 1000, price: 299 }, { qty: 2500, price: 649 }, { qty: 5000, price: 1149 }] },
     ], addOns: [
       { name: 'Glossy Finish', type: 'flat', value: 10 },
       { name: 'Double-Sided', type: 'flat', value: 20 },
     ]},
     // 17: Postcards
     { name: 'Postcards', items: [
-      { size: '4"×6" Postcard', quantities: [{ qty: 100, price: 45 }, { qty: 250, price: 79 }, { qty: 500, price: 129 }, { qty: 1000, price: 199 }] },
-      { size: '5"×7" Postcard', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 95 }, { qty: 500, price: 149 }, { qty: 1000, price: 239 }] },
+      { size: '4"×6" Postcard', quantities: [{ qty: 100, price: 45 }, { qty: 250, price: 79 }, { qty: 500, price: 129 }, { qty: 1000, price: 199 }, { qty: 2500, price: 439 }, { qty: 5000, price: 779 }] },
+      { size: '5"×7" Postcard', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 95 }, { qty: 500, price: 149 }, { qty: 1000, price: 239 }, { qty: 2500, price: 529 }, { qty: 5000, price: 929 }] },
     ], addOns: [
       { name: 'Soft-Touch', type: 'flat', value: 15 },
       { name: 'Spot UV', type: 'flat', value: 25 },
