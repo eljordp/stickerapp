@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Printer } from 'lucide-react'
 
 const SESSION_KEY = 'tss_intro_played'
 const DURATION = 4.6
@@ -9,22 +8,23 @@ const HEAD_TRAVEL_S = DURATION - 0.8
 // scan at near-constant speed, they don't whip through the middle
 const HEAD_EASE: [number, number, number, number] = [0.2, 0.1, 0.8, 0.9]
 const STATUS_MESSAGES = ['CALIBRATING', 'LOADING INK', 'PRINTING', 'CURING']
-
-type Phase = 'hidden' | 'gate' | 'playing'
+const NOZZLE_CYCLE_S = 1.3 // must match nozzle oscillation duration below
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export default function PrinterIntro() {
-  const [phase, setPhase] = useState<Phase>('hidden')
+  const [show, setShow] = useState(false)
   const [vh, setVh] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 800))
   const [statusIdx, setStatusIdx] = useState(0)
+  const [progress, setProgress] = useState(0)
   const [showCropMarks, setShowCropMarks] = useState(false)
   const audioStoppers = useRef<Array<() => void>>([])
+  const audioUnlockRef = useRef<(() => void) | null>(null)
   const timersRef = useRef<Array<number>>([])
 
-  // Decide on mount whether to show the gate
+  // Start everything on mount if first visit
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (sessionStorage.getItem(SESSION_KEY)) return
@@ -33,51 +33,69 @@ export default function PrinterIntro() {
       return
     }
     sessionStorage.setItem(SESSION_KEY, '1')
-    setPhase('gate')
-    document.body.style.overflow = 'hidden'
-  }, [])
-
-  // When transitioning to playing, kick off timers + audio
-  useEffect(() => {
-    if (phase !== 'playing') return
+    setShow(true)
     setVh(window.innerHeight)
+    document.body.style.overflow = 'hidden'
 
     const statusStep = (DURATION * 1000) / STATUS_MESSAGES.length
     STATUS_MESSAGES.forEach((_, i) => {
       timersRef.current.push(window.setTimeout(() => setStatusIdx(i), i * statusStep))
     })
+
+    // Progress counter — tick ~every 40ms over DURATION
+    const startT = performance.now()
+    const progressTimer = window.setInterval(() => {
+      const elapsed = (performance.now() - startT) / 1000
+      const pct = Math.min(100, Math.round((elapsed / DURATION) * 100))
+      setProgress(pct)
+      if (pct >= 100) clearInterval(progressTimer)
+    }, 40)
+    timersRef.current.push(progressTimer as unknown as number)
+
     timersRef.current.push(
       window.setTimeout(() => setShowCropMarks(true), (DURATION - 0.6) * 1000),
     )
     timersRef.current.push(
       window.setTimeout(() => {
-        setPhase('hidden')
+        setShow(false)
         document.body.style.overflow = ''
         stopAllSound(audioStoppers)
       }, DURATION * 1000),
     )
 
-    startPrinterSound(audioStoppers)
+    // Try to start audio — will be suspended until user gesture
+    const { unlock } = startPrinterSound(audioStoppers)
+    audioUnlockRef.current = unlock
+
+    // Any user interaction anywhere resumes the audio context
+    const onGesture = () => {
+      audioUnlockRef.current?.()
+      audioUnlockRef.current = null
+    }
+    window.addEventListener('pointerdown', onGesture, { once: true, capture: true })
+    window.addEventListener('keydown', onGesture, { once: true, capture: true })
+    window.addEventListener('touchstart', onGesture, { once: true, capture: true })
 
     return () => {
       timersRef.current.forEach((id) => clearTimeout(id))
       timersRef.current = []
       document.body.style.overflow = ''
       stopAllSound(audioStoppers)
+      window.removeEventListener('pointerdown', onGesture, { capture: true })
+      window.removeEventListener('keydown', onGesture, { capture: true })
+      window.removeEventListener('touchstart', onGesture, { capture: true })
     }
-  }, [phase])
+  }, [])
 
-  const startIntro = () => {
-    // This runs inside the click handler — AudioContext will be allowed
-    setPhase('playing')
-  }
-
-  const skipEverything = () => {
+  const skip = () => {
     timersRef.current.forEach((id) => clearTimeout(id))
     timersRef.current = []
-    setPhase('hidden')
+    setShow(false)
     document.body.style.overflow = ''
-    stopAllSound(audioStoppers)
+    // Let audio play briefly on skip — a quick "bzzt" — then fade out
+    audioUnlockRef.current?.()
+    audioUnlockRef.current = null
+    setTimeout(() => stopAllSound(audioStoppers), 250)
   }
 
   const FRAME_H = 56
@@ -85,14 +103,22 @@ export default function PrinterIntro() {
   const headStart = FRAME_H
   const headEnd = vh - HEAD_H
 
-  // Ink droplets — spaced across the scan, use CSS keyframes so they don't
-  // share the main JS anim thread with framer-motion
-  const droplets = Array.from({ length: 16 }, (_, i) => {
+  // Ink droplets — spawn UNDER the oscillating nozzle as it scans. The nozzle
+  // oscillates 5% → 80% → 5% over NOZZLE_CYCLE_S. At any given time t, we know
+  // where the nozzle is horizontally, so droplets spawn at that x.
+  const droplets = Array.from({ length: 22 }, (_, i) => {
     const colors = ['#22d3ee', '#ec4899', '#facc15']
+    // Offset into the scan (seconds)
+    const tOffset = (i / 21) * HEAD_TRAVEL_S + (Math.random() - 0.5) * 0.08
+    // Nozzle position at that time (percent of width). Use sine-like oscillation
+    const phase = (tOffset % NOZZLE_CYCLE_S) / NOZZLE_CYCLE_S
+    const nozzlePct = 5 + 37.5 * (1 - Math.cos(phase * Math.PI * 2))
+    // Small random jitter around the nozzle
+    const x = Math.max(2, Math.min(98, nozzlePct + (Math.random() - 0.5) * 6))
     return {
       id: i,
-      x: 4 + Math.random() * 92,
-      progress: i / 16 + Math.random() * 0.04,
+      x,
+      progress: tOffset / HEAD_TRAVEL_S,
       color: colors[i % colors.length],
       size: 2 + Math.random() * 2,
     }
@@ -100,70 +126,9 @@ export default function PrinterIntro() {
 
   return (
     <AnimatePresence>
-      {phase === 'gate' && (
+      {show && (
         <motion.div
-          key="gate"
-          className="fixed inset-0 z-[9999] bg-neutral-950 flex items-center justify-center px-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {/* Ambient grid backdrop */}
-          <div
-            className="absolute inset-0 opacity-[0.04] pointer-events-none"
-            style={{
-              backgroundImage:
-                'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-              backgroundSize: '60px 60px',
-            }}
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4, ease: 'easeOut' }}
-            className="relative text-center max-w-md"
-          >
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_6px_rgba(236,72,153,0.8)]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.8)]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-neutral-800 border border-neutral-600" />
-              <span className="ml-2 text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
-                ready
-              </span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-8 tracking-tight">
-              Press <span className="text-gradient">Print</span>
-            </h2>
-            <button
-              onClick={startIntro}
-              className="group inline-flex items-center gap-3 bg-gradient-to-b from-neutral-100 to-neutral-300 hover:from-white hover:to-neutral-200 text-neutral-900 font-black text-lg px-10 py-5 rounded-full shadow-[0_0_40px_rgba(34,211,238,0.25)] transition-all hover:scale-[1.03] active:scale-95"
-            >
-              <Printer size={22} strokeWidth={2.5} />
-              PRINT
-              <motion.span
-                className="w-1.5 h-1.5 rounded-full bg-cyan-500"
-                animate={{ opacity: [1, 0.2, 1] }}
-                transition={{ duration: 1.1, repeat: Infinity }}
-              />
-            </button>
-            <div className="mt-8">
-              <button
-                onClick={skipEverything}
-                className="text-xs text-neutral-600 hover:text-neutral-400 font-mono tracking-widest uppercase transition-colors"
-              >
-                skip intro →
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {phase === 'playing' && (
-        <motion.div
-          key="playing"
-          onClick={skipEverything}
+          onClick={skip}
           className="fixed inset-0 z-[9999] cursor-pointer"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -211,15 +176,42 @@ export default function PrinterIntro() {
             exit={{ y: '-100%' }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-              <div className="w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
-              <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
-              <div className="w-2 h-2 rounded-full bg-neutral-900 border border-neutral-600 shadow-[0_0_6px_rgba(0,0,0,0.8),inset_0_0_2px_rgba(255,255,255,0.2)]" />
-              <span className="ml-2 text-[10px] md:text-xs text-neutral-400 font-mono tracking-widest uppercase hidden sm:inline">
-                CMYK — 1440dpi
+            {/* Left: CMYK ink tank bars */}
+            <div className="flex items-end gap-1 md:gap-1.5 h-8">
+              {[
+                { c: '#22d3ee', glow: 'rgba(34,211,238,0.7)', level: 0.82 },
+                { c: '#ec4899', glow: 'rgba(236,72,153,0.7)', level: 0.76 },
+                { c: '#facc15', glow: 'rgba(250,204,21,0.7)', level: 0.88 },
+                { c: '#111', glow: 'rgba(255,255,255,0.15)', level: 0.7 },
+              ].map((ink, i) => (
+                <div
+                  key={i}
+                  className="relative w-1.5 md:w-2 h-7 bg-neutral-950 border border-neutral-700 rounded-[2px] overflow-hidden"
+                >
+                  <div
+                    className="absolute bottom-0 left-0 right-0 rounded-[1px]"
+                    style={{
+                      height: `${ink.level * 100}%`,
+                      backgroundColor: ink.c,
+                      boxShadow: `0 0 4px ${ink.glow}, inset 0 -1px 2px rgba(255,255,255,0.2)`,
+                    }}
+                  />
+                </div>
+              ))}
+              <span className="ml-2 text-[10px] md:text-xs text-neutral-500 font-mono tracking-widest uppercase hidden md:inline">
+                CMYK
               </span>
             </div>
+
+            {/* Center: progress % (desktop only — mobile is too narrow) */}
+            <div className="hidden sm:flex items-baseline gap-1.5 font-mono">
+              <span className="text-lg md:text-xl font-black text-white tabular-nums tracking-tight min-w-[3ch] text-right">
+                {progress}
+              </span>
+              <span className="text-[10px] md:text-xs text-neutral-500 uppercase tracking-widest">%</span>
+            </div>
+
+            {/* Right: blinking + status */}
             <div className="flex items-center gap-3">
               <motion.div
                 className="w-1.5 h-1.5 rounded-full bg-green-400"
@@ -347,15 +339,19 @@ export default function PrinterIntro() {
 }
 
 // ---- Web Audio printer sound (fails silently if blocked) ----
-function startPrinterSound(refStore: React.MutableRefObject<Array<() => void>>) {
+// Returns { unlock } — call unlock() inside a user gesture to resume audio
+function startPrinterSound(refStore: React.MutableRefObject<Array<() => void>>): {
+  unlock: () => void
+} {
   try {
     const Ctx =
       (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
         .AudioContext ||
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!Ctx) return
+    if (!Ctx) return { unlock: () => {} }
     const ctx = new Ctx()
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+    // Try to resume now (desktop Chrome may allow if domain has engagement)
+    ctx.resume().catch(() => {})
 
     const masterGain = ctx.createGain()
     masterGain.gain.value = 0.14
@@ -547,8 +543,16 @@ function startPrinterSound(refStore: React.MutableRefObject<Array<() => void>>) 
         /* no-op */
       }
     })
+
+    return {
+      unlock: () => {
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {})
+        }
+      },
+    }
   } catch {
-    /* no-op — audio failed, keep silent */
+    return { unlock: () => {} }
   }
 }
 
