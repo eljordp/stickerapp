@@ -12,20 +12,20 @@ interface SearchItem {
 
 const searchItems: SearchItem[] = [
   // Stickers
-  { name: 'Custom Stickers', category: 'Stickers', href: '/order', keywords: ['sticker', 'die-cut', 'kiss-cut', 'vinyl', 'matte', 'glossy', 'clear', 'holographic', 'paper', 'circle', 'square', 'rectangle', 'decal', 'label'] },
-  { name: 'Gloss Finish Stickers', category: 'Stickers', href: '/order', keywords: ['gloss', 'glossy', 'shiny', 'finish'] },
-  { name: 'Holographic Stickers', category: 'Stickers', href: '/order', keywords: ['holo', 'holographic', 'rainbow', 'iridescent'] },
-  { name: 'UV Coating Stickers', category: 'Stickers', href: '/order', keywords: ['uv', 'coating', 'protection', 'spot uv'] },
-  { name: 'Embossed Stickers', category: 'Stickers', href: '/order', keywords: ['emboss', 'embossed', 'raised', 'textured', '3d'] },
-  { name: 'Paper Stickers', category: 'Stickers', href: '/order', keywords: ['paper', 'eco', 'recyclable'] },
+  { name: 'Custom Stickers', category: 'Stickers', href: '/stickers', keywords: ['sticker', 'die-cut', 'kiss-cut', 'vinyl', 'matte', 'glossy', 'clear', 'holographic', 'paper', 'circle', 'square', 'rectangle', 'decal', 'label'] },
+  { name: 'Gloss Finish Stickers', category: 'Stickers', href: '/stickers', keywords: ['gloss', 'glossy', 'shiny', 'finish'] },
+  { name: 'Holographic Stickers', category: 'Stickers', href: '/stickers', keywords: ['holo', 'holographic', 'rainbow', 'iridescent'] },
+  { name: 'UV Coating Stickers', category: 'Stickers', href: '/stickers', keywords: ['uv', 'coating', 'protection', 'spot uv'] },
+  { name: 'Embossed Stickers', category: 'Stickers', href: '/stickers', keywords: ['emboss', 'embossed', 'raised', 'textured', '3d'] },
+  { name: 'Paper Stickers', category: 'Stickers', href: '/stickers', keywords: ['paper', 'eco', 'recyclable'] },
 
   // Mylar Packaging
-  { name: 'Mylar Bags – Eighths', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['mylar', 'bag', 'eighth', '8th', '3x5', 'packaging', 'pouch'] },
-  { name: 'Mylar Bags – Quarters', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['mylar', 'bag', 'quarter', 'qtr', '4x6', 'packaging'] },
-  { name: 'Mylar Bags – Ounce', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['mylar', 'bag', 'ounce', 'oz', '5x8', 'packaging'] },
-  { name: 'Mylar Bags – Half Pound', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['mylar', 'bag', 'half pound', 'hp', '10x12', 'packaging'] },
-  { name: 'Mylar Bags – Pound', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['mylar', 'bag', 'pound', 'lb', '14x16', 'packaging'] },
-  { name: 'Jar Labels', category: 'Mylar Packaging', href: '/services/mylar-packaging', keywords: ['jar', 'label', '2oz', 'container'] },
+  { name: 'Mylar Bags – Eighths', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'eighth', '8th', '3x5', 'packaging', 'pouch'] },
+  { name: 'Mylar Bags – Quarters', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'quarter', 'qtr', '4x6', 'packaging'] },
+  { name: 'Mylar Bags – Ounce', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'ounce', 'oz', '5x8', 'packaging'] },
+  { name: 'Mylar Bags – Half Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'half pound', 'hp', '10x12', 'packaging'] },
+  { name: 'Mylar Bags – Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'pound', 'lb', '14x16', 'packaging'] },
+  { name: 'Jar Labels', category: 'Mylar Packaging', href: '/mylar', keywords: ['jar', 'label', '2oz', 'container'] },
 
   // Event Displays
   { name: 'Custom Canopy Tents', category: 'Event Displays', href: '/services/event-displays', keywords: ['canopy', 'tent', 'popup', 'pop-up', 'event', 'booth', 'trade show', 'steel', 'aluminum', '5x5', '10x10', '10x15', '10x20'] },

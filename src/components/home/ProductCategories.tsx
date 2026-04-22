@@ -10,25 +10,25 @@ const categories = [
   {
     title: 'Sample Packs',
     description: 'Pick your perfect match',
-    href: '/order',
+    href: '/stickers',
     image: samplePacksCategory,
   },
   {
     title: 'Die-Cut',
     description: 'Any shape',
-    href: '/order',
+    href: '/stickers',
     image: dieCutCategory,
   },
   {
     title: 'Sticker Sheets',
     description: 'Multiple designs',
-    href: '/order',
+    href: '/stickers',
     image: stickerSheetsCategory,
   },
   {
     title: 'Labels on Roll',
     description: 'Fast, pro-level labeling',
-    href: '/order',
+    href: '/stickers',
     image: labelsRollCategory,
   },
 ]

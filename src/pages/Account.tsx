@@ -264,7 +264,7 @@ function AccountDashboard() {
                 <Package size={48} className="mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-bold mb-2">No orders yet</h3>
                 <p className="text-muted-foreground mb-6">Place your first order and it'll show up here.</p>
-                <Link to="/order" className="btn-primary inline-flex items-center gap-2">
+                <Link to="/stickers" className="btn-primary inline-flex items-center gap-2">
                   Order Stickers <ArrowRight size={16} />
                 </Link>
               </div>

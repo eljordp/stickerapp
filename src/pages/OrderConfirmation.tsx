@@ -93,7 +93,7 @@ export default function OrderConfirmation() {
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
           <Link to="/" className="btn-primary">Back to Home</Link>
-          <Link to="/order" className="btn-secondary">Order More Stickers</Link>
+          <Link to="/stickers" className="btn-secondary">Order More Stickers</Link>
         </motion.div>
       </div>
     </section>

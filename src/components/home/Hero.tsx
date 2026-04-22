@@ -52,7 +52,7 @@ export default function Hero() {
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="flex flex-col sm:flex-row gap-3 mb-8 max-w-sm mx-auto lg:mx-0 lg:max-w-none">
-              <Link to="/order" className="btn-primary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Order Stickers<ArrowRight size={20} /></Link>
+              <Link to="/stickers" className="btn-primary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Order Stickers<ArrowRight size={20} /></Link>
               <Link to="/contact" className="btn-secondary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Start My Project</Link>
             </motion.div>
 

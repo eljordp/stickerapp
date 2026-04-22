@@ -47,7 +47,7 @@ export default function Checkout() {
         <div className="section-container text-center">
           <h1 className="text-3xl font-black mb-4">Nothing to Checkout</h1>
           <p className="text-muted-foreground mb-8">Your cart is empty.</p>
-          <Link to="/order" className="btn-primary">Make Custom Stickers</Link>
+          <Link to="/stickers" className="btn-primary">Make Custom Stickers</Link>
         </div>
       </section>
     )

@@ -8,7 +8,7 @@ import SearchModal from '@/components/SearchModal'
 import tssLogo from '@/assets/tss-logo-new.png'
 
 const navLinks = [
-  { label: 'Order Stickers', href: '/order' },
+  { label: 'Order Stickers', href: '/stickers' },
   {
     label: 'Services',
     href: '/services',
@@ -18,7 +18,7 @@ const navLinks = [
       { label: 'Event Displays', href: '/services/event-displays', products: ['Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
       { label: 'Business Print', href: '/services/business-print', products: ['Business Cards', 'Flyers', 'Door Hangers', 'Postcards & Mailers', 'Vehicle Magnets'] },
       { label: 'Window Film & Tint', href: '/services/window-film', products: ['Frosted Privacy Film', 'Solar & Heat Rejection', 'Security & Safety Film', 'Decorative Graphics', 'Custom Cut Logos'] },
-      { label: 'Mylar Packaging', href: '/services/mylar-packaging', products: ['Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', 'Jar Labels'] },
+      { label: 'Mylar Packaging', href: '/mylar', products: ['Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', 'Jar Labels'] },
     ],
   },
   { label: 'Projects', href: '/projects' },

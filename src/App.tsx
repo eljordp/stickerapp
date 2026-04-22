@@ -48,15 +48,14 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
-            <Route path="/order" element={<Order />} />
+            <Route path="/stickers" element={<Order />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/vehicle-graphics" element={<VehicleGraphics />} />
             <Route path="/services/business-signage" element={<BusinessSignage />} />
             <Route path="/services/event-displays" element={<EventDisplays />} />
-            <Route path="/services/event-canopies" element={<EventDisplays />} />
             <Route path="/services/business-print" element={<BusinessPrint />} />
             <Route path="/services/window-film" element={<WindowFilm />} />
-            <Route path="/services/mylar-packaging" element={<MylarPackaging />} />
+            <Route path="/mylar" element={<MylarPackaging />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />

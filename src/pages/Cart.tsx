@@ -59,7 +59,7 @@ export default function Cart() {
           <ShoppingBag size={64} className="mx-auto text-muted-foreground mb-6" />
           <h1 className="text-3xl font-black mb-4">Your Cart is Empty</h1>
           <p className="text-muted-foreground mb-8">Start by ordering some custom stickers!</p>
-          <Link to="/order" className="btn-primary">Make Custom Stickers</Link>
+          <Link to="/stickers" className="btn-primary">Make Custom Stickers</Link>
         </div>
       </section>
     )

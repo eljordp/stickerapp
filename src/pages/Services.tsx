@@ -15,7 +15,7 @@ const services = [
   { image: businessPrint, title: 'Business Print', description: 'Business cards, flyers, brochures, marketing collateral.', href: '/services/business-print' },
   { image: businessSignage, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, retractable banners.', href: '/services/business-signage' },
   { image: windowFilm, title: 'Window Film & Tint', description: 'Frosted film, solar film, security film, decorative graphics.', href: '/services/window-film' },
-  { image: mylarPackaging, title: 'Mylar Packaging', description: 'Custom branded mylar bags for products, edibles, and retail.', href: '/services/mylar-packaging' },
+  { image: mylarPackaging, title: 'Mylar Packaging', description: 'Custom branded mylar bags for products, edibles, and retail.', href: '/mylar' },
 ]
 
 export default function Services() {

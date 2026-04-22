@@ -11,7 +11,7 @@ const showcases = [
     subtitle: 'Waterproof, durable, precision cut',
     description: 'From die-cut vinyl to holographic finishes, our stickers are built to stick anywhere and withstand anything. Perfect for branding, packaging, and personal expression.',
     cta: 'Shop Stickers',
-    href: '/order',
+    href: '/stickers',
     image: customStickersShowcase,
   },
   {
@@ -19,7 +19,7 @@ const showcases = [
     subtitle: 'High-quality labels & packaging',
     description: 'Professional product labels, packaging stickers, and custom mylar bags. Printed with precision for a flawless finish on every product you ship.',
     cta: 'Shop Labels',
-    href: '/order',
+    href: '/stickers',
     image: customLabelsShowcase,
   },
 ]

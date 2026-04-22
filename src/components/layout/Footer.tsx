@@ -3,10 +3,10 @@ import tssLogo from '@/assets/tss-logo-new.png'
 
 const footerLinks = {
   products: [
-    { label: 'Die-Cut Stickers', href: '/order' },
-    { label: 'Kiss-Cut Stickers', href: '/order' },
-    { label: 'Sticker Sheets', href: '/order' },
-    { label: 'Holographic Stickers', href: '/order' },
+    { label: 'Die-Cut Stickers', href: '/stickers' },
+    { label: 'Kiss-Cut Stickers', href: '/stickers' },
+    { label: 'Sticker Sheets', href: '/stickers' },
+    { label: 'Holographic Stickers', href: '/stickers' },
   ],
   services: [
     { label: 'Vehicle Graphics', href: '/services/vehicle-graphics' },
@@ -14,7 +14,7 @@ const footerLinks = {
     { label: 'Business Print', href: '/services/business-print' },
     { label: 'Business Signage', href: '/services/business-signage' },
     { label: 'Window Film & Tint', href: '/services/window-film' },
-    { label: 'Mylar Packaging', href: '/services/mylar-packaging' },
+    { label: 'Mylar Packaging', href: '/mylar' },
   ],
   support: [
     { label: 'Get a Quote', href: '/contact' },

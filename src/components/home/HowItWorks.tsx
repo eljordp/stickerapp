@@ -32,7 +32,7 @@ export default function HowItWorks() {
           ))}
         </div>
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center">
-          <Link to="/order" className="btn-primary text-lg px-8 py-4">Start Your Order<ArrowRight size={20} /></Link>
+          <Link to="/stickers" className="btn-primary text-lg px-8 py-4">Start Your Order<ArrowRight size={20} /></Link>
         </motion.div>
       </div>
     </section>

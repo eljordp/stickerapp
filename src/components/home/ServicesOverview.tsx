@@ -15,7 +15,7 @@ const services = [
   { image: businessPrint, title: 'Business Print', description: 'Cards, flyers & marketing materials', href: '/services/business-print' },
   { image: businessSignage, title: 'Business Signage', description: 'Storefront, wall graphics & A-frames', href: '/services/business-signage' },
   { image: windowFilm, title: 'Window Film', description: 'Frosted, solar, security & graphics', href: '/services/window-film' },
-  { image: mylarPackaging, title: 'Mylar Packaging', description: 'Custom branded packaging bags', href: '/services/mylar-packaging' },
+  { image: mylarPackaging, title: 'Mylar Packaging', description: 'Custom branded packaging bags', href: '/mylar' },
 ]
 
 export default function ServicesOverview() {
