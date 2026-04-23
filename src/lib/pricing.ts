@@ -79,61 +79,61 @@ export const defaultPricing: PricingConfig = {
       { name: 'Window Cutout', type: 'flat', value: 0.30 },
       { name: 'Foil Finish', type: 'flat', value: 0.30 },
     ]},
-    // 1: Event Displays
+    // 1: Event Displays — resold canopies, +25% markup
     { name: 'Event Displays', items: [
-      { size: '5\'×5\' Steel', quantities: [{ qty: 1, price: 399 }] },
-      { size: '5\'×5\' Aluminum', quantities: [{ qty: 1, price: 549 }] },
-      { size: '10\'×10\' Steel', quantities: [{ qty: 1, price: 728 }] },
-      { size: '10\'×10\' Aluminum', quantities: [{ qty: 1, price: 899 }] },
-      { size: '10\'×15\' Steel', quantities: [{ qty: 1, price: 1200 }] },
-      { size: '10\'×15\' Aluminum', quantities: [{ qty: 1, price: 1400 }] },
-      { size: '10\'×20\' Steel', quantities: [{ qty: 1, price: 1500 }] },
-      { size: '10\'×20\' Aluminum', quantities: [{ qty: 1, price: 1750 }] },
+      { size: '5\'×5\' Steel', quantities: [{ qty: 1, price: 499 }] },
+      { size: '5\'×5\' Aluminum', quantities: [{ qty: 1, price: 689 }] },
+      { size: '10\'×10\' Steel', quantities: [{ qty: 1, price: 915 }] },
+      { size: '10\'×10\' Aluminum', quantities: [{ qty: 1, price: 1125 }] },
+      { size: '10\'×15\' Steel', quantities: [{ qty: 1, price: 1499 }] },
+      { size: '10\'×15\' Aluminum', quantities: [{ qty: 1, price: 1749 }] },
+      { size: '10\'×20\' Steel', quantities: [{ qty: 1, price: 1879 }] },
+      { size: '10\'×20\' Aluminum', quantities: [{ qty: 1, price: 2189 }] },
     ], addOns: [
-      { name: 'Sidewalls (set of 4)', type: 'flat', value: 199 },
-      { name: 'Half Walls (set of 4)', type: 'flat', value: 149 },
+      { name: 'Sidewalls (set of 4)', type: 'flat', value: 249 },
+      { name: 'Half Walls (set of 4)', type: 'flat', value: 189 },
     ]},
-    // 2: Backdrops & Displays
+    // 2: Backdrops & Displays — resold, +25% markup
     { name: 'Backdrops & Displays', items: [
-      { size: '8\'×7.5\' Graphic Only', quantities: [{ qty: 1, price: 99 }] },
-      { size: '8\'×7.5\' With Frame', quantities: [{ qty: 1, price: 199 }] },
-      { size: '10\'×7.5\' Graphic Only', quantities: [{ qty: 1, price: 149 }] },
-      { size: '10\'×7.5\' With Frame', quantities: [{ qty: 1, price: 349 }] },
+      { size: '8\'×7.5\' Graphic Only', quantities: [{ qty: 1, price: 125 }] },
+      { size: '8\'×7.5\' With Frame', quantities: [{ qty: 1, price: 249 }] },
+      { size: '10\'×7.5\' Graphic Only', quantities: [{ qty: 1, price: 189 }] },
+      { size: '10\'×7.5\' With Frame', quantities: [{ qty: 1, price: 439 }] },
     ], addOns: [
-      { name: 'Vinyl Upgrade', type: 'flat', value: 20 },
-      { name: 'Pop-Up Display', type: 'flat', value: 50 },
-      { name: 'Tension Fabric', type: 'flat', value: 30 },
+      { name: 'Vinyl Upgrade', type: 'flat', value: 30 },
+      { name: 'Pop-Up Display', type: 'flat', value: 65 },
+      { name: 'Tension Fabric', type: 'flat', value: 40 },
     ]},
-    // 3: Table Covers
+    // 3: Table Covers — resold, +25% markup
     { name: 'Table Covers', items: [
-      { size: '6ft Rectangular', quantities: [{ qty: 1, price: 190 }] },
-      { size: '8ft Rectangular', quantities: [{ qty: 1, price: 210 }] },
-      { size: '31" Round', quantities: [{ qty: 1, price: 159 }] },
-      { size: '36" Round', quantities: [{ qty: 1, price: 179 }] },
-      { size: '48" Round', quantities: [{ qty: 1, price: 209 }] },
-      { size: '60" Round', quantities: [{ qty: 1, price: 225 }] },
+      { size: '6ft Rectangular', quantities: [{ qty: 1, price: 239 }] },
+      { size: '8ft Rectangular', quantities: [{ qty: 1, price: 265 }] },
+      { size: '31" Round', quantities: [{ qty: 1, price: 199 }] },
+      { size: '36" Round', quantities: [{ qty: 1, price: 225 }] },
+      { size: '48" Round', quantities: [{ qty: 1, price: 265 }] },
+      { size: '60" Round', quantities: [{ qty: 1, price: 285 }] },
     ], addOns: []},
-    // 4: Retractable Banners
+    // 4: Retractable Banners — resold, +30% markup
     { name: 'Retractable Banners', items: [
-      { size: 'Economy (33"×78")', quantities: [{ qty: 1, price: 89 }, { qty: 2, price: 80 }, { qty: 6, price: 70 }] },
-      { size: 'Standard (33"×81")', quantities: [{ qty: 1, price: 129 }, { qty: 2, price: 109 }, { qty: 6, price: 95 }] },
-      { size: 'Premium (36"×85")', quantities: [{ qty: 1, price: 169 }, { qty: 2, price: 145 }, { qty: 6, price: 125 }] },
-      { size: 'Wide (47"×85")', quantities: [{ qty: 1, price: 229 }, { qty: 2, price: 199 }, { qty: 6, price: 175 }] },
+      { size: 'Economy (33"×78")', quantities: [{ qty: 1, price: 115 }, { qty: 2, price: 105 }, { qty: 6, price: 91 }] },
+      { size: 'Standard (33"×81")', quantities: [{ qty: 1, price: 169 }, { qty: 2, price: 145 }, { qty: 6, price: 125 }] },
+      { size: 'Premium (36"×85")', quantities: [{ qty: 1, price: 219 }, { qty: 2, price: 189 }, { qty: 6, price: 165 }] },
+      { size: 'Wide (47"×85")', quantities: [{ qty: 1, price: 299 }, { qty: 2, price: 259 }, { qty: 6, price: 229 }] },
     ], addOns: [
-      { name: 'Double-Sided', type: 'flat', value: 50 },
-      { name: 'Outdoor Base', type: 'flat', value: 40 },
-      { name: 'Travel Case', type: 'flat', value: 25 },
+      { name: 'Double-Sided', type: 'flat', value: 65 },
+      { name: 'Outdoor Base', type: 'flat', value: 55 },
+      { name: 'Travel Case', type: 'flat', value: 35 },
     ]},
-    // 5: Business Cards
+    // 5: Business Cards — resold (VistaPrint jobber), +35% markup
     { name: 'Business Cards', items: [
-      { size: 'Standard (3.5"×2")', quantities: [{ qty: 250, price: 49 }, { qty: 500, price: 79 }, { qty: 1000, price: 129 }, { qty: 2500, price: 279 }, { qty: 5000, price: 499 }] },
-      { size: 'Square (2.5"×2.5")', quantities: [{ qty: 250, price: 59 }, { qty: 500, price: 89 }, { qty: 1000, price: 149 }, { qty: 2500, price: 329 }, { qty: 5000, price: 589 }] },
-      { size: 'Mini (3"×1")', quantities: [{ qty: 250, price: 39 }, { qty: 500, price: 59 }, { qty: 1000, price: 99 }, { qty: 2500, price: 219 }, { qty: 5000, price: 389 }] },
+      { size: 'Standard (3.5"×2")', quantities: [{ qty: 250, price: 65 }, { qty: 500, price: 105 }, { qty: 1000, price: 175 }, { qty: 2500, price: 375 }, { qty: 5000, price: 675 }] },
+      { size: 'Square (2.5"×2.5")', quantities: [{ qty: 250, price: 79 }, { qty: 500, price: 119 }, { qty: 1000, price: 199 }, { qty: 2500, price: 445 }, { qty: 5000, price: 795 }] },
+      { size: 'Mini (3"×1")', quantities: [{ qty: 250, price: 52 }, { qty: 500, price: 79 }, { qty: 1000, price: 135 }, { qty: 2500, price: 295 }, { qty: 5000, price: 525 }] },
     ], addOns: [
-      { name: 'Soft-Touch', type: 'flat', value: 15 },
-      { name: 'Spot UV', type: 'flat', value: 25 },
-      { name: 'Foil Stamping', type: 'flat', value: 35 },
-      { name: 'Rounded Corners', type: 'flat', value: 10 },
+      { name: 'Soft-Touch', type: 'flat', value: 25 },
+      { name: 'Spot UV', type: 'flat', value: 40 },
+      { name: 'Foil Stamping', type: 'flat', value: 55 },
+      { name: 'Rounded Corners', type: 'flat', value: 15 },
     ]},
     // 6: Storefront Graphics
     { name: 'Storefront Graphics', items: [
@@ -151,14 +151,14 @@ export const defaultPricing: PricingConfig = {
       { name: 'Design Service', type: 'flat', value: 75 },
       { name: 'Permit Assistance', type: 'flat', value: 50 },
     ]},
-    // 7: A-Frame Signs
+    // 7: A-Frame Signs — resold, +30% markup
     { name: 'A-Frame Signs', items: [
-      { size: 'Small (20"×20")', quantities: [{ qty: 1, price: 129 }, { qty: 3, price: 120 }, { qty: 6, price: 108 }] },
-      { size: 'Standard (24"×36")', quantities: [{ qty: 1, price: 259 }, { qty: 3, price: 240 }, { qty: 6, price: 218 }] },
+      { size: 'Small (20"×20")', quantities: [{ qty: 1, price: 169 }, { qty: 3, price: 155 }, { qty: 6, price: 139 }] },
+      { size: 'Standard (24"×36")', quantities: [{ qty: 1, price: 339 }, { qty: 3, price: 315 }, { qty: 6, price: 285 }] },
     ], addOns: [
-      { name: 'Changeable Inserts', type: 'flat', value: 20 },
-      { name: 'Chalkboard Surface', type: 'flat', value: 15 },
-      { name: 'Weighted Base', type: 'flat', value: 25 },
+      { name: 'Changeable Inserts', type: 'flat', value: 30 },
+      { name: 'Chalkboard Surface', type: 'flat', value: 22 },
+      { name: 'Weighted Base', type: 'flat', value: 35 },
     ]},
     // 8: Wall Graphics
     { name: 'Wall Graphics', items: [
@@ -264,32 +264,32 @@ export const defaultPricing: PricingConfig = {
       { name: 'Carbon Tint Upgrade', type: 'flat', value: 60 },
       { name: 'Old Tint Removal', type: 'flat', value: 50 },
     ]},
-    // 16: Flyers & Door Hangers
+    // 16: Flyers & Door Hangers — resold, +40% markup
     { name: 'Flyers & Door Hangers', items: [
-      { size: '8.5"×11" Flyer', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 99 }, { qty: 500, price: 159 }, { qty: 1000, price: 249 }, { qty: 2500, price: 549 }, { qty: 5000, price: 969 }] },
-      { size: '5.5"×8.5" Half-Page Flyer', quantities: [{ qty: 100, price: 39 }, { qty: 250, price: 69 }, { qty: 500, price: 109 }, { qty: 1000, price: 179 }, { qty: 2500, price: 399 }, { qty: 5000, price: 699 }] },
-      { size: 'Door Hangers', quantities: [{ qty: 100, price: 69 }, { qty: 250, price: 119 }, { qty: 500, price: 189 }, { qty: 1000, price: 299 }, { qty: 2500, price: 649 }, { qty: 5000, price: 1149 }] },
+      { size: '8.5"×11" Flyer', quantities: [{ qty: 100, price: 75 }, { qty: 250, price: 135 }, { qty: 500, price: 219 }, { qty: 1000, price: 349 }, { qty: 2500, price: 769 }, { qty: 5000, price: 1359 }] },
+      { size: '5.5"×8.5" Half-Page Flyer', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 95 }, { qty: 500, price: 155 }, { qty: 1000, price: 249 }, { qty: 2500, price: 559 }, { qty: 5000, price: 979 }] },
+      { size: 'Door Hangers', quantities: [{ qty: 100, price: 95 }, { qty: 250, price: 165 }, { qty: 500, price: 265 }, { qty: 1000, price: 419 }, { qty: 2500, price: 909 }, { qty: 5000, price: 1609 }] },
     ], addOns: [
-      { name: 'Glossy Finish', type: 'flat', value: 10 },
-      { name: 'Double-Sided', type: 'flat', value: 20 },
+      { name: 'Glossy Finish', type: 'flat', value: 15 },
+      { name: 'Double-Sided', type: 'flat', value: 30 },
     ]},
-    // 17: Postcards
+    // 17: Postcards — resold, +40% markup
     { name: 'Postcards', items: [
-      { size: '4"×6" Postcard', quantities: [{ qty: 100, price: 45 }, { qty: 250, price: 79 }, { qty: 500, price: 129 }, { qty: 1000, price: 199 }, { qty: 2500, price: 439 }, { qty: 5000, price: 779 }] },
-      { size: '5"×7" Postcard', quantities: [{ qty: 100, price: 55 }, { qty: 250, price: 95 }, { qty: 500, price: 149 }, { qty: 1000, price: 239 }, { qty: 2500, price: 529 }, { qty: 5000, price: 929 }] },
+      { size: '4"×6" Postcard', quantities: [{ qty: 100, price: 65 }, { qty: 250, price: 109 }, { qty: 500, price: 179 }, { qty: 1000, price: 279 }, { qty: 2500, price: 615 }, { qty: 5000, price: 1089 }] },
+      { size: '5"×7" Postcard', quantities: [{ qty: 100, price: 79 }, { qty: 250, price: 135 }, { qty: 500, price: 209 }, { qty: 1000, price: 335 }, { qty: 2500, price: 739 }, { qty: 5000, price: 1299 }] },
     ], addOns: [
-      { name: 'Soft-Touch', type: 'flat', value: 15 },
-      { name: 'Spot UV', type: 'flat', value: 25 },
-      { name: 'Glossy Finish', type: 'flat', value: 10 },
+      { name: 'Soft-Touch', type: 'flat', value: 25 },
+      { name: 'Spot UV', type: 'flat', value: 40 },
+      { name: 'Glossy Finish', type: 'flat', value: 15 },
     ]},
-    // 18: Vehicle Magnets
+    // 18: Vehicle Magnets — resold, +40% markup
     { name: 'Vehicle Magnets', items: [
-      { size: '12"×18"', quantities: [{ qty: 1, price: 35 }, { qty: 2, price: 30 }, { qty: 5, price: 25 }] },
-      { size: '18"×24"', quantities: [{ qty: 1, price: 49 }, { qty: 2, price: 42 }, { qty: 5, price: 35 }] },
-      { size: '24"×36"', quantities: [{ qty: 1, price: 69 }, { qty: 2, price: 59 }, { qty: 5, price: 49 }] },
+      { size: '12"×18"', quantities: [{ qty: 1, price: 49 }, { qty: 2, price: 42 }, { qty: 5, price: 35 }] },
+      { size: '18"×24"', quantities: [{ qty: 1, price: 69 }, { qty: 2, price: 59 }, { qty: 5, price: 49 }] },
+      { size: '24"×36"', quantities: [{ qty: 1, price: 95 }, { qty: 2, price: 79 }, { qty: 5, price: 69 }] },
     ], addOns: [
-      { name: 'Rounded Corners', type: 'flat', value: 10 },
-      { name: 'UV Laminate', type: 'flat', value: 8 },
+      { name: 'Rounded Corners', type: 'flat', value: 15 },
+      { name: 'UV Laminate', type: 'flat', value: 12 },
     ]},
   ],
 }
