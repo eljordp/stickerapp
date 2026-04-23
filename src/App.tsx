@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import Layout from '@/components/layout/Layout'
@@ -21,7 +21,6 @@ import OrderConfirmation from '@/pages/OrderConfirmation'
 import Contact from '@/pages/Contact'
 import About from '@/pages/About'
 import Projects from '@/pages/Projects'
-import CaseStudies from '@/pages/CaseStudies'
 import CaseStudyDetail from '@/pages/CaseStudyDetail'
 import Referral from '@/pages/Referral'
 import Account from '@/pages/Account'
@@ -64,7 +63,7 @@ export default function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/about" element={<About />} />
             <Route path="/projects" element={<Projects />} />
-            <Route path="/case-studies" element={<CaseStudies />} />
+            <Route path="/case-studies" element={<Navigate to="/projects" replace />} />
             <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
             <Route path="/referral" element={<Referral />} />
             <Route path="/account" element={<Account />} />

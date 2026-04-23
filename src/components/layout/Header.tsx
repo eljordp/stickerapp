@@ -22,7 +22,6 @@ const navLinks = [
     ],
   },
   { label: 'Projects', href: '/projects' },
-  { label: 'Case Studies', href: '/case-studies' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ]

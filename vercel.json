@@ -2,7 +2,8 @@
   "redirects": [
     { "source": "/order", "destination": "/stickers", "permanent": true },
     { "source": "/services/mylar-packaging", "destination": "/mylar", "permanent": true },
-    { "source": "/services/event-canopies", "destination": "/services/event-displays", "permanent": true }
+    { "source": "/services/event-canopies", "destination": "/services/event-displays", "permanent": true },
+    { "source": "/case-studies", "destination": "/projects", "permanent": true }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
 import { caseStudies } from '@/lib/caseStudies'
 
 import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
@@ -89,14 +88,9 @@ export default function Projects() {
       {/* Featured case studies */}
       <section className="py-8 md:py-12 border-b border-border/50">
         <div className="section-container max-w-6xl">
-          <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
-            <div>
-              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-1.5">Featured Case Studies</p>
-              <h2 className="text-xl md:text-3xl font-black">The full story behind the work</h2>
-            </div>
-            <Link to="/case-studies" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:gap-2 transition-all">
-              See all <ArrowRight size={14} />
-            </Link>
+          <div className="mb-6">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-1.5">Featured Case Studies</p>
+            <h2 className="text-xl md:text-3xl font-black">The full story behind the work</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             {caseStudies.map((study) => (

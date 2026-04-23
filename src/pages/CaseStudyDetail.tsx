@@ -8,7 +8,7 @@ export default function CaseStudyDetail() {
   const { slug } = useParams<{ slug: string }>()
   const study = slug ? getCaseStudy(slug) : null
 
-  if (!study) return <Navigate to="/case-studies" replace />
+  if (!study) return <Navigate to="/projects" replace />
 
   return (
     <>
@@ -20,10 +20,10 @@ export default function CaseStudyDetail() {
         </div>
         <div className="relative section-container z-10">
           <Link
-            to="/case-studies"
+            to="/projects"
             className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:brightness-110 transition-all mb-6"
           >
-            <ArrowLeft size={14} /> All case studies
+            <ArrowLeft size={14} /> All projects
           </Link>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl">
             <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">
@@ -176,8 +176,8 @@ export default function CaseStudyDetail() {
       {/* Bottom nav */}
       <section className="py-12 border-t border-border/50">
         <div className="section-container text-center">
-          <Link to="/case-studies" className="btn-secondary inline-flex items-center gap-2">
-            <ArrowLeft size={16} /> See more case studies
+          <Link to="/projects" className="btn-secondary inline-flex items-center gap-2">
+            <ArrowLeft size={16} /> See more work
           </Link>
           <Link to="/services" className="ml-3 inline-flex items-center gap-1 text-sm font-bold text-primary hover:brightness-110 transition-all">
             Browse services <ArrowRight size={14} />
