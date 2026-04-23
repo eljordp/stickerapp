@@ -25,7 +25,7 @@ const searchItems: SearchItem[] = [
   { name: 'Mylar Bags – Ounce', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'ounce', 'oz', '5x8', 'packaging'] },
   { name: 'Mylar Bags – Half Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'half pound', 'hp', '10x12', 'packaging'] },
   { name: 'Mylar Bags – Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'pound', 'lb', '14x16', 'packaging'] },
-  { name: 'Jar Labels', category: 'Mylar Packaging', href: '/mylar', keywords: ['jar', 'label', '2oz', 'container'] },
+  { name: '2oz Jar + Custom Label', category: 'Mylar Packaging', href: '/mylar', keywords: ['jar', 'label', '2oz', 'container', 'cannabis', 'bottle'] },
 
   // Event Displays
   { name: 'Custom Canopy Tents', category: 'Event Displays', href: '/services/event-displays', keywords: ['canopy', 'tent', 'popup', 'pop-up', 'event', 'booth', 'trade show', 'steel', 'aluminum', '5x5', '10x10', '10x15', '10x20'] },

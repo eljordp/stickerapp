@@ -85,7 +85,7 @@ const mockupScales: Record<string, number> = {
   'Ounce Bags (5"×8")': 0.85,
   'Half Pound (10"×12")': 1.0,
   'Pound Bags (14"×16")': 1.15,
-  '2oz Jar Labels': 0.7,
+  '2oz Jar + Custom Label': 0.7,
 }
 
 export default function MylarPackaging() {

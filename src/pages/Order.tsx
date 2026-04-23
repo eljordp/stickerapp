@@ -512,7 +512,7 @@ export default function Order() {
                   <><ShoppingCart size={18} /> Add to Cart</>
                 )}
               </button>
-              {effectiveQty >= 2000 && (
+              {effectiveQty > 2500 && (
                 <a
                   href={`/contact?service=Bulk+Sticker+Order&qty=${effectiveQty}&size=${encodeURIComponent(size)}&material=${encodeURIComponent(material)}`}
                   className="block mt-3 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors p-3 text-center"
