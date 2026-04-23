@@ -21,7 +21,7 @@ export default function PromoBanner() {
     const timer = setTimeout(() => {
       timerDone = true
       tryShow()
-    }, 5000)
+    }, 10000)
 
     const onScroll = () => {
       if (window.scrollY > 100) {

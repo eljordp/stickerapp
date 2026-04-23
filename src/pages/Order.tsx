@@ -46,6 +46,7 @@ const materialData = [
 
 const sizeOptions = ['2" x 2"', '3" x 3"', '4" x 4"', '5" x 5"', '6" x 6"', '7" x 7"']
 const qtyOptions = [50, 100, 250, 500, 1000, 2500]
+const MIN_QTY = 25
 
 function ShapeIcon({ shape }: { shape: string }) {
   return (
@@ -170,6 +171,7 @@ export default function Order() {
   }
 
   const handleAddToCart = () => {
+    if (effectiveQty < MIN_QTY) return
     const addOns: { name: string; price: number }[] = []
     if (rushAddon) addOns.push({ name: ADDON_RUSH.label, price: ADDON_RUSH.price })
     if (designAddon) addOns.push({ name: ADDON_DESIGN.label, price: ADDON_DESIGN.price })
@@ -307,21 +309,26 @@ export default function Order() {
                   )
                 })}
                 {/* Custom quantity */}
-                <div className={`rounded-xl border transition-all ${customQty ? 'border-primary bg-primary/10' : 'border-border'}`}>
-                  <p className="text-xs text-muted-foreground text-center pt-3 pb-1.5">Custom quantity</p>
+                <div className={`rounded-xl border transition-all ${customQty ? (effectiveQty < MIN_QTY ? 'border-yellow-500/40 bg-yellow-500/5' : 'border-primary bg-primary/10') : 'border-border'}`}>
+                  <p className="text-xs text-muted-foreground text-center pt-3 pb-1.5">Custom quantity · min {MIN_QTY}</p>
                   <div className="flex items-center gap-2 px-3 pb-3">
                     <input
                       type="number"
-                      min={1}
-                      placeholder="Enter qty"
+                      min={MIN_QTY}
+                      placeholder={`Enter qty (${MIN_QTY}+)`}
                       value={customQty}
                       onChange={e => setCustomQty(e.target.value)}
                       className="flex-1 bg-muted rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                     <span className="text-sm font-bold">
-                      ${customQty ? getQtyTotal(parseInt(customQty) || 50) : getQtyTotal(quantity)}
+                      ${customQty ? getQtyTotal(parseInt(customQty) || MIN_QTY) : getQtyTotal(quantity)}
                     </span>
                   </div>
+                  {customQty && effectiveQty < MIN_QTY && (
+                    <p className="text-[11px] text-yellow-500 px-3 pb-3 -mt-1">
+                      Minimum {MIN_QTY} pieces per order.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -494,9 +501,12 @@ export default function Order() {
               </div>
               <button
                 onClick={handleAddToCart}
-                className={`btn-primary w-full mt-5 ${added ? 'bg-green-600' : ''}`}
+                disabled={effectiveQty < MIN_QTY}
+                className={`btn-primary w-full mt-5 ${added ? 'bg-green-600' : ''} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!transform-none`}
               >
-                {added ? (
+                {effectiveQty < MIN_QTY ? (
+                  <>Minimum {MIN_QTY} to add</>
+                ) : added ? (
                   <><Check size={18} /> Added to Cart!</>
                 ) : (
                   <><ShoppingCart size={18} /> Add to Cart</>
