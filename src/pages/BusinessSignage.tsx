@@ -4,12 +4,16 @@ import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import SqFtEstimator from '@/components/SqFtEstimator'
 import PortfolioStrip from '@/components/PortfolioStrip'
+import ArtworkMockup from '@/components/ArtworkMockup'
 import atlasPizza from '@/assets/projects/atlas-pizza-signage.jpeg'
 import elevated925 from '@/assets/projects/elevated925-storefront.jpg'
 import plu2o from '@/assets/projects/plu2o-dispensary.jpg'
 import barbershop from '@/assets/projects/curated-barbershop.jpeg'
 import safewayInstall from '@/assets/projects/safeway-install.jpeg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
+import storefrontBlank from '@/assets/mockups/signage-storefront-blank.jpg'
+import wallInteriorBlank from '@/assets/mockups/signage-wall-interior-blank.jpg'
+import aFrameBlank from '@/assets/mockups/signage-a-frame-blank.jpg'
 
 const features = [
   'Storefront & Building Signs',
@@ -82,6 +86,35 @@ export default function BusinessSignage() {
           </motion.div>
 
           <ProductOrder categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <ArtworkMockup
+            service="Signage"
+            title="See your signage in place"
+            subtitle="Upload your logo — we'll preview it on a storefront, wall, or sidewalk sign."
+            scenes={[
+              {
+                key: 'storefront',
+                label: 'Storefront',
+                base: storefrontBlank,
+                slot: { left: 13, top: 13, width: 75, height: 30 },
+              },
+              {
+                key: 'wall',
+                label: 'Interior Wall',
+                base: wallInteriorBlank,
+                slot: { left: 28, top: 20, width: 55, height: 40 },
+              },
+              {
+                key: 'aframe',
+                label: 'A-Frame',
+                base: aFrameBlank,
+                slot: { left: 30, top: 22, width: 42, height: 50 },
+              },
+            ]}
+          />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">

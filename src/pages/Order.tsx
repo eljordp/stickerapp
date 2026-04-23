@@ -4,12 +4,17 @@ import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Pale
 import { useCart } from '@/context/CartContext'
 import { getPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
 import PortfolioStrip from '@/components/PortfolioStrip'
+import ArtworkMockup from '@/components/ArtworkMockup'
 import stkDieCut from '@/assets/projects/stickers-die-cut-stack.jpg'
 import stkHolo from '@/assets/projects/stickers-holographic.jpg'
 import stkLaptop from '@/assets/projects/stickers-on-laptop.jpg'
 import stkSheet from '@/assets/projects/stickers-sheet.jpg'
 import stkRoll from '@/assets/projects/stickers-roll.jpg'
 import stkMatte from '@/assets/projects/stickers-matte-detail.jpg'
+import stickerLaptopBlank from '@/assets/mockups/sticker-laptop-blank.jpg'
+import stickerBottleBlank from '@/assets/mockups/sticker-bottle-blank.jpg'
+import stickerWindowBlank from '@/assets/mockups/sticker-window-blank.jpg'
+import stickerToteBlank from '@/assets/mockups/sticker-tote-blank.jpg'
 
 const stickerSpecs = [
   { icon: Droplets, label: 'Material', value: 'Premium 3M & Avery cast vinyl' },
@@ -531,6 +536,43 @@ export default function Order() {
               </div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* In-context mockup */}
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <ArtworkMockup
+            service="Sticker"
+            title="See your sticker in the wild"
+            subtitle="Upload your design — preview it on the surfaces it'll actually live on."
+            scenes={[
+              {
+                key: 'laptop',
+                label: 'Laptop',
+                base: stickerLaptopBlank,
+                slot: { left: 32, top: 28, width: 42, height: 35 },
+              },
+              {
+                key: 'bottle',
+                label: 'Water Bottle',
+                base: stickerBottleBlank,
+                slot: { left: 36, top: 30, width: 30, height: 38 },
+              },
+              {
+                key: 'window',
+                label: 'Car Window',
+                base: stickerWindowBlank,
+                slot: { left: 35, top: 30, width: 35, height: 35 },
+              },
+              {
+                key: 'tote',
+                label: 'Tote Bag',
+                base: stickerToteBlank,
+                slot: { left: 32, top: 30, width: 40, height: 40 },
+              },
+            ]}
+          />
         </div>
       </section>
 

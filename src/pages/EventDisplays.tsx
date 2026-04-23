@@ -3,12 +3,16 @@ import { Tent, CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
+import ArtworkMockup from '@/components/ArtworkMockup'
 import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
 import weddingFloor1 from '@/assets/projects/wedding-vinyl-floor-1.jpeg'
 import weddingFloor2 from '@/assets/projects/wedding-vinyl-floor-2.jpeg'
 import culturalFloor from '@/assets/projects/cultural-dance-floor-1.jpeg'
+import canopyBlank from '@/assets/mockups/event-canopy-blank.jpg'
+import flagBlank from '@/assets/mockups/event-feather-flag-blank.jpg'
+import backdropBlank from '@/assets/mockups/event-backdrop-blank.jpg'
 
 const features = [
   'Custom Printed Canopy Tents',
@@ -81,6 +85,35 @@ export default function EventCanopies() {
           </motion.div>
 
           <ProductOrder categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <ArtworkMockup
+            service="Event Display"
+            title="Preview your event setup"
+            subtitle="Upload your brand — see it on a canopy, flag, or backdrop before the event."
+            scenes={[
+              {
+                key: 'canopy',
+                label: 'Canopy Tent',
+                base: canopyBlank,
+                slot: { left: 22, top: 16, width: 55, height: 20 },
+              },
+              {
+                key: 'flag',
+                label: 'Feather Flag',
+                base: flagBlank,
+                slot: { left: 30, top: 15, width: 40, height: 70 },
+              },
+              {
+                key: 'backdrop',
+                label: 'Backdrop',
+                base: backdropBlank,
+                slot: { left: 15, top: 15, width: 70, height: 70 },
+              },
+            ]}
+          />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">

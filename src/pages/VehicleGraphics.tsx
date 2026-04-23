@@ -3,12 +3,17 @@ import { Car, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
+import ArtworkMockup from '@/components/ArtworkMockup'
 import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
 import bhogalTruck from '@/assets/projects/bhogal-construction.jpeg'
 import procareFleet from '@/assets/projects/procare-fleet.jpeg'
 import safewayTruck from '@/assets/projects/safeway-truck.jpeg'
 import tecTruck from '@/assets/projects/tec-equipment-truck.jpeg'
 import safewayInstall from '@/assets/projects/safeway-install.jpeg'
+import sedanBlank from '@/assets/mockups/vehicle-sedan-blank.jpg'
+import vanBlank from '@/assets/mockups/vehicle-van-blank.jpg'
+import boxTruckBlank from '@/assets/mockups/vehicle-box-truck-blank.jpg'
+import workVanBlank from '@/assets/mockups/vehicle-work-van-blank.jpg'
 
 const features = [
   'Full Vehicle Wraps',
@@ -81,6 +86,41 @@ export default function VehicleGraphics() {
           </motion.div>
 
           <ProductOrder categoryNames={['Decals & Lettering', 'Full Wraps', 'Partial Wraps']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <ArtworkMockup
+            service="Vehicle"
+            title="See your brand on the vehicle"
+            subtitle="Upload your logo — we'll show you how it looks on different vehicles before you commit."
+            scenes={[
+              {
+                key: 'van',
+                label: 'Ford Transit Van',
+                base: vanBlank,
+                slot: { left: 33, top: 37, width: 45, height: 22 },
+              },
+              {
+                key: 'sedan',
+                label: 'Sedan',
+                base: sedanBlank,
+                slot: { left: 20, top: 42, width: 60, height: 20 },
+              },
+              {
+                key: 'box',
+                label: 'Box Truck',
+                base: boxTruckBlank,
+                slot: { left: 30, top: 28, width: 55, height: 35 },
+              },
+              {
+                key: 'sprinter',
+                label: 'Work Van',
+                base: workVanBlank,
+                slot: { left: 28, top: 35, width: 50, height: 28 },
+              },
+            ]}
+          />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">

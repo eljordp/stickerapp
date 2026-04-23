@@ -4,12 +4,15 @@ import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import SqFtEstimator from '@/components/SqFtEstimator'
 import PortfolioStrip from '@/components/PortfolioStrip'
+import ArtworkMockup from '@/components/ArtworkMockup'
 import windowFrosted from '@/assets/projects/window-frosted-office.jpg'
 import windowAutoTint from '@/assets/projects/window-auto-tint.jpg'
 import windowStorefront from '@/assets/projects/window-storefront-vinyl.jpg'
 import windowDecorative from '@/assets/projects/window-decorative-pattern.jpg'
 import windowInstall from '@/assets/projects/window-install-squeegee.jpg'
 import windowSecurity from '@/assets/projects/window-security-film.jpg'
+import officeWindowBlank from '@/assets/mockups/film-office-window-blank.jpg'
+import storefrontGlassBlank from '@/assets/mockups/film-storefront-glass-blank.jpg'
 
 const features = [
   'Frosted Privacy Film',
@@ -83,6 +86,29 @@ export default function WindowFilm() {
           </motion.div>
 
           <ProductOrder categoryNames={['Frosted & Decorative', 'Solar & UV Protection', 'Security Film', 'Automotive Window Tint']} />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <ArtworkMockup
+            service="Window Film"
+            title="See your logo on the glass"
+            subtitle="Upload your mark — preview a frosted film or vinyl cutout on a real window."
+            scenes={[
+              {
+                key: 'office',
+                label: 'Office Glass',
+                base: officeWindowBlank,
+                slot: { left: 25, top: 25, width: 50, height: 40 },
+              },
+              {
+                key: 'storefront',
+                label: 'Storefront Door',
+                base: storefrontGlassBlank,
+                slot: { left: 30, top: 30, width: 40, height: 40 },
+              },
+            ]}
+          />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">
