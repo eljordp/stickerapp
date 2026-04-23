@@ -59,14 +59,14 @@ export default function About() {
       <section className="py-12 md:py-20">
         <div className="section-container">
           <div className="grid md:grid-cols-[1fr_1.1fr] gap-10 md:gap-14 items-center max-w-6xl mx-auto">
-            <motion.div {...fadeUp} className="relative order-2 md:order-1">
+            <motion.div {...fadeUp} className="relative order-1 md:order-1">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-[4/5]">
                 <img src={aboutCraft} alt="Hands working at a large-format printer" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-transparent" />
               </div>
               <div className="absolute -inset-4 -z-10 bg-primary/10 rounded-full blur-3xl" />
             </motion.div>
-            <motion.div {...fadeUp} className="order-1 md:order-2">
+            <motion.div {...fadeUp} className="order-2 md:order-2">
               <h2 className="text-3xl md:text-5xl font-black mb-8">Our Story</h2>
               <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
                 <p>

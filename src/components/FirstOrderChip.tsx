@@ -9,7 +9,7 @@ export default function FirstOrderChip() {
     if (typeof window === 'undefined') return
     const hasOrdered = localStorage.getItem('tss_order_completed') === 'true'
     if (hasOrdered) return
-    const t = setTimeout(() => setShow(true), 800)
+    const t = setTimeout(() => setShow(true), 150)
     return () => clearTimeout(t)
   }, [])
 
