@@ -38,8 +38,8 @@ export default function Footer() {
               The Sticker Smith is a Bay Area sticker and print company for creators, brands, and dreamers.
             </p>
             <div className="space-y-1.5 mb-6 text-sm">
-              <a href="tel:+17074388925" className="block text-muted-foreground hover:text-foreground transition-colors">
-                (707) 438-8925
+              <a href="tel:+15106348203" className="block text-muted-foreground hover:text-foreground transition-colors">
+                (510) 634-8203
               </a>
               <a href="mailto:thestickersmith@gmail.com" className="block text-muted-foreground hover:text-foreground transition-colors">
                 thestickersmith@gmail.com

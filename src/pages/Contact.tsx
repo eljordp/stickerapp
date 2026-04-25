@@ -181,12 +181,12 @@ export default function Contact() {
             </div>
             <div className="space-y-6">
               <a
-                href="tel:+17074388925"
+                href="tel:+15106348203"
                 className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-colors"
               >
                 <Phone className="text-primary mb-3" size={24} aria-hidden="true" />
                 <h3 className="font-bold mb-1">Phone</h3>
-                <p className="text-sm text-muted-foreground">(707) 438-8925</p>
+                <p className="text-sm text-muted-foreground">(510) 634-8203</p>
               </a>
               <a
                 href="mailto:thestickersmith@gmail.com"
