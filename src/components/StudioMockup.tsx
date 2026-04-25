@@ -42,7 +42,8 @@ const SHAPE_RATIO: Record<StudioShape, number> = {
   'sticker-square': 1,
   'sticker-rect': 4 / 3,
   'mylar-pouch': 0.62,
-  'mylar-jar': 0.85,
+  // 2oz cannabis jar — squat, slightly wider than tall once you include the lid
+  'mylar-jar': 1.0,
 }
 
 /**
@@ -80,7 +81,7 @@ function ShapeFrame({
           height: '88%',
           transform: `rotate(${rotate * 0.4}deg)`,
           filter:
-            'drop-shadow(0 35px 45px rgba(0,0,0,0.55)) drop-shadow(0 10px 18px rgba(0,0,0,0.35))',
+            'drop-shadow(0 35px 45px rgba(0,0,0,0.6)) drop-shadow(0 10px 18px rgba(0,0,0,0.4))',
         }}
       >
         {/* Pouch silhouette via SVG mask */}
@@ -94,23 +95,38 @@ function ShapeFrame({
               {/* Stand-up pouch outline: heat-sealed top, rounded shoulders, gusseted bottom */}
               <path d="M8,18 L8,150 Q8,156 14,156 L86,156 Q92,156 92,150 L92,18 Q92,12 86,12 L14,12 Q8,12 8,18 Z" />
             </clipPath>
-            <linearGradient id="pouchSheen" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+            {/* Cylindrical-feeling body shading — bright stripe through center */}
+            <linearGradient id="pouchBody" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0a0a0c" />
+              <stop offset="25%" stopColor="#1d1d22" />
+              <stop offset="50%" stopColor="#33333a" />
+              <stop offset="75%" stopColor="#1d1d22" />
+              <stop offset="100%" stopColor="#0a0a0c" />
+            </linearGradient>
+            <linearGradient id="pouchSheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
               <stop offset="35%" stopColor="rgba(255,255,255,0)" />
-              <stop offset="65%" stopColor="rgba(255,255,255,0)" />
-              <stop offset="100%" stopColor="rgba(0,0,0,0.28)" />
+              <stop offset="100%" stopColor="rgba(0,0,0,0.25)" />
             </linearGradient>
           </defs>
 
-          {/* Background bag fill */}
-          <rect width="100" height="160" fill="#1a1a1d" clipPath="url(#pouchClip)" />
+          {/* Body fill with cylindrical highlight */}
+          <rect width="100" height="160" fill="url(#pouchBody)" clipPath="url(#pouchClip)" />
 
           {/* Heat-seal zip line at top */}
           <rect x="8" y="10" width="84" height="3" fill="#0a0a0c" rx="1" />
-          <line x1="14" y1="11.5" x2="86" y2="11.5" stroke="#3a3a3f" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+          <line x1="14" y1="11.5" x2="86" y2="11.5" stroke="#4a4a4f" strokeWidth="0.5" strokeDasharray="1.5 1.5" />
 
-          {/* Bag body sheen */}
+          {/* Top-to-bottom subtle sheen */}
           <rect width="100" height="160" fill="url(#pouchSheen)" clipPath="url(#pouchClip)" />
+
+          {/* Subtle outline so the pouch lifts off the dark backdrop */}
+          <path
+            d="M8,18 L8,150 Q8,156 14,156 L86,156 Q92,156 92,150 L92,18 Q92,12 86,12 L14,12 Q8,12 8,18 Z"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="0.6"
+          />
         </svg>
 
         {/* Artwork label area — centered on the bag face */}
@@ -121,7 +137,7 @@ function ShapeFrame({
             bottom: '14%',
             left: '14%',
             right: '14%',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.55)',
           }}
         >
           <ArtworkSlot artworkUrl={artworkUrl} />
@@ -136,46 +152,59 @@ function ShapeFrame({
         className="relative"
         style={{
           aspectRatio: ratio,
-          height: '78%',
-          transform: `rotate(${rotate * 0.2}deg)`,
+          height: '70%',
+          transform: `rotate(${rotate * 0.15}deg)`,
           filter:
-            'drop-shadow(0 30px 40px rgba(0,0,0,0.5)) drop-shadow(0 8px 14px rgba(0,0,0,0.3))',
+            'drop-shadow(0 30px 40px rgba(0,0,0,0.55)) drop-shadow(0 10px 16px rgba(0,0,0,0.35))',
         }}
       >
         <svg
-          viewBox="0 0 100 118"
+          viewBox="0 0 100 100"
           preserveAspectRatio="none"
           className="absolute inset-0 w-full h-full"
         >
           <defs>
+            {/* Cylindrical body shading — dark at edges, bright down the middle */}
             <linearGradient id="jarBody" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#0f0f12" />
-              <stop offset="50%" stopColor="#2a2a30" />
-              <stop offset="100%" stopColor="#0f0f12" />
+              <stop offset="0%" stopColor="#0a0a0c" />
+              <stop offset="20%" stopColor="#1f1f24" />
+              <stop offset="50%" stopColor="#3a3a42" />
+              <stop offset="80%" stopColor="#1f1f24" />
+              <stop offset="100%" stopColor="#0a0a0c" />
             </linearGradient>
             <linearGradient id="jarLid" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#1a1a1d" />
-              <stop offset="50%" stopColor="#3a3a40" />
-              <stop offset="100%" stopColor="#1a1a1d" />
+              <stop offset="0%" stopColor="#15151a" />
+              <stop offset="50%" stopColor="#4a4a52" />
+              <stop offset="100%" stopColor="#15151a" />
+            </linearGradient>
+            <linearGradient id="jarTopShine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
             </linearGradient>
           </defs>
-          {/* Jar body */}
-          <rect x="10" y="22" width="80" height="92" fill="url(#jarBody)" rx="6" />
-          {/* Lid — slightly wider than body */}
-          <rect x="6" y="6" width="88" height="20" fill="url(#jarLid)" rx="3" />
-          <line x1="6" y1="13" x2="94" y2="13" stroke="rgba(255,255,255,0.08)" strokeWidth="0.4" />
-          <line x1="6" y1="20" x2="94" y2="20" stroke="rgba(0,0,0,0.4)" strokeWidth="0.4" />
+          {/* Jar body — short and squat */}
+          <rect x="10" y="32" width="80" height="64" fill="url(#jarBody)" rx="4" />
+          {/* Subtle horizontal highlight on body top */}
+          <rect x="10" y="32" width="80" height="14" fill="url(#jarTopShine)" rx="4" />
+          {/* Lid — slightly wider than body, taller for visibility */}
+          <rect x="6" y="6" width="88" height="26" fill="url(#jarLid)" rx="3" />
+          {/* Lid grooves */}
+          <line x1="6" y1="14" x2="94" y2="14" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+          <line x1="6" y1="22" x2="94" y2="22" stroke="rgba(255,255,255,0.06)" strokeWidth="0.4" />
+          <line x1="6" y1="31" x2="94" y2="31" stroke="rgba(0,0,0,0.5)" strokeWidth="0.5" />
+          {/* Bottom shadow on body */}
+          <rect x="10" y="88" width="80" height="8" fill="rgba(0,0,0,0.35)" rx="4" />
         </svg>
-        {/* Wraparound label area */}
+        {/* Wraparound label area — centered on body face */}
         <div
           className="absolute overflow-hidden"
           style={{
-            top: '38%',
-            bottom: '8%',
-            left: '12%',
-            right: '12%',
-            borderRadius: '4px',
-            boxShadow: '0 3px 8px rgba(0,0,0,0.4)',
+            top: '46%',
+            bottom: '14%',
+            left: '16%',
+            right: '16%',
+            borderRadius: '3px',
+            boxShadow: '0 3px 8px rgba(0,0,0,0.5)',
           }}
         >
           <ArtworkSlot artworkUrl={artworkUrl} />
@@ -184,15 +213,23 @@ function ShapeFrame({
     )
   }
 
-  // Default: paper / sticker shapes
+  // Sticker shapes
   const isSticker = shape.startsWith('sticker-')
   const isCircle = shape === 'sticker-circle'
   const isRoundedSquare = shape === 'sticker-square'
-  const isDieCut = shape === 'sticker-die-cut' || shape === 'sticker-rect'
+  const isDieCut = shape === 'sticker-die-cut'
+  const isStickerRect = shape === 'sticker-rect'
 
-  const margin = isSticker ? '7%' : '0%'
-  const innerRadius = isCircle ? '50%' : isRoundedSquare ? '14%' : isDieCut ? '6%' : '4px'
-  const outerRadius = isCircle ? '50%' : isRoundedSquare ? '20%' : isSticker ? '10%' : '6px'
+  // Die-cut = cut TO the design's outline — no white backing border, just the
+  // art itself sitting flat. Other sticker styles (kiss-cut on backing, square,
+  // circle, rect) keep the white margin to suggest the cut release liner.
+  const stickerMargin = isDieCut ? '0%' : isSticker ? '7%' : '0%'
+  const innerRadius = isCircle ? '50%' : isRoundedSquare ? '14%' : isStickerRect ? '6%' : isDieCut ? '14%' : '4px'
+  const outerRadius = isCircle ? '50%' : isRoundedSquare ? '20%' : isDieCut ? '14%' : isSticker ? '10%' : '6px'
+
+  // Business cards & postcards get a "stacked" look — second card behind to
+  // show this is a real product run, not a single floating card
+  const isStacked = shape === 'business-card' || shape === 'postcard'
 
   return (
     <div
@@ -205,20 +242,37 @@ function ShapeFrame({
         filter: 'drop-shadow(0 30px 40px rgba(0,0,0,0.45)) drop-shadow(0 8px 14px rgba(0,0,0,0.3))',
       }}
     >
-      <div
-        className="absolute inset-0 bg-white"
-        style={{
-          borderRadius: outerRadius,
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.06)',
-        }}
-      />
+      {/* Back card (stack effect) */}
+      {isStacked && (
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-white"
+          style={{
+            borderRadius: outerRadius,
+            transform: 'translate(4%, 5%) rotate(5deg)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.06)',
+            opacity: 0.92,
+          }}
+        />
+      )}
+      {/* Foreground surface — for die-cut stickers we skip this so the artwork
+          sits naked (no backing visible), like a finished die-cut */}
+      {!isDieCut && (
+        <div
+          className="absolute inset-0 bg-white"
+          style={{
+            borderRadius: outerRadius,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.06)',
+          }}
+        />
+      )}
       <div
         className="absolute overflow-hidden"
         style={{
-          top: margin,
-          left: margin,
-          right: margin,
-          bottom: margin,
+          top: stickerMargin,
+          left: stickerMargin,
+          right: stickerMargin,
+          bottom: stickerMargin,
           borderRadius: innerRadius,
         }}
       >
