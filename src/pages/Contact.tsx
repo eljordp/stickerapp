@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Send, Mail, MapPin, Loader2 } from 'lucide-react'
+import { Send, Mail, MapPin, Phone, Loader2 } from 'lucide-react'
 import { contactSchema, type ContactFormErrors } from '@/lib/validation'
 import { supabase } from '@/lib/supabase'
 import { sendContactEmail } from '@/lib/email'
@@ -180,11 +180,22 @@ export default function Contact() {
               )}
             </div>
             <div className="space-y-6">
-              <div className="bg-card border border-border rounded-2xl p-6">
+              <a
+                href="tel:+17074388925"
+                className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-colors"
+              >
+                <Phone className="text-primary mb-3" size={24} aria-hidden="true" />
+                <h3 className="font-bold mb-1">Phone</h3>
+                <p className="text-sm text-muted-foreground">(707) 438-8925</p>
+              </a>
+              <a
+                href="mailto:thestickersmith@gmail.com"
+                className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-colors"
+              >
                 <Mail className="text-primary mb-3" size={24} aria-hidden="true" />
                 <h3 className="font-bold mb-1">Email</h3>
                 <p className="text-sm text-muted-foreground">thestickersmith@gmail.com</p>
-              </div>
+              </a>
               <div className="bg-card border border-border rounded-2xl p-6">
                 <MapPin className="text-primary mb-3" size={24} aria-hidden="true" />
                 <h3 className="font-bold mb-1">Location</h3>
