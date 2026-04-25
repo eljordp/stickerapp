@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 
+import PageHero from '@/components/PageHero'
 import vehicleGraphics from '@/assets/services/vehicle-graphics.jpg'
 import eventDisplays from '@/assets/services/event-displays.jpg'
 import businessPrint from '@/assets/services/business-print.jpg'
@@ -21,12 +22,13 @@ const services = [
 export default function Services() {
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Our Services</h1>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto">Full-service print and branding for Bay Area businesses</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="What We Do"
+        title="Full-service print & branding"
+        subtitle="Stickers, wraps, signage, packaging, print, window film. One studio, every surface — built for Bay Area brands."
+        primaryCta={{ label: 'Get a Quote', href: '/contact' }}
+        secondaryCta={{ label: 'See Our Work', href: '/projects' }}
+      />
       <section className="py-8 md:py-16">
         <div className="section-container">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">

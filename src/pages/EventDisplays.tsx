@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import { Tent, CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
+import PageHero from '@/components/PageHero'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import eventHero from '@/assets/services/event-displays.jpg'
 import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
@@ -40,13 +42,16 @@ const process = [
 export default function EventCanopies() {
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <Tent className="w-10 h-10 text-white/80 mx-auto mb-4" />
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Event Displays</h1>
-          <p className="text-white/80 text-lg">Custom tents, backdrops, table covers, flags, banners, and everything for your next event.</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Event Displays"
+        title="Tents, flags, backdrops, banners."
+        subtitle="Everything you need to show up branded — printed on heavy-duty polyester, packed with hardware, ready to set up in 5 minutes."
+        image={eventHero}
+        imageAlt="Custom event canopy and feather flags"
+        icon={Tent}
+        primaryCta={{ label: 'Order Now', href: '#shop' }}
+        secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
+      />
       <section className="py-8 md:py-16">
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
@@ -84,7 +89,9 @@ export default function EventCanopies() {
             </div>
           </motion.div>
 
-          <ProductOrder categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']} />
+          <div id="shop" className="scroll-mt-24">
+            <ProductOrder categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']} />
+          </div>
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">
@@ -116,7 +123,7 @@ export default function EventCanopies() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <PortfolioStrip
             title="Events We've Shown Up For"
@@ -132,7 +139,7 @@ export default function EventCanopies() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <EstimateForm
             service="Event Displays"

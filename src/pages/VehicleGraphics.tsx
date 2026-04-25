@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion'
 import { Car, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
-import ProductOrder from '@/components/ProductOrder'
+import PageHero from '@/components/PageHero'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import vehicleHero from '@/assets/services/vehicle-graphics.jpg'
 import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
 import bhogalTruck from '@/assets/projects/bhogal-construction.jpeg'
 import procareFleet from '@/assets/projects/procare-fleet.jpeg'
@@ -41,13 +42,16 @@ const process = [
 export default function VehicleGraphics() {
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <Car className="w-10 h-10 text-white/80 mx-auto mb-4" />
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Vehicle Graphics</h1>
-          <p className="text-white/80 text-lg">Full wraps, partial wraps, fleet branding, and custom decals.</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Vehicle Graphics"
+        title="Wraps, decals, and fleet branding."
+        subtitle="Full wraps, partial wraps, door logos, and fleet rollouts. Premium 3M & Avery vinyl, professional install in the Bay Area."
+        image={vehicleHero}
+        imageAlt="Vehicle wrap install"
+        icon={Car}
+        primaryCta={{ label: 'Get a Custom Quote', href: '#quote' }}
+        secondaryCta={{ label: 'See Our Work', href: '#portfolio' }}
+      />
       <section className="py-8 md:py-16">
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
@@ -72,7 +76,7 @@ export default function VehicleGraphics() {
             ))}
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-12">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10">
             <h2 className="text-2xl font-black mb-6">How It Works</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {process.map(p => (
@@ -84,8 +88,6 @@ export default function VehicleGraphics() {
               ))}
             </div>
           </motion.div>
-
-          <ProductOrder categoryNames={['Decals & Lettering', 'Full Wraps', 'Partial Wraps']} />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">
@@ -123,7 +125,7 @@ export default function VehicleGraphics() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <PortfolioStrip
             title="Vehicle Wraps We've Done"
@@ -139,7 +141,7 @@ export default function VehicleGraphics() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <EstimateForm
             service="Vehicle Graphics"

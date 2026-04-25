@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import { Printer, CheckCircle, Clock, Shield, Layers, Zap } from 'lucide-react'
+import PageHero from '@/components/PageHero'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import businessPrintHero from '@/assets/services/business-print.jpg'
 import bizCardsLuxury from '@/assets/projects/business-cards-luxury.jpg'
 import bizCardsFoil from '@/assets/projects/business-cards-foil.jpg'
 import flyers from '@/assets/projects/flyers-full-color.jpg'
@@ -40,13 +42,16 @@ const process = [
 export default function BusinessPrint() {
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <Printer className="w-10 h-10 text-white/80 mx-auto mb-4" />
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Business Print</h1>
-          <p className="text-white/80 text-lg">Business cards, flyers, postcards, magnets, and marketing essentials.</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Business Print"
+        title="Cards, flyers, postcards — done right."
+        subtitle="Business cards, flyers, postcards, mailers, and marketing essentials. Premium stocks, real finishes, free digital proof before we print."
+        image={businessPrintHero}
+        imageAlt="Premium business cards and print collateral"
+        icon={Printer}
+        primaryCta={{ label: 'Order Now', href: '#shop' }}
+        secondaryCta={{ label: 'Bulk / Custom Quote', href: '#quote' }}
+      />
       <section className="py-8 md:py-16">
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
@@ -84,7 +89,9 @@ export default function BusinessPrint() {
             </div>
           </motion.div>
 
-          <ProductOrder categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']} />
+          <div id="shop" className="scroll-mt-24">
+            <ProductOrder categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']} />
+          </div>
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">
@@ -132,7 +139,7 @@ export default function BusinessPrint() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <EstimateForm
             service="Business Print"

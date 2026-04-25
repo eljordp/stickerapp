@@ -3,8 +3,10 @@ import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
+import PageHero from '@/components/PageHero'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import stickerHeroImg from '@/assets/projects/stickers-die-cut-stack.jpg'
 import stkDieCut from '@/assets/projects/stickers-die-cut-stack.jpg'
 import stkHolo from '@/assets/projects/stickers-holographic.jpg'
 import stkLaptop from '@/assets/projects/stickers-on-laptop.jpg'
@@ -193,16 +195,18 @@ export default function Order() {
 
   return (
     <>
-      <div className="relative -mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(var(--color-foreground) 1px, transparent 1px), linear-gradient(90deg, var(--color-foreground) 1px, transparent 1px)`, backgroundSize: '60px 60px', opacity: 0.02 }} />
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <StickerIcon className="w-10 h-10 text-white/80 mx-auto mb-4" />
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Custom Stickers</h1>
-          <p className="text-white/80 text-lg">Die-cut, kiss-cut, holographic, matte — all on premium vinyl, with a proof before we print.</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Custom Stickers"
+        title="Die-cut, kiss-cut, holographic, matte."
+        subtitle="Premium vinyl. Free digital proof in 24 hours. 3–5 day turnaround. Free US shipping or Bay Area pickup."
+        image={stickerHeroImg}
+        imageAlt="Stack of custom die-cut stickers"
+        icon={StickerIcon}
+        primaryCta={{ label: 'Configure Stickers', href: '#configure' }}
+        secondaryCta={{ label: 'See Sticker Work', href: '#portfolio' }}
+      />
 
-      <section className="py-8 md:py-12">
+      <section id="configure" className="py-8 md:py-12 scroll-mt-24">
         <div className="section-container">
           {/* 4-column configurator — first thing after the hero */}
           <motion.div
@@ -587,7 +591,7 @@ export default function Order() {
       </section>
 
       {/* Portfolio */}
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <PortfolioStrip
             title="Sticker Work"

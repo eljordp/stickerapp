@@ -122,7 +122,7 @@ export default function About() {
       </section>
 
       {/* Stats Row */}
-      <section className="py-12 md:py-16" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
+      <section className="py-12 md:py-16 border-y border-border/50 bg-card/30">
         <div className="section-container">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
             {stats.map((stat, index) => (
@@ -134,9 +134,9 @@ export default function About() {
                 transition={{ delay: index * 0.08 }}
                 className="text-center"
               >
-                <stat.icon className="w-8 h-8 text-white/80 mx-auto mb-4" />
-                <div className="text-3xl md:text-4xl font-black text-white mb-2">{stat.value}</div>
-                <div className="text-white/70 text-sm font-medium">{stat.label}</div>
+                <stat.icon className="w-8 h-8 text-primary mx-auto mb-4" />
+                <div className="text-3xl md:text-4xl font-black mb-2">{stat.value}</div>
+                <div className="text-muted-foreground text-sm font-medium">{stat.label}</div>
               </motion.div>
             ))}
           </div>

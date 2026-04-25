@@ -3,7 +3,9 @@ import { motion } from 'framer-motion'
 import { Upload, X, Package, Sparkles, Box, ShoppingCart, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
+import PageHero from '@/components/PageHero'
 import EstimateForm from '@/components/EstimateForm'
+import mylarHero from '@/assets/services/mylar-packaging.jpg'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
 import mylarBlack from '@/assets/projects/mylar-black-pouches.jpg'
@@ -177,17 +179,18 @@ export default function MylarPackaging() {
 
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70 mb-3">Mylar Packaging Suite</p>
-          <h1 className="text-3xl md:text-5xl font-black mb-4 text-white">Custom Mylar Bags, Jars & Labels</h1>
-          <p className="text-white/80 text-base max-w-xl mx-auto">
-            Quarter, 8th, ounce and pound bags, plus 2oz compliant jars. Holographic upgrades, windows and direct print available.
-          </p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Mylar Packaging Suite"
+        title="Custom mylar bags, jars & labels."
+        subtitle="Quarter, 8th, ounce and pound bags, plus 2oz compliant jars. Holographic upgrades, windows, and direct print available."
+        image={mylarHero}
+        imageAlt="Custom mylar packaging"
+        icon={Package}
+        primaryCta={{ label: 'Configure Bag', href: '#configure' }}
+        secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
+      />
 
-      <section className="py-8 md:py-16">
+      <section id="configure" className="py-8 md:py-16 scroll-mt-24">
         <div className="section-container max-w-5xl mx-auto">
           {/* Upload + Mockup Preview */}
           <div className="grid gap-6 lg:grid-cols-2 mb-10">
@@ -420,7 +423,7 @@ export default function MylarPackaging() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <EstimateForm
             service="Mylar Packaging"

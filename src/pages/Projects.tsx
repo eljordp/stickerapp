@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { caseStudies } from '@/lib/caseStudies'
+import PageHero from '@/components/PageHero'
 
 import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
 import atlasPizza from '@/assets/projects/atlas-pizza-signage.jpeg'
@@ -79,12 +80,13 @@ export default function Projects() {
 
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Our Projects</h1>
-          <p className="text-white/80 text-lg">A look at some of our recent work</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Our Work"
+        title="Real jobs, real clients."
+        subtitle="Bay Area fleets, storefronts, weddings, and brands. Every project is shipped, installed, and standing today."
+        primaryCta={{ label: 'Start a Project', href: '/contact' }}
+        secondaryCta={{ label: 'All Services', href: '/services' }}
+      />
       {/* Featured case studies */}
       <section className="py-8 md:py-12 border-b border-border/50">
         <div className="section-container max-w-6xl">

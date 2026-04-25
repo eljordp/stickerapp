@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion'
 import { Store, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
+import PageHero from '@/components/PageHero'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import SqFtEstimator from '@/components/SqFtEstimator'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import signageHero from '@/assets/services/business-signage.jpg'
 import atlasPizza from '@/assets/projects/atlas-pizza-signage.jpeg'
 import elevated925 from '@/assets/projects/elevated925-storefront.jpg'
 import plu2o from '@/assets/projects/plu2o-dispensary.jpg'
@@ -41,13 +43,16 @@ const process = [
 export default function BusinessSignage() {
   return (
     <>
-      <div className="-mt-16 md:-mt-18 pt-24 md:pt-32 pb-10 md:pb-14" style={{ backgroundColor: 'hsl(199 89% 64%)' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center section-container">
-          <Store className="w-10 h-10 text-white/80 mx-auto mb-4" />
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Business Signage</h1>
-          <p className="text-white/80 text-lg">Storefront signs, wall graphics, A-frames, banners, and more.</p>
-        </motion.div>
-      </div>
+      <PageHero
+        eyebrow="Business Signage"
+        title="Storefront, wall, sidewalk."
+        subtitle="Storefront signs, wall graphics, A-frames, banners, acrylic, and illuminated. Built to last 3–10 years and installed by our crew in the Bay Area."
+        image={signageHero}
+        imageAlt="Storefront signage"
+        icon={Store}
+        primaryCta={{ label: 'Get a Quote', href: '#quote' }}
+        secondaryCta={{ label: 'Recent Installs', href: '#portfolio' }}
+      />
       <section className="py-8 md:py-16">
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
@@ -117,7 +122,7 @@ export default function BusinessSignage() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <PortfolioStrip
             title="Signage We've Installed"
@@ -149,7 +154,7 @@ export default function BusinessSignage() {
           />
         </div>
       </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
         <div className="section-container">
           <EstimateForm
             service="Business Signage"
