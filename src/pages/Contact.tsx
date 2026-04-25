@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Send, Mail, Phone, MapPin, Loader2 } from 'lucide-react'
+import { Send, Mail, MapPin, Loader2 } from 'lucide-react'
 import { contactSchema, type ContactFormErrors } from '@/lib/validation'
 import { supabase } from '@/lib/supabase'
 import { sendContactEmail } from '@/lib/email'
@@ -167,14 +167,15 @@ export default function Contact() {
                 <p className="text-sm text-muted-foreground">thestickersmith@gmail.com</p>
               </div>
               <div className="bg-card border border-border rounded-2xl p-6">
-                <Phone className="text-primary mb-3" size={24} aria-hidden="true" />
-                <h3 className="font-bold mb-1">Phone</h3>
-                <p className="text-sm text-muted-foreground">Bay Area, CA</p>
-              </div>
-              <div className="bg-card border border-border rounded-2xl p-6">
                 <MapPin className="text-primary mb-3" size={24} aria-hidden="true" />
                 <h3 className="font-bold mb-1">Location</h3>
                 <p className="text-sm text-muted-foreground">Hayward, California</p>
+                <p className="text-xs text-muted-foreground mt-1">Bay Area pickup by appointment</p>
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <Send className="text-primary mb-3" size={24} aria-hidden="true" />
+                <h3 className="font-bold mb-1">Response Time</h3>
+                <p className="text-sm text-muted-foreground">Within 24 hours, every business day.</p>
               </div>
             </div>
           </div>
