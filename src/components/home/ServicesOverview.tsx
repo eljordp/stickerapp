@@ -23,8 +23,9 @@ export default function ServicesOverview() {
     <section className="py-16 md:py-24">
       <div className="section-container">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-black mb-4">More Than Just Stickers</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Full-service print and branding for Bay Area businesses</p>
+          <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Beyond Stickers</p>
+          <h2 className="text-3xl md:text-5xl font-black mb-4">Everything you need branded.</h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Wraps, signage, packaging, print, window film. One studio, every surface — built for Bay Area brands.</p>
         </motion.div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-12">
           {services.map((service, index) => (
