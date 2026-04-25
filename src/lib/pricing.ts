@@ -40,12 +40,21 @@ export const defaultPricing: PricingConfig = {
     { maxQty: Infinity, price: 0.28 },
   ],
   sizeMultipliers: [
+    // Square / Die-Cut / Kiss-Cut / Square sticker presets
     { name: '2" x 2"', multiplier: 1.0 },
     { name: '3" x 3"', multiplier: 1.3 },
     { name: '4" x 4"', multiplier: 1.7 },
     { name: '5" x 5"', multiplier: 2.1 },
     { name: '6" x 6"', multiplier: 2.5 },
     { name: '7" x 7"', multiplier: 3.0 },
+    // Rectangle presets — area-based, smoothly interpolated against the square scale
+    { name: '3" x 2"', multiplier: 1.15 },
+    { name: '4" x 2"', multiplier: 1.25 },
+    { name: '4" x 3"', multiplier: 1.50 },
+    { name: '5" x 3"', multiplier: 1.65 },
+    { name: '6" x 3"', multiplier: 1.85 },
+    { name: '6" x 4"', multiplier: 2.05 },
+    { name: '8" x 4"', multiplier: 2.30 },
   ],
   materialMultipliers: [
     { name: 'Matte Vinyl', multiplier: 1.0 },

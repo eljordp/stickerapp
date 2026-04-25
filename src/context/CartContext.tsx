@@ -43,10 +43,12 @@ function EmailCaptureModal({
   isOpen,
   onSubmit,
   onClose,
+  onSkip,
 }: {
   isOpen: boolean
   onSubmit: (email: string) => void
   onClose: () => void
+  onSkip: () => void
 }) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -90,8 +92,8 @@ function EmailCaptureModal({
                 <ShoppingBag size={24} className="text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-lg">Before we add that...</h3>
-                <p className="text-sm text-muted-foreground">Enter your email to save your cart</p>
+                <h3 className="font-bold text-lg">Save your cart?</h3>
+                <p className="text-sm text-muted-foreground">Drop your email and we'll save it so you can come back anytime.</p>
               </div>
             </div>
 
@@ -111,11 +113,15 @@ function EmailCaptureModal({
                 {error && <p className="text-sm text-destructive mt-1">{error}</p>}
               </div>
               <button type="submit" className="btn-primary w-full">
-                Continue to Cart
+                Save & Add to Cart
               </button>
-              <p className="text-xs text-muted-foreground text-center">
-                We'll save your cart so you don't lose it
-              </p>
+              <button
+                type="button"
+                onClick={onSkip}
+                className="block w-full text-xs text-muted-foreground hover:text-foreground text-center transition-colors py-2"
+              >
+                Skip — just add to cart
+              </button>
             </form>
           </motion.div>
         </motion.div>
@@ -218,6 +224,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setPendingItem(null)
   }
 
+  const handleEmailSkip = () => {
+    // Add the item without saving an email — guest checkout
+    setShowEmailModal(false)
+    if (pendingItem) {
+      doAddItem(pendingItem)
+      setPendingItem(null)
+    }
+  }
+
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id))
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -318,6 +333,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         isOpen={showEmailModal}
         onSubmit={handleEmailSubmit}
         onClose={handleEmailClose}
+        onSkip={handleEmailSkip}
       />
     </CartContext.Provider>
   )

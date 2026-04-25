@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Printer } from 'lucide-react'
+import tssLogo from '@/assets/tss-logo-new.png'
 
 const SESSION_KEY = 'tss_intro_played'
 const DURATION = 4.6
@@ -158,7 +159,11 @@ export default function PrinterIntro() {
             transition={{ delay: 0.1, duration: 0.4, ease: 'easeOut' }}
             className="relative text-center max-w-md"
           >
-            <div className="flex items-center justify-center gap-2 mb-6">
+            <img src={tssLogo} alt="The Sticker Smith" className="h-12 md:h-14 mx-auto mb-3" />
+            <p className="text-[10px] md:text-xs text-neutral-500 font-mono tracking-[0.2em] uppercase mb-7">
+              Bay Area Print &amp; Branding Studio
+            </p>
+            <div className="flex items-center justify-center gap-2 mb-5">
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
               <div className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_6px_rgba(236,72,153,0.8)]" />
               <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.8)]" />
@@ -167,7 +172,7 @@ export default function PrinterIntro() {
                 ready
               </span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-8 tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-7 tracking-tight">
               Press <span className="text-gradient">Print</span>
             </h2>
             <button

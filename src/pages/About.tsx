@@ -27,10 +27,10 @@ const stats = [
 ]
 
 const values = [
-  { icon: Shield, title: 'Quality Materials', description: 'We use premium vinyl, inks, and substrates on every job. Your brand deserves materials that last, not the cheapest option available.' },
-  { icon: Zap, title: 'Fast Turnaround', description: 'Most projects ship within days, not weeks. Rush orders are available when you need them, and we communicate timelines upfront.' },
-  { icon: FileCheck, title: 'Free Digital Proofs', description: 'Every order includes a free digital proof before production. You see exactly what you are getting and approve before we print.' },
-  { icon: Heart, title: 'Local Service', description: 'We are a Bay Area business serving Bay Area businesses. Local pickup, face-to-face consultations, and real accountability.' },
+  { icon: Shield, title: 'Premium Materials', description: '3M and Avery cast vinyl on stickers and wraps. 16pt cardstock on cards. SunTek and LLumar on tint. We don\'t cut corners on substrate.' },
+  { icon: Zap, title: '3–5 Day Standard, 24hr Proof', description: 'Most jobs ship in 3–5 business days. Every order gets a free digital proof in 24 hours so you approve the file before we print.' },
+  { icon: FileCheck, title: 'Trusted by Real Brands', description: 'Safeway, Albertsons, WHCI, and dozens of Bay Area businesses run their print and fleet branding through us. The list keeps growing.' },
+  { icon: Heart, title: 'Bay Area, Hands-On', description: 'Local pickup, face-to-face consultations, real accountability. We install most jobs ourselves. You\'re not getting passed off to a call center.' },
 ]
 
 const fadeUp = {

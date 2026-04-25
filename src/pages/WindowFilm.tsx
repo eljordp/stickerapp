@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { Film, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import PageHero from '@/components/PageHero'
 import EstimateForm from '@/components/EstimateForm'
-import SqFtEstimator from '@/components/SqFtEstimator'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
 import windowHero from '@/assets/services/window-film.jpg'
@@ -125,22 +124,6 @@ export default function WindowFilm() {
               { src: windowDecorative, alt: 'Decorative pattern', caption: 'Decorative pattern' },
               { src: windowInstall, alt: 'Squeegee install', caption: 'Pro install' },
               { src: windowSecurity, alt: 'Security film', caption: 'Security film' },
-            ]}
-          />
-        </div>
-      </section>
-      <section className="py-10 md:py-14 border-t border-border/50">
-        <div className="section-container max-w-2xl">
-          <SqFtEstimator
-            service="Window Film & Tint"
-            title="Window Film Quick Estimate"
-            subtitle="Not sure what your tint job costs? Get a ballpark in seconds."
-            tiers={[
-              { maxSqFt: 25, price: 200, label: 'Small (up to 25 sq ft) — Standard Frosted' },
-              { maxSqFt: 50, price: 400, label: 'Medium (25–50 sq ft) — Standard Frosted' },
-              { maxSqFt: 100, price: 600, label: 'Large (50–100 sq ft) — Standard Frosted' },
-              { maxSqFt: 150, price: 1000, label: '100–150 sq ft — Medium tint / Solar' },
-              { maxSqFt: 300, price: 1800, label: '150–300 sq ft — Medium tint / Solar' },
             ]}
           />
         </div>

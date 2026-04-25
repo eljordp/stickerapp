@@ -137,10 +137,29 @@ export default function Contact() {
                     <label htmlFor="contact-phone" className="sr-only">Phone</label>
                     <input
                       id="contact-phone"
-                      type="tel" placeholder="Phone" value={formData.phone}
+                      type="tel" placeholder="Phone (optional)" value={formData.phone}
                       onChange={e => setFormData({...formData, phone: e.target.value})}
                       className="w-full px-5 py-3.5 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                     />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-service" className="sr-only">Service</label>
+                    <select
+                      id="contact-service"
+                      value={formData.service}
+                      onChange={e => setFormData({...formData, service: e.target.value})}
+                      className="w-full px-5 py-3.5 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                    >
+                      <option value="">What do you need? (optional)</option>
+                      <option value="Stickers & Labels">Stickers &amp; Labels</option>
+                      <option value="Vehicle Graphics">Vehicle Graphics</option>
+                      <option value="Business Signage">Business Signage</option>
+                      <option value="Event Displays">Event Displays</option>
+                      <option value="Mylar Packaging">Mylar Packaging</option>
+                      <option value="Business Print">Business Print (cards, flyers, etc.)</option>
+                      <option value="Window Film & Tint">Window Film &amp; Tint</option>
+                      <option value="Other">Other / Not sure</option>
+                    </select>
                   </div>
                   <div>
                     <label htmlFor="contact-message" className="sr-only">Project Details</label>

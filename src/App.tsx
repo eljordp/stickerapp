@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import Layout from '@/components/layout/Layout'
@@ -43,6 +44,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <PrinterIntro />
+      <Analytics />
       <AnalyticsTracker />
       <AuthProvider>
       <CartProvider>

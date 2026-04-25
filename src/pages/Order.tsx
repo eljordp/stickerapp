@@ -42,7 +42,32 @@ const materialData = [
   { value: 'Embossed/UV', label: 'Embossed/UV', bg: 'radial-gradient(circle at 35% 35%, #ffffff, #d8d8d8)' },
 ]
 
-const sizeOptions = ['2" x 2"', '3" x 3"', '4" x 4"', '5" x 5"', '6" x 6"', '7" x 7"']
+// Square-presets — used for Die-Cut, Kiss-Cut, Square (these shapes have equal W and H)
+const SQUARE_SIZES = ['2" x 2"', '3" x 3"', '4" x 4"', '5" x 5"', '6" x 6"', '7" x 7"']
+// Circle uses the same square presets internally (diameter = W = H), but the
+// label is rendered as a single diameter ('2"', '3"', etc.) since "2" x 2"" is
+// nonsensical for a circle.
+const CIRCLE_LABELS: Record<string, string> = {
+  '2" x 2"': '2" diameter',
+  '3" x 3"': '3" diameter',
+  '4" x 4"': '4" diameter',
+  '5" x 5"': '5" diameter',
+  '6" x 6"': '6" diameter',
+  '7" x 7"': '7" diameter',
+}
+// Rectangle gets its own set of W×H presets
+const RECT_SIZES = ['3" x 2"', '4" x 2"', '4" x 3"', '5" x 3"', '6" x 3"', '6" x 4"', '8" x 4"']
+
+function getSizesForShape(shape: string): string[] {
+  if (shape === 'Rectangle') return RECT_SIZES
+  return SQUARE_SIZES
+}
+
+function formatSizeForShape(size: string, shape: string): string {
+  if (shape === 'Circle') return CIRCLE_LABELS[size] ?? size
+  return size
+}
+
 const qtyOptions = [50, 100, 250, 500, 1000, 2500]
 const MIN_QTY = 50
 
@@ -218,7 +243,12 @@ export default function Order() {
                 {shapeData.map(s => (
                   <button
                     key={s.value}
-                    onClick={() => setShape(s.value)}
+                    onClick={() => {
+                      setShape(s.value)
+                      // If current size isn't valid for the new shape, snap to that shape's first preset
+                      const validSizes = getSizesForShape(s.value)
+                      if (!validSizes.includes(size)) setSize(validSizes[0])
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium border transition-all text-left ${
                       shape === s.value
                         ? 'border-primary bg-primary/10 text-primary'
@@ -260,9 +290,11 @@ export default function Order() {
 
             {/* Size */}
             <div>
-              <h3 className="text-sm font-black uppercase tracking-wider mb-3">Size, inch (WxH)</h3>
+              <h3 className="text-sm font-black uppercase tracking-wider mb-3">
+                {shape === 'Circle' ? 'Diameter' : shape === 'Rectangle' ? 'Size, inch (W × H)' : 'Size, inch (W × H)'}
+              </h3>
               <div className="space-y-2">
-                {sizeOptions.map(s => (
+                {getSizesForShape(shape).map(s => (
                   <button
                     key={s}
                     onClick={() => setSize(s)}
@@ -272,7 +304,7 @@ export default function Order() {
                         : 'border-border hover:border-primary/30'
                     }`}
                   >
-                    {s}
+                    {formatSizeForShape(s, shape)}
                   </button>
                 ))}
               </div>
@@ -438,7 +470,7 @@ export default function Order() {
               </h3>
               <div className="text-center mb-4">
                 <p className="text-xl font-black">{effectiveQty} stickers</p>
-                <p className="text-sm text-muted-foreground">{shapeLabel} &middot; {size}</p>
+                <p className="text-sm text-muted-foreground">{shapeLabel} &middot; {formatSizeForShape(size, shape)}</p>
                 <p className="text-sm text-muted-foreground">{materialLabel}</p>
               </div>
 
@@ -450,7 +482,7 @@ export default function Order() {
                 </div>
                 {sizeMult !== 1 && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>{size} size (×{sizeMult.toFixed(1)})</span>
+                    <span>{formatSizeForShape(size, shape)} size (×{sizeMult.toFixed(1)})</span>
                     <span className="tabular-nums">+${(basePrice * effectiveQty * (sizeMult - 1)).toFixed(2)}</span>
                   </div>
                 )}
