@@ -30,6 +30,16 @@ function isBulkCategory(cat: ProductCategory): boolean {
   return cat.items.some(item => item.quantities.some(q => q.qty >= 50))
 }
 
+const TOTAL_TIER_CATEGORIES = new Set([
+  'Business Cards',
+  'Flyers & Door Hangers',
+  'Postcards',
+])
+
+function usesTotalTierPricing(cat: ProductCategory): boolean {
+  return TOTAL_TIER_CATEGORIES.has(cat.name)
+}
+
 /** Find the best tier for a given qty (highest tier whose qty <= input) */
 function findTier(quantities: { qty: number; price: number }[], qty: number) {
   const sorted = [...quantities].sort((a, b) => a.qty - b.qty)
@@ -62,7 +72,8 @@ export default function ProductOrder({ categoryNames }: Props) {
   const item = category.items[selectedItem]
   if (!item) return null
 
-  const bulk = isBulkCategory(category)
+  const totalTierPricing = usesTotalTierPricing(category)
+  const bulk = isBulkCategory(category) && !totalTierPricing
   const groups = useMemo(() => groupItems(category.items), [category])
   const hasGroups = groups.length > 1 || groups[0]?.label !== groups[0]?.items[0]?.item.size
 
@@ -78,7 +89,7 @@ export default function ProductOrder({ categoryNames }: Props) {
 
   // For bulk (per-unit pricing): total = (unitPrice + addOns) * qty
   // For fixed (per-project pricing): total = price + addOns
-  const isPerUnit = bulk || item.quantities.length > 1
+  const isPerUnit = !totalTierPricing && (bulk || item.quantities.length > 1)
   const totalPrice = isPerUnit
     ? +((unitPrice + addOnTotal) * effectiveQty).toFixed(2)
     : +(unitPrice + addOnTotal).toFixed(2)
@@ -216,7 +227,9 @@ export default function ProductOrder({ categoryNames }: Props) {
                     <span className="float-right text-muted-foreground">
                       {item.quantities.length === 1 && item.quantities[0].qty === 1
                         ? `$${p.quantities[0].price.toFixed(2)}`
-                        : `from $${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}`}
+                        : totalTierPricing
+                          ? `from $${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}`
+                          : `from $${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}/ea`}
                     </span>
                   </button>
                 ))}
@@ -270,7 +283,9 @@ export default function ProductOrder({ categoryNames }: Props) {
                     }`}
                   >
                     <div className="font-bold">{q.qty}{q.qty > 1 ? ' pcs' : ''}</div>
-                    <div className="text-xs mt-0.5 text-muted-foreground">${q.price.toFixed(2)}/ea</div>
+                    <div className="text-xs mt-0.5 text-muted-foreground">
+                      ${q.price.toFixed(2)}{totalTierPricing ? ' total' : '/ea'}
+                    </div>
                   </button>
                 ))}
               </div>
