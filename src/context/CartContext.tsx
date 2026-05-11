@@ -199,11 +199,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const addItem = (item: CartItem): 'added' | 'pending' => {
-    if (!cartEmail) {
-      setPendingItem(item)
-      setShowEmailModal(true)
-      return 'pending'
-    }
     doAddItem(item)
     return 'added'
   }

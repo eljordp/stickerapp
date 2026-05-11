@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 
 import dieCutCategory from '@/assets/stickers/die-cut-category.png'
 import stickerSheetsCategory from '@/assets/stickers/sticker-sheets-category.png'
@@ -35,20 +34,21 @@ const categories = [
 
 export default function ProductCategories() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-10 md:py-16">
       <div className="section-container">
+        <div className="mb-6 md:mb-8 flex flex-col gap-2 text-center md:text-left">
+          <p className="text-primary font-bold text-xs uppercase tracking-widest">Shop stickers</p>
+          <h2 className="text-2xl md:text-4xl font-black">Start with the product people ask for most.</h2>
+          <p className="text-muted-foreground md:text-lg">Pick a format, upload artwork, approve your proof, then we print.</p>
+        </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {categories.map((cat, index) => (
-            <motion.div
+          {categories.map((cat) => (
+            <div
               key={cat.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
             >
               <Link
                 to={cat.href}
-                className="group block overflow-hidden rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-300"
+                className="group block overflow-hidden rounded-lg border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-300"
               >
                 {/* Image */}
                 <div className="flex items-center justify-center p-6 md:p-8 aspect-square">
@@ -65,7 +65,7 @@ export default function ProductCategories() {
                   <p className="text-muted-foreground text-sm">{cat.description}</p>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

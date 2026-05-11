@@ -4,8 +4,9 @@ import ProductCategories from '@/components/home/ProductCategories'
 import ServicesOverview from '@/components/home/ServicesOverview'
 import Reviews from '@/components/home/Reviews'
 import FAQ from '@/components/home/FAQ'
-import SavingsAndRewards from '@/components/home/SavingsAndRewards'
 import QuickContact from '@/components/home/QuickContact'
+import HowItWorks from '@/components/home/HowItWorks'
+import ProjectGallery from '@/components/home/ProjectGallery'
 
 export default function Home() {
   return (
@@ -24,10 +25,11 @@ export default function Home() {
       <div className="relative">
         <Hero />
         <ProductCategories />
+        <HowItWorks />
+        <ProjectGallery />
         <TrustedBy />
         <ServicesOverview />
         <Reviews />
-        <SavingsAndRewards />
         <FAQ compact />
         <QuickContact />
       </div>

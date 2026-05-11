@@ -8,7 +8,7 @@ import heroPrinter from '@/assets/hero-printer.jpg'
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[92vh] lg:min-h-[90vh] flex items-center overflow-hidden pt-6 pb-10 lg:py-0">
+    <section className="relative overflow-hidden py-6 sm:py-10 lg:min-h-[78vh] lg:flex lg:items-center lg:py-12">
       {/* Subtle background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
 
@@ -25,8 +25,8 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative order-1 lg:order-2"
           >
-            <div className="relative w-full aspect-square max-w-[300px] sm:max-w-sm lg:max-w-md mx-auto">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 ring-1 ring-primary/10">
+            <div className="relative w-full aspect-square max-w-[260px] sm:max-w-sm lg:max-w-md mx-auto">
+              <div className="relative rounded-lg overflow-hidden shadow-2xl border border-white/10 ring-1 ring-primary/10">
                 <img
                   src={heroPrinter}
                   alt="Large-format printer mid-job"
@@ -45,7 +45,7 @@ export default function Hero() {
             <div className="mb-4 flex justify-center lg:justify-start">
               <FirstOrderChip />
             </div>
-            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="text-[2.25rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-6 tracking-tight">
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="text-[2rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-6 tracking-tight">
               <span className="text-gradient">Bay Area's</span>
               <br />
               Full-Service Print & Branding Studio
@@ -56,8 +56,8 @@ export default function Hero() {
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="flex flex-col sm:flex-row gap-3 mb-8 max-w-sm mx-auto lg:mx-0 lg:max-w-none">
-              <Link to="/stickers" className="btn-primary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Order Stickers<ArrowRight size={20} /></Link>
-              <Link to="/contact" className="btn-secondary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Start My Project</Link>
+              <Link to="/stickers" className="btn-primary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Make Stickers<ArrowRight size={20} /></Link>
+              <Link to="/contact" className="btn-secondary hidden sm:inline-flex text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Get a Quote</Link>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }} className="flex flex-wrap justify-center lg:justify-start gap-2 md:gap-3">
@@ -65,7 +65,7 @@ export default function Hero() {
                 <Clock size={14} className="text-primary" />24hr Proof
               </div>
               <div className="flex items-center gap-1.5 bg-white/5 border border-border rounded-full px-3 py-1.5 text-xs md:text-sm text-muted-foreground whitespace-nowrap">
-                <MapPin size={14} className="text-primary" />Free Shipping
+                <MapPin size={14} className="text-primary" />Bay Area Pickup
               </div>
               <div className="flex items-center gap-1.5 bg-white/5 border border-border rounded-full px-3 py-1.5 text-xs md:text-sm text-muted-foreground whitespace-nowrap">
                 <Shield size={14} className="text-primary" />Quality Guaranteed
