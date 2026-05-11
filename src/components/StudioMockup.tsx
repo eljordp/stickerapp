@@ -1,6 +1,6 @@
 import { useState, useRef, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, X, ImageIcon } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 
 export type StudioShape =
   | 'business-card'
@@ -50,14 +50,31 @@ const SHAPE_RATIO: Record<StudioShape, number> = {
  * Cards/postcards/flyers get a subtle paper-edge look.
  * Stickers get a white die-cut margin.
  */
-function ArtworkSlot({ artworkUrl }: { artworkUrl: string | null }) {
-  return artworkUrl ? (
-    <img src={artworkUrl} alt="Your design" className="w-full h-full object-cover" />
-  ) : (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-neutral-400 bg-neutral-100">
-      <ImageIcon size={24} strokeWidth={1.5} />
-      <span className="text-[10px] font-mono uppercase tracking-widest">Your art here</span>
+function SampleDesign({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
+  const dark = tone === 'dark'
+  return (
+    <div className={`relative flex h-full w-full flex-col justify-between overflow-hidden p-[8%] ${dark ? 'bg-neutral-950 text-white' : 'bg-white text-neutral-950'}`}>
+      <div className="absolute -right-[12%] -top-[18%] h-[54%] w-[54%] rounded-full bg-cyan-400/85" />
+      <div className="absolute -bottom-[18%] -left-[14%] h-[46%] w-[46%] rounded-full bg-pink-500/85" />
+      <div className="absolute bottom-[18%] right-[18%] h-[18%] w-[34%] rounded-full bg-yellow-400/90" />
+      <div className="relative z-10">
+        <p className="text-[clamp(9px,1.4vw,18px)] font-black uppercase leading-none tracking-wide">
+          Your Brand
+        </p>
+        <p className={`mt-1 text-[clamp(6px,0.8vw,10px)] font-bold uppercase tracking-[0.22em] ${dark ? 'text-white/58' : 'text-neutral-500'}`}>
+          Bay Area
+        </p>
+      </div>
+      <div className="relative z-10 h-[10%] w-[46%] rounded-full bg-current opacity-80" />
     </div>
+  )
+}
+
+function ArtworkSlot({ artworkUrl, tone = 'light' }: { artworkUrl: string | null; tone?: 'light' | 'dark' }) {
+  return artworkUrl ? (
+    <img src={artworkUrl} alt="Your design" className="h-full w-full object-cover" />
+  ) : (
+    <SampleDesign tone={tone} />
   )
 }
 
@@ -140,7 +157,8 @@ function ShapeFrame({
             boxShadow: '0 4px 12px rgba(0,0,0,0.55)',
           }}
         >
-          <ArtworkSlot artworkUrl={artworkUrl} />
+          <ArtworkSlot artworkUrl={artworkUrl} tone="light" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,255,255,0.18),transparent_32%,rgba(255,255,255,0.08)_68%,transparent)] mix-blend-screen" />
         </div>
       </div>
     )
@@ -207,7 +225,8 @@ function ShapeFrame({
             boxShadow: '0 3px 8px rgba(0,0,0,0.5)',
           }}
         >
-          <ArtworkSlot artworkUrl={artworkUrl} />
+          <ArtworkSlot artworkUrl={artworkUrl} tone="light" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,255,255,0.16),transparent_36%,rgba(255,255,255,0.08)_70%,transparent)] mix-blend-screen" />
         </div>
       </div>
     )
@@ -276,7 +295,8 @@ function ShapeFrame({
           borderRadius: innerRadius,
         }}
       >
-        <ArtworkSlot artworkUrl={artworkUrl} />
+        <ArtworkSlot artworkUrl={artworkUrl} tone={isDieCut ? 'dark' : 'light'} />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.24),transparent_34%,rgba(255,255,255,0.08)_70%,transparent)] mix-blend-screen" />
       </div>
     </div>
   )
@@ -342,7 +362,7 @@ export default function StudioMockup({
       )}
 
       {/* Studio canvas */}
-      <div className="relative rounded-3xl overflow-hidden border border-border aspect-[16/10] md:aspect-[16/9]">
+      <div className="relative overflow-hidden rounded-lg border border-border aspect-[16/10] md:aspect-[16/9] shadow-2xl">
         {/* Backdrop — soft radial spotlight from top */}
         <div
           className="absolute inset-0"
@@ -358,6 +378,9 @@ export default function StudioMockup({
             background:
               'linear-gradient(to bottom, transparent, rgba(0,0,0,0.4))',
           }}
+        />
+        <div
+          className="absolute left-1/2 top-[18%] h-32 w-32 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl pointer-events-none"
         />
 
         <AnimatePresence mode="wait">
@@ -381,10 +404,13 @@ export default function StudioMockup({
         <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-white/70">
           {scene.label}
         </div>
+        <div className="absolute bottom-3 left-3 rounded-full border border-white/10 bg-black/55 px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-white/60 backdrop-blur-sm">
+          preview only
+        </div>
       </div>
 
       {/* Upload bar */}
-      <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 bg-card border border-border rounded-2xl p-3">
+      <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 bg-card border border-border rounded-lg p-3">
         <input
           ref={fileRef}
           type="file"
@@ -408,7 +434,7 @@ export default function StudioMockup({
           </div>
         ) : (
           <p className="text-xs text-muted-foreground text-center sm:text-left">
-            PNG, JPG, PDF, AI, SVG · preview updates instantly
+            PNG, JPG, PDF, AI, SVG · preview only, final proof follows
           </p>
         )}
       </div>

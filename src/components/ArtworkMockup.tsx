@@ -1,6 +1,6 @@
 import { useState, useRef, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, X, ImageIcon } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 
 export type MockupSlot = {
   left: number // %
@@ -12,6 +12,7 @@ export type MockupSlot = {
   perspective?: number // px
   opacity?: number // 0-1
   blendMode?: React.CSSProperties['mixBlendMode']
+  radius?: string
 }
 
 export type MockupScene = {
@@ -57,6 +58,8 @@ export default function ArtworkMockup({
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  const surface = getSurfaceStyle(service, scene.key)
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="text-center mb-8">
@@ -88,7 +91,7 @@ export default function ArtworkMockup({
       )}
 
       {/* Mockup canvas */}
-      <div className="relative rounded-3xl overflow-hidden border border-border bg-black">
+      <div className="relative overflow-hidden rounded-lg border border-border bg-black shadow-2xl aspect-[4/3] md:aspect-[16/9]">
         <AnimatePresence mode="wait">
           <motion.div
             key={scene.key}
@@ -96,13 +99,14 @@ export default function ArtworkMockup({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative w-full"
+            className="absolute inset-0"
           >
-            <img src={scene.base} alt={scene.label} className="w-full h-auto block" />
+            <img src={scene.base} alt={scene.label} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
 
             {/* Artwork slot overlay */}
             <div
-              className="absolute pointer-events-none flex items-center justify-center"
+              className="absolute pointer-events-none"
               style={{
                 left: `${scene.slot.left}%`,
                 top: `${scene.slot.top}%`,
@@ -117,37 +121,55 @@ export default function ArtworkMockup({
                   .join(' '),
                 opacity: scene.slot.opacity ?? 1,
                 mixBlendMode: scene.slot.blendMode ?? 'normal',
+                transformOrigin: 'center',
               }}
             >
+              <div
+                className="relative h-full w-full overflow-hidden"
+                style={{
+                  borderRadius: scene.slot.radius ?? surface.radius,
+                  background: surface.background,
+                  border: surface.border,
+                  boxShadow: surface.shadow,
+                }}
+              >
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: surface.sheen,
+                    mixBlendMode: surface.sheenBlend,
+                    opacity: surface.sheenOpacity,
+                  }}
+                />
               {artworkUrl ? (
                 <img
                   src={artworkUrl}
                   alt="Your artwork"
-                  className="max-w-full max-h-full object-contain"
+                    className="relative z-10 h-full w-full p-[5%]"
                   style={{
-                    filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.35))',
+                      objectFit: surface.objectFit,
+                      filter: surface.artworkFilter,
                   }}
                 />
               ) : (
-                <div className="w-full h-full border-2 border-dashed border-white/40 bg-white/10 backdrop-blur-[2px] rounded-md flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-1.5 text-white/80 text-xs font-semibold uppercase tracking-widest">
-                    <ImageIcon size={18} />
-                    Your art here
-                  </div>
-                </div>
+                  <SampleArtwork service={service} sceneKey={scene.key} surface={surface.kind} />
               )}
+              </div>
             </div>
 
             {/* Corner hint */}
-            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-white/70">
+            <div className="absolute top-3 right-3 bg-black/65 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-white/80">
               {scene.label}
+            </div>
+            <div className="absolute bottom-3 left-3 rounded-full border border-white/10 bg-black/55 px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-white/60 backdrop-blur-sm">
+              preview only
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Upload bar */}
-      <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 bg-card border border-border rounded-2xl p-3">
+      <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 bg-card border border-border rounded-lg p-3">
         <input
           ref={fileRef}
           type="file"
@@ -174,9 +196,105 @@ export default function ArtworkMockup({
           </div>
         ) : (
           <p className="text-xs text-muted-foreground text-center sm:text-left">
-            PNG, JPG, PDF, AI, SVG · preview updates instantly
+            PNG, JPG, PDF, AI, SVG · preview only, final proof follows
           </p>
         )}
+      </div>
+      <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        We adjust scale, crop, and placement in the real proof before production.
+      </p>
+    </div>
+  )
+}
+
+type SurfaceKind = 'print' | 'vinyl' | 'glass'
+
+function getSurfaceStyle(service: string, sceneKey: string): {
+  kind: SurfaceKind
+  background: string
+  border: string
+  shadow: string
+  sheen: string
+  sheenBlend: React.CSSProperties['mixBlendMode']
+  sheenOpacity: number
+  artworkFilter: string
+  objectFit: React.CSSProperties['objectFit']
+  radius: string
+} {
+  const lower = `${service} ${sceneKey}`.toLowerCase()
+  if (lower.includes('window') || lower.includes('glass') || lower.includes('film')) {
+    return {
+      kind: 'glass',
+      background: 'rgba(240, 248, 255, 0.18)',
+      border: '1px solid rgba(255,255,255,0.24)',
+      shadow: 'inset 0 1px 18px rgba(255,255,255,0.08), 0 10px 24px rgba(0,0,0,0.18)',
+      sheen: 'linear-gradient(115deg, rgba(255,255,255,0.34), transparent 36%, rgba(255,255,255,0.1) 64%, transparent)',
+      sheenBlend: 'screen',
+      sheenOpacity: 0.75,
+      artworkFilter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.22)) saturate(0.85)',
+      objectFit: 'contain',
+      radius: '6px',
+    }
+  }
+  if (lower.includes('vehicle') || lower.includes('van') || lower.includes('truck') || lower.includes('sedan')) {
+    return {
+      kind: 'vinyl',
+      background: 'transparent',
+      border: '0',
+      shadow: 'none',
+      sheen: 'linear-gradient(135deg, rgba(255,255,255,0.2), transparent 34%, rgba(255,255,255,0.08) 68%, transparent)',
+      sheenBlend: 'screen',
+      sheenOpacity: 0.45,
+      artworkFilter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.45))',
+      objectFit: 'contain',
+      radius: '8px',
+    }
+  }
+  return {
+    kind: 'print',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.96), rgba(232,238,244,0.94))',
+    border: '1px solid rgba(255,255,255,0.38)',
+    shadow: 'inset 0 1px 0 rgba(255,255,255,0.72), inset 0 -10px 24px rgba(0,0,0,0.08), 0 12px 28px rgba(0,0,0,0.28)',
+    sheen: 'linear-gradient(120deg, transparent, rgba(255,255,255,0.42) 38%, transparent 48%)',
+    sheenBlend: 'screen',
+    sheenOpacity: 0.55,
+    artworkFilter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.16))',
+    objectFit: 'contain',
+    radius: '5px',
+  }
+}
+
+function SampleArtwork({
+  service,
+  sceneKey,
+  surface,
+}: {
+  service: string
+  sceneKey: string
+  surface: SurfaceKind
+}) {
+  const lower = `${service} ${sceneKey}`.toLowerCase()
+  const light = surface === 'print'
+  const glass = surface === 'glass'
+  const primary = glass ? 'text-white' : light ? 'text-neutral-950' : 'text-white'
+  const secondary = glass ? 'text-white/70' : light ? 'text-neutral-600' : 'text-white/70'
+  const accent = lower.includes('event') || lower.includes('flag') || lower.includes('canopy')
+    ? 'bg-yellow-400'
+    : lower.includes('window') || lower.includes('glass')
+      ? 'bg-white/60'
+      : 'bg-cyan-400'
+
+  return (
+    <div className={`relative z-10 flex h-full w-full items-center justify-center p-[7%] ${glass ? 'backdrop-blur-[1px]' : ''}`}>
+      <div className="absolute inset-[8%] rounded-md border border-current opacity-10" />
+      <div className="text-center">
+        <div className={`mx-auto mb-2 h-2 w-16 rounded-full ${accent} shadow-[0_0_14px_rgba(56,189,248,0.35)]`} />
+        <p className={`${primary} text-[clamp(10px,1.8vw,24px)] font-black uppercase leading-none tracking-wide`}>
+          Your Brand
+        </p>
+        <p className={`${secondary} mt-1 text-[clamp(7px,0.9vw,12px)] font-bold uppercase tracking-[0.22em]`}>
+          Est. 2026
+        </p>
       </div>
     </div>
   )
