@@ -47,6 +47,7 @@ import igFuego from '@/assets/projects/ig-fuegofamilyfarms-circle.jpg'
 // Business Print real client work
 import bpCleopatraCards from '@/assets/projects/bp-cleopatra-discount-cards.jpg'
 import bpCleopatraFlyer from '@/assets/projects/bp-cleopatra-tattoo-flyer.jpg'
+import bpCleopatraPoster from '@/assets/projects/bp-cleopatra-poster.jpg'
 import bpEmpireAuto from '@/assets/projects/bp-empire-automotive-flyer.jpg'
 
 export type ProjectCategory =
@@ -579,6 +580,17 @@ export const projects: Project[] = [
       'Service flyer + 4-up coupon sheet for Empire Automotive (Hayward, CA). Oil change, brake inspection, smog check, and 15% service offers — all printed as a coordinated pack.',
     scope: 'Flyer + coupon sheet',
     materials: 'Full-color print',
+  },
+  {
+    slug: 'cleopatra-ink-wall-poster',
+    image: bpCleopatraPoster,
+    title: 'Cleopatra Ink — Wall Poster',
+    client: 'Cleopatra Ink Tattoo & Piercing',
+    category: 'Business Print',
+    description:
+      'Large-format wall poster for Cleopatra Ink Sacramento — "The Largest & Most Awarded Tattoo Company Worldwide." Awards, country flags, and shop contact info in one piece.',
+    scope: 'Large-format poster',
+    materials: 'Premium photo paper',
   },
 ]
 
