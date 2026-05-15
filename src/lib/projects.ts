@@ -44,11 +44,10 @@ import igDuckTape from '@/assets/projects/ig-ducktape-ducksace.jpg'
 import igBotanas from '@/assets/projects/ig-botanas-sinaloa.jpg'
 import igCaliBull from '@/assets/projects/ig-calibullconnect-bulldog.jpg'
 import igFuego from '@/assets/projects/ig-fuegofamilyfarms-circle.jpg'
-// Business print
-import bizCards from '@/assets/projects/business-cards-luxury.jpg'
-import bizCardsFoil from '@/assets/projects/business-cards-foil.jpg'
-import flyers from '@/assets/projects/flyers-full-color.jpg'
-import postcards from '@/assets/projects/postcards-set.jpg'
+// Business Print real client work
+import bpCleopatraCards from '@/assets/projects/bp-cleopatra-discount-cards.jpg'
+import bpCleopatraFlyer from '@/assets/projects/bp-cleopatra-tattoo-flyer.jpg'
+import bpEmpireAuto from '@/assets/projects/bp-empire-automotive-flyer.jpg'
 
 export type ProjectCategory =
   | 'Vehicle Graphics'
@@ -549,44 +548,37 @@ export const projects: Project[] = [
 
   // ── Business Print ────────────────────────────────────────────
   {
-    slug: 'business-cards-luxury',
-    image: bizCards,
-    title: 'Premium Business Cards',
+    slug: 'cleopatra-ink-discount-cards',
+    image: bpCleopatraCards,
+    title: 'Cleopatra Ink — Card Suite',
+    client: 'Cleopatra Ink Tattoo & Piercing',
     category: 'Business Print',
     description:
-      'Thick-stock business cards on cotton or suede paper. Letterpress, embossing, and edge-paint options.',
-    scope: 'Business stationery',
-    materials: 'Cotton / suede stock',
+      'Full card suite for Cleopatra Ink Berkeley — premium business card with brand mark + 10/20/30% discount cards. Black/white/orange print on heavy stock.',
+    scope: 'Business cards + discount cards',
+    materials: 'Heavy matte stock',
   },
   {
-    slug: 'business-cards-foil',
-    image: bizCardsFoil,
-    title: 'Specialty Finish Cards',
+    slug: 'cleopatra-ink-tattoo-flyer',
+    image: bpCleopatraFlyer,
+    title: 'Cleopatra Ink — Tattoo Flyer',
+    client: 'Cleopatra Ink Tattoo & Piercing',
     category: 'Business Print',
     description:
-      'Foil-stamp + spot-UV business cards. The finish you notice in the hand before you read the name.',
-    scope: 'Specialty finish',
-    materials: 'Foil stamp + spot-UV',
+      '"We Make Extraordinary Tattoos For Extraordinary People" — full-color portrait flyer with real artist work shown. Brand-consistent with the rest of the Cleopatra suite.',
+    scope: 'Marketing flyer',
+    materials: 'Premium gloss',
   },
   {
-    slug: 'flyers-full-color',
-    image: flyers,
-    title: 'Full-Color Flyers',
+    slug: 'empire-automotive-flyer',
+    image: bpEmpireAuto,
+    title: 'Empire Automotive — Flyer + Coupon Pack',
+    client: 'Empire Automotive Services',
     category: 'Business Print',
     description:
-      'Full-bleed flyers on premium gloss or matte stock. Same-week turnaround on standard sizes.',
-    scope: 'Marketing collateral',
-    materials: '100lb gloss or matte',
-  },
-  {
-    slug: 'postcards-set',
-    image: postcards,
-    title: 'Custom Postcards',
-    category: 'Business Print',
-    description:
-      'Mailer-ready postcards — direct-mail spec, EDDM-compatible sizing, full-color both sides.',
-    scope: 'Direct mail',
-    materials: '14pt cardstock',
+      'Service flyer + 4-up coupon sheet for Empire Automotive (Hayward, CA). Oil change, brake inspection, smog check, and 15% service offers — all printed as a coordinated pack.',
+    scope: 'Flyer + coupon sheet',
+    materials: 'Full-color print',
   },
 ]
 
