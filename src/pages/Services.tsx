@@ -29,6 +29,40 @@ export default function Services() {
         primaryCta={{ label: 'Get a Quote', href: '/contact' }}
         secondaryCta={{ label: 'See Our Work', href: '/projects' }}
       />
+
+      {/* Print process b-roll */}
+      <section className="py-6 md:py-10 border-b border-border/40">
+        <div className="section-container max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid md:grid-cols-[1.4fr_1fr] gap-6 items-center"
+          >
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-border bg-black shadow-xl">
+              <video
+                src="/videos/epic-rane-print.mp4"
+                poster="/videos/epic-rane-print.jpg"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                aria-label="Large-format printer running custom stickers"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">In The Shop</p>
+              <h2 className="text-2xl md:text-3xl font-black leading-tight mb-3">Printed in-house. No middleman.</h2>
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                Every order runs through our own large-format printer and cutter — we own the process from proof to peel. That's how we hold deadlines, match colors, and ship clean every time.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       <section className="py-8 md:py-16">
         <div className="section-container">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">

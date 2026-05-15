@@ -1,28 +1,14 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 
-import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
-import atlasPizza from '@/assets/projects/atlas-pizza-signage.jpeg'
-import bhogal from '@/assets/projects/bhogal-construction.jpeg'
-import culturalDance from '@/assets/projects/cultural-dance-floor-1.jpeg'
-import weddingFloor from '@/assets/projects/wedding-vinyl-floor-1.jpeg'
-import safewayInstall from '@/assets/projects/safeway-install.jpeg'
-import tecEquipment from '@/assets/projects/tec-equipment-truck.jpeg'
-import procareFleet from '@/assets/projects/procare-fleet.jpeg'
-
-const galleryImages = [
-  { src: albertsonsVan, alt: 'Albertsons fleet van wrap', label: '@thestickersmith' },
-  { src: atlasPizza, alt: 'Atlas Pizza storefront signage', label: '@thestickersmith' },
-  { src: bhogal, alt: 'Bhogal Construction truck', label: '@thestickersmith' },
-  { src: culturalDance, alt: 'Cultural dance floor vinyl', label: '@thestickersmith' },
-  { src: weddingFloor, alt: 'Wedding vinyl floor design', label: '@thestickersmith' },
-  { src: safewayInstall, alt: 'Safeway installation', label: '@thestickersmith' },
-  { src: tecEquipment, alt: 'TEC Equipment truck', label: '@thestickersmith' },
-  { src: procareFleet, alt: 'ProCare fleet branding', label: '@thestickersmith' },
-]
+import { homepageGallery, type Project } from '@/lib/projects'
+import ProjectModal from '@/components/ProjectModal'
 
 export default function ProjectGallery() {
+  const [active, setActive] = useState<Project | null>(null)
+
   return (
     <section className="py-16 md:py-24 overflow-hidden">
       <div className="section-container mb-10">
@@ -45,32 +31,47 @@ export default function ProjectGallery() {
       {/* Full-width scrolling gallery */}
       <div className="relative">
         <div className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-8 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-          {galleryImages.map((img, index) => (
-            <motion.div
-              key={index}
+          {homepageGallery.map((project, index) => (
+            <motion.button
+              key={project.slug}
+              type="button"
+              onClick={() => setActive(project)}
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="flex-shrink-0 snap-start"
+              className="flex-shrink-0 snap-start group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl"
+              aria-label={`View ${project.title}`}
             >
-              <div className="group relative w-60 sm:w-72 md:w-80 aspect-square rounded-2xl overflow-hidden border border-border cursor-pointer">
+              <div className="relative w-60 sm:w-72 md:w-80 aspect-square rounded-2xl overflow-hidden border border-border cursor-pointer">
                 <img
-                  src={img.src}
-                  alt={img.alt}
+                  src={project.image}
+                  alt={project.title}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {img.label}
+                {/* Always-visible bottom title strip */}
+                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent text-left">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-0.5">
+                    {project.category}
+                  </p>
+                  <p className="text-white font-bold text-sm leading-tight line-clamp-1">
+                    {project.title}
+                  </p>
+                </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                  <span className="px-3 py-1.5 rounded-full bg-white/95 text-black text-xs font-bold opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    View Details
                   </span>
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
       </div>
+
+      <ProjectModal project={active} onClose={() => setActive(null)} />
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
