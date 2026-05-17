@@ -3,9 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Send, Mail, MapPin, Phone, Loader2 } from 'lucide-react'
 import { contactSchema, type ContactFormErrors } from '@/lib/validation'
-import { supabase } from '@/lib/supabase'
-import { sendContactEmail } from '@/lib/email'
 import { toast } from 'sonner'
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgbqwzo'
 import contactPrinter from '@/assets/pages/contact-printer.jpg'
 
 export default function Contact() {
@@ -53,27 +53,23 @@ export default function Contact() {
 
     setLoading(true)
     try {
-      const { error } = await supabase.from('contact_submissions').insert({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || null,
-        service: formData.service || null,
-        message: formData.message.trim(),
-        source: 'contact-page',
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || undefined,
+          service: formData.service || undefined,
+          message: formData.message.trim(),
+          _subject: `New quote request from ${formData.name.trim()}`,
+        }),
       })
 
-      if (error) throw error
-      sendContactEmail({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || undefined,
-        service: formData.service || undefined,
-        message: formData.message.trim(),
-      })
+      if (!res.ok) throw new Error('Formspree request failed')
       setSubmitted(true)
       toast.success('Quote request sent!')
     } catch {
-      // Fallback to mailto if Supabase fails
       const body = [`Name: ${formData.name}`, `Email: ${formData.email}`, formData.phone ? `Phone: ${formData.phone}` : '', formData.service ? `Service: ${formData.service}` : '', '', formData.message].filter(Boolean).join('\n')
       window.location.href = `mailto:thestickersmith@gmail.com?subject=${encodeURIComponent('Quote Request')}&body=${encodeURIComponent(body)}`
       setSubmitted(true)
