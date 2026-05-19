@@ -3,11 +3,9 @@ import { Send, ArrowRight, Loader2, Paperclip, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { contactSchema, validateAttachment, type ContactFormErrors } from '@/lib/validation'
+import { submitContactRequest } from '@/lib/contactSubmit'
 import { supabase } from '@/lib/supabase'
-import { sendContactEmail } from '@/lib/email'
 import { toast } from 'sonner'
-
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgbqwzo'
 
 const services = ['Stickers & Labels', 'Vehicle Graphics', 'Business Signage', 'Event Displays', 'Mylar Packaging', 'Business Print', 'Other']
 
@@ -43,57 +41,33 @@ export default function QuickContact() {
 
     setLoading(true)
     try {
-      let res: Response
-      if (attachment) {
-        const payload = new FormData()
-        payload.append('name', formData.name.trim())
-        payload.append('email', formData.email.trim())
-        if (formData.phone.trim()) payload.append('phone', formData.phone.trim())
-        if (formData.service) payload.append('service', formData.service)
-        payload.append('message', formData.message.trim())
-        payload.append('_subject', `New quick message from ${formData.name.trim()}`)
-        payload.append('Upload File', attachment, attachment.name)
-        res = await fetch(FORMSPREE_ENDPOINT, {
-          method: 'POST',
-          headers: { Accept: 'application/json' },
-          body: payload,
-        })
-      } else {
-        res = await fetch(FORMSPREE_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            phone: formData.phone.trim() || undefined,
-            service: formData.service || undefined,
-            message: formData.message.trim(),
-            _subject: `New quick message from ${formData.name.trim()}`,
-          }),
-        })
-      }
-
-      if (!res.ok) throw new Error(`Formspree returned ${res.status}`)
-
-      // Best-effort log to Supabase + Resend confirmation. Non-blocking.
-      supabase.from('contact_submissions').insert({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || null,
-        service: formData.service || null,
-        message: formData.message.trim(),
-        source: 'quick-contact',
-      }).then(() => {})
-      sendContactEmail({
+      const submission = {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || undefined,
         service: formData.service || undefined,
         message: formData.message.trim(),
-      })
+      }
+      const submitResult = await submitContactRequest({
+        ...submission,
+        subject: `New quick message from ${submission.name}`,
+      }, attachment)
 
+      // Best-effort CRM log. Email delivery is handled by Web3Forms above.
+      supabase.from('contact_submissions').insert({
+        name: submission.name,
+        email: submission.email,
+        phone: submission.phone || null,
+        service: submission.service || null,
+        message: submission.message,
+        source: 'quick-contact',
+      }).then(() => {})
       setSubmitted(true)
-      toast.success('Message sent!')
+      if (submitResult.attachmentStatus === 'fallback') {
+        toast.warning("Message sent, but the file couldn't attach. We'll request it by email.")
+      } else {
+        toast.success('Message sent!')
+      }
     } catch (err) {
       toast.error("Couldn't send — please email thestickersmith@gmail.com directly.")
       console.error('QuickContact submit failed:', err)
@@ -184,7 +158,7 @@ export default function QuickContact() {
                 type="file"
                 id="quick-attachment"
                 className="sr-only"
-                accept=".pdf,.jpg,.jpeg,.png,.gif,.svg"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null
                   if (!file) { setAttachment(null); setAttachmentError(null); return }
@@ -222,7 +196,7 @@ export default function QuickContact() {
                   className="flex items-center gap-3 px-5 py-3 rounded-xl border border-dashed border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer transition-colors"
                 >
                   <Paperclip size={18} />
-                  <span className="text-sm">Attach a file (optional — PDF, JPG, PNG, GIF, SVG, 10 MB max)</span>
+                  <span className="text-sm">Attach a file (optional — PDF, JPG, PNG, 5 MB max)</span>
                 </label>
               )}
               {attachmentError && <p className="text-sm text-destructive mt-1">{attachmentError}</p>}

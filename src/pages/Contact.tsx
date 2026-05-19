@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Send, Mail, MapPin, Phone, Loader2, Paperclip, X } from 'lucide-react'
 import { contactSchema, validateAttachment, type ContactFormErrors } from '@/lib/validation'
+import { submitContactRequest } from '@/lib/contactSubmit'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgbqwzo'
 import contactPrinter from '@/assets/pages/contact-printer.jpg'
 
 export default function Contact() {
@@ -61,39 +62,29 @@ export default function Contact() {
 
     setLoading(true)
     try {
-      let res: Response
-      if (attachment) {
-        const payload = new FormData()
-        payload.append('name', formData.name.trim())
-        payload.append('email', formData.email.trim())
-        if (formData.phone.trim()) payload.append('phone', formData.phone.trim())
-        if (formData.service) payload.append('service', formData.service)
-        payload.append('message', formData.message.trim())
-        payload.append('_subject', `New quote request from ${formData.name.trim()}`)
-        payload.append('Upload File', attachment, attachment.name)
-        res = await fetch(FORMSPREE_ENDPOINT, {
-          method: 'POST',
-          headers: { Accept: 'application/json' },
-          body: payload,
-        })
-      } else {
-        res = await fetch(FORMSPREE_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            phone: formData.phone.trim() || undefined,
-            service: formData.service || undefined,
-            message: formData.message.trim(),
-            _subject: `New quote request from ${formData.name.trim()}`,
-          }),
-        })
+      const submission = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || undefined,
+        service: formData.service || undefined,
+        message: formData.message.trim(),
       }
-
-      if (!res.ok) throw new Error(`Formspree returned ${res.status}`)
+      const submitResult = await submitContactRequest({
+        ...submission,
+        subject: `New quote request from ${submission.name}`,
+      }, attachment)
+      supabase.from('contact_submissions').insert({
+        ...submission,
+        phone: submission.phone || null,
+        service: submission.service || null,
+        source: 'contact-page',
+      }).then(() => {})
       setSubmitted(true)
-      toast.success('Quote request sent!')
+      if (submitResult.attachmentStatus === 'fallback') {
+        toast.warning("Quote sent, but the file couldn't attach. We'll request it by email.")
+      } else {
+        toast.success('Quote request sent!')
+      }
     } catch (err) {
       toast.error("Couldn't send — please email thestickersmith@gmail.com directly.")
       console.error('Contact form submit failed:', err)
@@ -199,7 +190,7 @@ export default function Contact() {
                       type="file"
                       id="contact-attachment"
                       className="sr-only"
-                      accept=".pdf,.jpg,.jpeg,.png,.gif,.svg"
+                      accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null
                         if (!file) { setAttachment(null); setAttachmentError(null); return }
@@ -237,7 +228,7 @@ export default function Contact() {
                         className="flex items-center gap-3 px-5 py-3.5 rounded-xl border border-dashed border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer transition-colors"
                       >
                         <Paperclip size={18} />
-                        <span className="text-sm">Attach a file (PDF, JPG, PNG, GIF, SVG — 10 MB max)</span>
+                        <span className="text-sm">Attach a file (PDF, JPG, or PNG — 5 MB max)</span>
                       </label>
                     )}
                     {attachmentError && <p className="text-sm text-destructive mt-1">{attachmentError}</p>}

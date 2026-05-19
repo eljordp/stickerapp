@@ -8,23 +8,32 @@ export const contactSchema = z.object({
   message: z.string().trim().min(1, 'Message is required').max(2000, 'Message is too long'),
 })
 
-export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB
-// Must match the file types enabled in Formspree's File Validation settings.
+export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024 // Web3Forms default attachment limit
 export const ALLOWED_ATTACHMENT_TYPES = [
-  'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml',
+  'image/jpeg', 'image/png',
   'application/pdf',
 ]
-const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']
+const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png']
 
 export function validateAttachment(file: File): string | null {
-  if (file.size > MAX_ATTACHMENT_BYTES) return 'File is too large (10 MB max)'
+  if (file.size > MAX_ATTACHMENT_BYTES) return 'File is too large (5 MB max)'
   const ext = file.name.toLowerCase().split('.').pop() ?? ''
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return 'File type not supported (PDF, JPG, or PNG only)'
+  }
   if (file.type && !ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      return 'File type not supported (PDF, JPG, PNG, GIF, or SVG only)'
-    }
+    return 'File type not supported (PDF, JPG, or PNG only)'
   }
   return null
+}
+
+export function normalizeAttachment(file: File): File {
+  if (!file.name.toLowerCase().endsWith('.jpeg')) return file
+  const normalizedName = file.name.replace(/\.jpeg$/i, '.jpg')
+  return new File([file], normalizedName, {
+    type: file.type || 'image/jpeg',
+    lastModified: file.lastModified,
+  })
 }
 
 export type ContactFormData = z.infer<typeof contactSchema>
