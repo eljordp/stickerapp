@@ -43,22 +43,37 @@ export default function QuickContact() {
 
     setLoading(true)
     try {
-      const payload = new FormData()
-      payload.append('name', formData.name.trim())
-      payload.append('email', formData.email.trim())
-      if (formData.phone.trim()) payload.append('phone', formData.phone.trim())
-      if (formData.service) payload.append('service', formData.service)
-      payload.append('message', formData.message.trim())
-      payload.append('_subject', `New quick message from ${formData.name.trim()}`)
-      if (attachment) payload.append('Upload File', attachment, attachment.name)
+      let res: Response
+      if (attachment) {
+        const payload = new FormData()
+        payload.append('name', formData.name.trim())
+        payload.append('email', formData.email.trim())
+        if (formData.phone.trim()) payload.append('phone', formData.phone.trim())
+        if (formData.service) payload.append('service', formData.service)
+        payload.append('message', formData.message.trim())
+        payload.append('_subject', `New quick message from ${formData.name.trim()}`)
+        payload.append('Upload File', attachment, attachment.name)
+        res = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: payload,
+        })
+      } else {
+        res = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim() || undefined,
+            service: formData.service || undefined,
+            message: formData.message.trim(),
+            _subject: `New quick message from ${formData.name.trim()}`,
+          }),
+        })
+      }
 
-      const res = await fetch(FORMSPREE_ENDPOINT, {
-        method: 'POST',
-        headers: { Accept: 'application/json' },
-        body: payload,
-      })
-
-      if (!res.ok) throw new Error('Formspree request failed')
+      if (!res.ok) throw new Error(`Formspree returned ${res.status}`)
 
       // Best-effort log to Supabase + Resend confirmation. Non-blocking.
       supabase.from('contact_submissions').insert({
@@ -79,10 +94,9 @@ export default function QuickContact() {
 
       setSubmitted(true)
       toast.success('Message sent!')
-    } catch {
-      const body = [`Name: ${formData.name}`, `Email: ${formData.email}`, formData.phone ? `Phone: ${formData.phone}` : '', formData.service ? `Service: ${formData.service}` : '', '', formData.message].filter(Boolean).join('\n')
-      window.location.href = `mailto:thestickersmith@gmail.com?subject=${encodeURIComponent('Quick Question')}&body=${encodeURIComponent(body)}`
-      setSubmitted(true)
+    } catch (err) {
+      toast.error("Couldn't send — please email thestickersmith@gmail.com directly.")
+      console.error('QuickContact submit failed:', err)
     } finally {
       setLoading(false)
     }
