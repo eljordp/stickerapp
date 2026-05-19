@@ -1,8 +1,8 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Send, Mail, MapPin, Phone, Loader2 } from 'lucide-react'
-import { contactSchema, type ContactFormErrors } from '@/lib/validation'
+import { Send, Mail, MapPin, Phone, Loader2, Paperclip, X } from 'lucide-react'
+import { contactSchema, validateAttachment, type ContactFormErrors } from '@/lib/validation'
 import { toast } from 'sonner'
 
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgbqwzo'
@@ -14,6 +14,9 @@ export default function Contact() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ContactFormErrors>({})
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
+  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Prefill from query params — lets other pages hand off context
   // (e.g. /contact?service=Bulk+Sticker+Order&qty=2500&size=3"+x+3"&material=Holographic)
@@ -51,19 +54,26 @@ export default function Contact() {
       return
     }
 
+    if (attachmentError) {
+      toast.error(attachmentError)
+      return
+    }
+
     setLoading(true)
     try {
+      const payload = new FormData()
+      payload.append('name', formData.name.trim())
+      payload.append('email', formData.email.trim())
+      if (formData.phone.trim()) payload.append('phone', formData.phone.trim())
+      if (formData.service) payload.append('service', formData.service)
+      payload.append('message', formData.message.trim())
+      payload.append('_subject', `New quote request from ${formData.name.trim()}`)
+      if (attachment) payload.append('Upload File', attachment, attachment.name)
+
       const res = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim() || undefined,
-          service: formData.service || undefined,
-          message: formData.message.trim(),
-          _subject: `New quote request from ${formData.name.trim()}`,
-        }),
+        headers: { Accept: 'application/json' },
+        body: payload,
       })
 
       if (!res.ok) throw new Error('Formspree request failed')
@@ -168,6 +178,55 @@ export default function Contact() {
                       aria-describedby={errors.message ? 'message-error' : undefined}
                     />
                     {errors.message && <p id="message-error" className="text-sm text-destructive mt-1">{errors.message}</p>}
+                  </div>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="contact-attachment"
+                      className="sr-only"
+                      accept=".pdf,.jpg,.jpeg,.png,.gif,.svg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null
+                        if (!file) { setAttachment(null); setAttachmentError(null); return }
+                        const err = validateAttachment(file)
+                        if (err) { setAttachment(null); setAttachmentError(err); if (fileInputRef.current) fileInputRef.current.value = ''; return }
+                        setAttachment(file)
+                        setAttachmentError(null)
+                      }}
+                    />
+                    {attachment ? (
+                      <div className="flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl border border-border bg-background">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Paperclip size={18} className="text-primary shrink-0" />
+                          <span className="text-sm truncate">{attachment.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Remove attachment"
+                          onClick={() => {
+                            setAttachment(null)
+                            setAttachmentError(null)
+                            if (fileInputRef.current) fileInputRef.current.value = ''
+                          }}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="contact-attachment"
+                        className="flex items-center gap-3 px-5 py-3.5 rounded-xl border border-dashed border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer transition-colors"
+                      >
+                        <Paperclip size={18} />
+                        <span className="text-sm">Attach a file (PDF, JPG, PNG, GIF, SVG — 10 MB max)</span>
+                      </label>
+                    )}
+                    {attachmentError && <p className="text-sm text-destructive mt-1">{attachmentError}</p>}
                   </div>
                   <button type="submit" className="btn-primary w-full" disabled={loading}>
                     {loading ? <><Loader2 size={18} className="animate-spin" /> Sending...</> : <>Send Quote Request<Send size={18} /></>}

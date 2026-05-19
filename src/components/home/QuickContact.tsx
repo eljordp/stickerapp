@@ -1,11 +1,13 @@
-import { useState, type FormEvent } from 'react'
-import { Send, ArrowRight, Loader2 } from 'lucide-react'
+import { useState, useRef, type FormEvent } from 'react'
+import { Send, ArrowRight, Loader2, Paperclip, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { contactSchema, type ContactFormErrors } from '@/lib/validation'
+import { contactSchema, validateAttachment, type ContactFormErrors } from '@/lib/validation'
 import { supabase } from '@/lib/supabase'
 import { sendContactEmail } from '@/lib/email'
 import { toast } from 'sonner'
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xjgbqwzo'
 
 const services = ['Stickers & Labels', 'Vehicle Graphics', 'Business Signage', 'Event Displays', 'Mylar Packaging', 'Business Print', 'Other']
 
@@ -14,6 +16,9 @@ export default function QuickContact() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ContactFormErrors>({})
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
+  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -31,18 +36,39 @@ export default function QuickContact() {
       return
     }
 
+    if (attachmentError) {
+      toast.error(attachmentError)
+      return
+    }
+
     setLoading(true)
     try {
-      const { error } = await supabase.from('contact_submissions').insert({
+      const payload = new FormData()
+      payload.append('name', formData.name.trim())
+      payload.append('email', formData.email.trim())
+      if (formData.phone.trim()) payload.append('phone', formData.phone.trim())
+      if (formData.service) payload.append('service', formData.service)
+      payload.append('message', formData.message.trim())
+      payload.append('_subject', `New quick message from ${formData.name.trim()}`)
+      if (attachment) payload.append('Upload File', attachment, attachment.name)
+
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: payload,
+      })
+
+      if (!res.ok) throw new Error('Formspree request failed')
+
+      // Best-effort log to Supabase + Resend confirmation. Non-blocking.
+      supabase.from('contact_submissions').insert({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || null,
         service: formData.service || null,
         message: formData.message.trim(),
         source: 'quick-contact',
-      })
-
-      if (error) throw error
+      }).then(() => {})
       sendContactEmail({
         name: formData.name.trim(),
         email: formData.email.trim(),
@@ -50,6 +76,7 @@ export default function QuickContact() {
         service: formData.service || undefined,
         message: formData.message.trim(),
       })
+
       setSubmitted(true)
       toast.success('Message sent!')
     } catch {
@@ -136,6 +163,55 @@ export default function QuickContact() {
                 />
                 {errors.message && <p className="text-sm text-destructive mt-1">{errors.message}</p>}
               </div>
+            </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                id="quick-attachment"
+                className="sr-only"
+                accept=".pdf,.jpg,.jpeg,.png,.gif,.svg"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  if (!file) { setAttachment(null); setAttachmentError(null); return }
+                  const err = validateAttachment(file)
+                  if (err) { setAttachment(null); setAttachmentError(err); if (fileInputRef.current) fileInputRef.current.value = ''; return }
+                  setAttachment(file)
+                  setAttachmentError(null)
+                }}
+              />
+              {attachment ? (
+                <div className="flex items-center justify-between gap-3 px-5 py-3 rounded-xl border border-border bg-background">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Paperclip size={18} className="text-primary shrink-0" />
+                    <span className="text-sm truncate">{attachment.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Remove attachment"
+                    onClick={() => {
+                      setAttachment(null)
+                      setAttachmentError(null)
+                      if (fileInputRef.current) fileInputRef.current.value = ''
+                    }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="quick-attachment"
+                  className="flex items-center gap-3 px-5 py-3 rounded-xl border border-dashed border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer transition-colors"
+                >
+                  <Paperclip size={18} />
+                  <span className="text-sm">Attach a file (optional — PDF, JPG, PNG, GIF, SVG, 10 MB max)</span>
+                </label>
+              )}
+              {attachmentError && <p className="text-sm text-destructive mt-1">{attachmentError}</p>}
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <button type="submit" className="btn-primary px-8 py-3.5" disabled={loading}>

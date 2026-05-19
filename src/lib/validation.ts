@@ -8,6 +8,25 @@ export const contactSchema = z.object({
   message: z.string().trim().min(1, 'Message is required').max(2000, 'Message is too long'),
 })
 
+export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024 // 10 MB
+// Must match the file types enabled in Formspree's File Validation settings.
+export const ALLOWED_ATTACHMENT_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml',
+  'application/pdf',
+]
+const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']
+
+export function validateAttachment(file: File): string | null {
+  if (file.size > MAX_ATTACHMENT_BYTES) return 'File is too large (10 MB max)'
+  const ext = file.name.toLowerCase().split('.').pop() ?? ''
+  if (file.type && !ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      return 'File type not supported (PDF, JPG, PNG, GIF, or SVG only)'
+    }
+  }
+  return null
+}
+
 export type ContactFormData = z.infer<typeof contactSchema>
 export type ContactFormErrors = Partial<Record<keyof ContactFormData, string>>
 
