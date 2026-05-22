@@ -26,8 +26,8 @@ export default function Home() {
         <Hero />
         <ProductCategories />
         <HowItWorks />
-        <ProjectGallery />
         <TrustedBy />
+        <ProjectGallery />
         <ServicesOverview />
         <Reviews />
         <FAQ compact />
