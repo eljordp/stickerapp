@@ -11,6 +11,13 @@ const MIN_ORDER = 35
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, total, promoCode, promoDiscount, promoLabel } = useCart()
+  type CartLineItem = (typeof items)[number]
+
+  const getItemAddOnTotal = (item: CartLineItem) =>
+    item.addOns?.reduce((sum, addOn) => sum + addOn.price, 0) ?? 0
+  const getItemLineTotal = (item: CartLineItem) =>
+    +((item.price + getItemAddOnTotal(item)) * item.quantity).toFixed(2)
+
   const belowMin = total > 0 && total < MIN_ORDER
   const shortfall = +(MIN_ORDER - total).toFixed(2)
   const isAutoApplied = promoCode === 'AUTO10'
@@ -23,8 +30,11 @@ export default function Cart() {
 
   const buildQuoteMessage = () => {
     const lines = items.map((i) => {
-      const lineTotal = (i.price * i.quantity).toFixed(2)
-      return `• ${i.name} — ${i.option} · ${i.size} — $${lineTotal}`
+      const lineTotal = getItemLineTotal(i).toFixed(2)
+      const addOnText = i.addOns?.length
+        ? ` · ${i.addOns.map(addOn => `${addOn.name} (+$${addOn.price.toFixed(2)})`).join(' · ')}`
+        : ''
+      return `• ${i.name} — ${i.option} · ${i.size}${addOnText} — $${lineTotal}`
     })
     lines.push('')
     lines.push(`Cart total: $${total.toFixed(2)}`)
@@ -87,15 +97,45 @@ export default function Cart() {
               <div>
                 <h3 className="font-bold">{item.name}</h3>
                 <p className="text-sm text-muted-foreground">{item.option} · {item.size}</p>
+                {item.addOns?.length ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {item.addOns.map(addOn => (
+                      <span key={addOn.name} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                        {addOn.name} +${addOn.price.toFixed(2)}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:border-primary/50 transition-colors"><Minus size={14} /></button>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    aria-label={`Decrease quantity for ${item.name}`}
+                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+                  >
+                    <Minus size={14} />
+                  </button>
                   <span className="w-8 text-center font-bold">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:border-primary/50 transition-colors"><Plus size={14} /></button>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    aria-label={`Increase quantity for ${item.name}`}
+                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
-                <span className="font-bold text-primary w-20 text-right">${(item.price * item.quantity).toFixed(2)}</span>
-                <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive transition-colors"><Trash2 size={18} /></button>
+                <span className="font-bold text-primary w-20 text-right">${getItemLineTotal(item).toFixed(2)}</span>
+                <button
+                  type="button"
+                  onClick={() => removeItem(item.id)}
+                  aria-label={`Remove ${item.name} from cart`}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
             </div>
           ))}
@@ -164,7 +204,10 @@ export default function Cart() {
         {/* Save-as-quote — email this cart for later */}
         <div className="bg-card/50 border border-border/70 rounded-2xl overflow-hidden">
           <button
+            type="button"
             onClick={() => setQuoteOpen(!quoteOpen)}
+            aria-expanded={quoteOpen}
+            aria-controls="cart-quote-panel"
             className="w-full flex items-center justify-between gap-3 px-6 py-4 text-left hover:bg-white/[0.02] transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -187,7 +230,7 @@ export default function Cart() {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="px-6 pb-6 border-t border-border/50 pt-4">
+                <div id="cart-quote-panel" className="px-6 pb-6 border-t border-border/50 pt-4">
                   {quoteStatus === 'sent' ? (
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-9 h-9 rounded-lg bg-green-500/15 border border-green-500/30 flex items-center justify-center">
@@ -205,6 +248,7 @@ export default function Cart() {
                           value={quoteName}
                           onChange={(e) => setQuoteName(e.target.value)}
                           required
+                          aria-label="Quote contact name"
                           className="input-base"
                           placeholder="Your name"
                         />
@@ -213,6 +257,7 @@ export default function Cart() {
                           value={quoteEmail}
                           onChange={(e) => setQuoteEmail(e.target.value)}
                           required
+                          aria-label="Quote contact email"
                           className="input-base"
                           placeholder="you@email.com"
                         />

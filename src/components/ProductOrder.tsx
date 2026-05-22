@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
@@ -6,6 +6,7 @@ import { getPricing, type ProductCategory, type ProductTier } from '@/lib/pricin
 
 interface Props {
   categoryNames: string[]
+  onCategoryChange?: (categoryName: string) => void
 }
 
 /** Group items by their prefix before " – " */
@@ -50,7 +51,7 @@ function findTier(quantities: { qty: number; price: number }[], qty: number) {
   return tier
 }
 
-export default function ProductOrder({ categoryNames }: Props) {
+export default function ProductOrder({ categoryNames, onCategoryChange }: Props) {
   const { addItem } = useCart()
   const pricing = useMemo(() => getPricing(), [])
 
@@ -67,14 +68,17 @@ export default function ProductOrder({ categoryNames }: Props) {
   const [activeGroup, setActiveGroup] = useState(0)
 
   const category = categories[activeCategory]
-  if (!category) return null
+  const item = category?.items[selectedItem]
+  const groups = useMemo(() => category ? groupItems(category.items) : [], [category])
 
-  const item = category.items[selectedItem]
-  if (!item) return null
+  useEffect(() => {
+    if (category) onCategoryChange?.(category.name)
+  }, [category, onCategoryChange])
+
+  if (!category || !item) return null
 
   const totalTierPricing = usesTotalTierPricing(category)
   const bulk = isBulkCategory(category) && !totalTierPricing
-  const groups = useMemo(() => groupItems(category.items), [category])
   const hasGroups = groups.length > 1 || groups[0]?.label !== groups[0]?.items[0]?.item.size
 
   // Quantity & pricing
@@ -93,6 +97,9 @@ export default function ProductOrder({ categoryNames }: Props) {
   const totalPrice = isPerUnit
     ? +((unitPrice + addOnTotal) * effectiveQty).toFixed(2)
     : +(unitPrice + addOnTotal).toFixed(2)
+  const cartBasePrice = isPerUnit
+    ? +(unitPrice * effectiveQty).toFixed(2)
+    : +unitPrice.toFixed(2)
 
   const toggleAddOn = (name: string) => {
     setSelectedAddOns(prev => {
@@ -106,14 +113,14 @@ export default function ProductOrder({ categoryNames }: Props) {
   const handleAddToCart = () => {
     const addOns = category.addOns
       .filter(a => selectedAddOns.has(a.name))
-      .map(a => ({ name: a.name, price: a.value }))
+      .map(a => ({ name: a.name, price: +(a.value * (isPerUnit ? effectiveQty : 1)).toFixed(2) }))
 
     addItem({
       id: `${category.name}-${item.size}-${Date.now()}`,
       name: `${item.size}`,
       size: item.size,
       option: effectiveQty > 1 ? `${effectiveQty} pcs` : '1',
-      price: totalPrice,
+      price: cartBasePrice,
       quantity: 1,
       addOns: addOns.length > 0 ? addOns : undefined,
     })
@@ -225,7 +232,7 @@ export default function ProductOrder({ categoryNames }: Props) {
                   >
                     <span>{p.size}</span>
                     <span className="float-right text-muted-foreground">
-                      {item.quantities.length === 1 && item.quantities[0].qty === 1
+                      {p.quantities.length === 1 && p.quantities[0].qty === 1
                         ? `$${p.quantities[0].price.toFixed(2)}`
                         : totalTierPricing
                           ? `from $${Math.min(...p.quantities.map(q => q.price)).toFixed(2)}`
@@ -370,7 +377,7 @@ export default function ProductOrder({ categoryNames }: Props) {
               {added ? (
                 <>Added to Cart! <Check size={18} /></>
               ) : (
-                <>Add to Cart <ShoppingCart size={18} /></>
+                <>Add to Cart — ${totalPrice.toFixed(2)} <ShoppingCart size={18} /></>
               )}
             </button>
           </div>

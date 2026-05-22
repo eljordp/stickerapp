@@ -1,4 +1,4 @@
-import { useState, useRef, type ChangeEvent } from 'react'
+import { useEffect, useState, useRef, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, X } from 'lucide-react'
 
@@ -13,12 +13,17 @@ export type MockupSlot = {
   opacity?: number // 0-1
   blendMode?: React.CSSProperties['mixBlendMode']
   radius?: string
+  clipPath?: string
+  imageFit?: React.CSSProperties['objectFit']
+  imagePosition?: React.CSSProperties['objectPosition']
+  artworkPadding?: React.CSSProperties['padding']
 }
 
 export type MockupScene = {
   key: string
   label: string
-  base: string
+  base?: string
+  variant?: 'photo' | 'retractable-banner' | 'table-cover'
   slot: MockupSlot
 }
 
@@ -28,6 +33,12 @@ type Props = {
   eyebrow?: string
   title?: string
   subtitle?: string
+  activeKey?: string
+  onActiveKeyChange?: (key: string) => void
+}
+
+function canPreviewArtwork(file: File) {
+  return file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.svg')
 }
 
 export default function ArtworkMockup({
@@ -36,19 +47,38 @@ export default function ArtworkMockup({
   eyebrow = 'See Your Design',
   title,
   subtitle = "Upload your artwork and see exactly how it'll look.",
+  activeKey: controlledActiveKey,
+  onActiveKeyChange,
 }: Props) {
-  const [activeKey, setActiveKey] = useState(scenes[0]?.key ?? '')
+  const [internalActiveKey, setInternalActiveKey] = useState(scenes[0]?.key ?? '')
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null)
   const [artworkName, setArtworkName] = useState<string | null>(null)
+  const [loadedScenes, setLoadedScenes] = useState<Set<string>>(new Set())
+  const [failedScenes, setFailedScenes] = useState<Set<string>>(new Set())
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const activeKey = controlledActiveKey ?? internalActiveKey
   const scene = scenes.find((s) => s.key === activeKey) ?? scenes[0]
+  const sceneLoaded = scene ? !scene.base || loadedScenes.has(scene.key) : false
+  const sceneFailed = scene ? failedScenes.has(scene.key) : false
+
+  useEffect(() => {
+    return () => {
+      if (artworkUrl) URL.revokeObjectURL(artworkUrl)
+    }
+  }, [artworkUrl])
+
   if (!scene) return null
+
+  const setActiveKey = (key: string) => {
+    if (!controlledActiveKey) setInternalActiveKey(key)
+    onActiveKeyChange?.(key)
+  }
 
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    setArtworkUrl(URL.createObjectURL(f))
+    setArtworkUrl(canPreviewArtwork(f) ? URL.createObjectURL(f) : null)
     setArtworkName(f.name)
   }
 
@@ -101,7 +131,48 @@ export default function ArtworkMockup({
             transition={{ duration: 0.3 }}
             className="absolute inset-0"
           >
-            <img src={scene.base} alt={scene.label} className="absolute inset-0 h-full w-full object-cover" />
+            {!sceneLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_20%,rgba(56,189,248,0.16),rgba(12,12,16,0.96)_58%)]">
+                <div className="rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-center text-xs font-semibold uppercase tracking-widest text-white/70">
+                  {sceneFailed ? `${scene.label} mockup unavailable` : `Loading ${scene.label} mockup`}
+                </div>
+              </div>
+            )}
+            {scene.variant === 'retractable-banner' && (
+              <div className="absolute inset-0 flex items-end justify-center bg-[radial-gradient(circle_at_50%_12%,rgba(56,189,248,0.16),rgba(12,12,16,0.92)_58%)] px-8 pb-10">
+                <div className="relative h-[82%] w-[28%] min-w-48">
+                  <div className="absolute left-1/2 top-0 h-full w-2 -translate-x-1/2 rounded-full bg-neutral-700 shadow-lg" />
+                  <div className="absolute inset-x-0 top-2 h-[82%] rounded-t-lg border border-white/15 bg-gradient-to-b from-white/95 to-neutral-200 shadow-2xl" />
+                  <div className="absolute inset-x-[-10%] bottom-0 h-7 rounded-full bg-neutral-800 shadow-[0_12px_24px_rgba(0,0,0,0.45)]" />
+                  <div className="absolute left-1/2 bottom-6 h-9 w-28 -translate-x-1/2 rounded-b-xl bg-neutral-700 shadow-xl" />
+                </div>
+              </div>
+            )}
+            {scene.variant === 'table-cover' && (
+              <div className="absolute inset-0 flex items-end justify-center bg-[radial-gradient(circle_at_50%_12%,rgba(56,189,248,0.14),rgba(12,12,16,0.92)_58%)] px-8 pb-16">
+                <div className="relative h-[44%] w-[62%] max-w-2xl">
+                  <div className="absolute inset-x-[8%] top-0 h-[22%] rounded-t-xl bg-neutral-200 shadow-[0_12px_28px_rgba(0,0,0,0.28)]" />
+                  <div
+                    className="absolute inset-x-0 top-[14%] h-[76%] rounded-b-2xl border border-white/15 bg-gradient-to-b from-white via-neutral-100 to-neutral-300 shadow-2xl"
+                    style={{ clipPath: 'polygon(4% 0, 96% 0, 100% 100%, 0 100%)' }}
+                  />
+                  <div className="absolute bottom-0 left-[8%] h-[80%] w-px bg-black/10" />
+                  <div className="absolute bottom-0 right-[8%] h-[80%] w-px bg-black/10" />
+                  <div className="absolute inset-x-[4%] bottom-[-10%] h-8 rounded-full bg-black/35 blur-md" />
+                </div>
+              </div>
+            )}
+            {scene.base && !sceneFailed && (
+              <img
+                src={scene.base}
+                alt={scene.label}
+                loading="eager"
+                decoding="async"
+                onLoad={() => setLoadedScenes(prev => new Set(prev).add(scene.key))}
+                onError={() => setFailedScenes(prev => new Set(prev).add(scene.key))}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${sceneLoaded ? 'opacity-100' : 'opacity-0'}`}
+              />
+            )}
             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(180deg,transparent,rgba(0,0,0,0.18))]" />
 
             {/* Artwork slot overlay */}
@@ -127,6 +198,7 @@ export default function ArtworkMockup({
               <div
                 className="relative h-full w-full overflow-hidden"
                 style={{
+                  clipPath: scene.slot.clipPath,
                   borderRadius: scene.slot.radius ?? surface.radius,
                   background: surface.background,
                   border: surface.border,
@@ -145,9 +217,11 @@ export default function ArtworkMockup({
                 <img
                   src={artworkUrl}
                   alt="Your artwork"
-                    className="relative z-10 h-full w-full p-[5%]"
+                    className="relative z-10 h-full w-full"
                   style={{
-                      objectFit: surface.objectFit,
+                      padding: scene.slot.artworkPadding ?? '5%',
+                      objectFit: scene.slot.imageFit ?? surface.objectFit,
+                      objectPosition: scene.slot.imagePosition ?? 'center',
                       filter: surface.artworkFilter,
                   }}
                 />
@@ -173,7 +247,7 @@ export default function ArtworkMockup({
         <input
           ref={fileRef}
           type="file"
-          accept="image/*,.pdf,.ai,.svg"
+          accept="image/*,.pdf,.ai,.eps,.svg"
           className="hidden"
           onChange={handleFile}
         />
@@ -181,22 +255,27 @@ export default function ArtworkMockup({
           onClick={() => fileRef.current?.click()}
           className="btn-primary w-full sm:w-auto"
         >
-          <Upload size={16} /> {artworkUrl ? 'Change artwork' : 'Upload your artwork'}
+          <Upload size={16} /> {artworkName ? 'Change file' : 'Upload your artwork'}
         </button>
         {artworkName ? (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-primary font-semibold truncate max-w-[200px]">{artworkName}</span>
-            <button
-              onClick={clear}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Remove artwork"
-            >
-              <X size={14} />
-            </button>
+          <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-primary font-semibold truncate max-w-[200px]">{artworkName}</span>
+              <button
+                onClick={clear}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Remove artwork"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            {!artworkUrl && (
+              <span className="text-xs text-muted-foreground">Proof file received. Upload PNG, JPG, or SVG for live preview.</span>
+            )}
           </div>
         ) : (
           <p className="text-xs text-muted-foreground text-center sm:text-left">
-            PNG, JPG, PDF, AI, SVG · preview only, final proof follows
+            PNG, JPG, SVG preview · PDF, AI, EPS accepted for proof
           </p>
         )}
       </div>
@@ -242,10 +321,10 @@ function getSurfaceStyle(service: string, sceneKey: string): {
       background: 'transparent',
       border: '0',
       shadow: 'none',
-      sheen: 'linear-gradient(135deg, rgba(255,255,255,0.2), transparent 34%, rgba(255,255,255,0.08) 68%, transparent)',
-      sheenBlend: 'screen',
-      sheenOpacity: 0.45,
-      artworkFilter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.45))',
+      sheen: 'linear-gradient(105deg, rgba(255,255,255,0.26), transparent 24%, rgba(0,0,0,0.13) 54%, rgba(255,255,255,0.12) 76%, transparent)',
+      sheenBlend: 'overlay',
+      sheenOpacity: 0.62,
+      artworkFilter: 'saturate(0.94) contrast(0.96) brightness(0.96)',
       objectFit: 'contain',
       radius: '8px',
     }

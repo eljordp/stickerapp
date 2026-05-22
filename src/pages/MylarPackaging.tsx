@@ -87,6 +87,15 @@ const mockupScales: Record<string, number> = {
   '2oz Jar + Custom Label': 0.7,
 }
 
+function isAcceptedArtwork(file: File) {
+  const name = file.name.toLowerCase()
+  return file.type.startsWith('image/') || ['.pdf', '.ai', '.eps', '.svg'].some(ext => name.endsWith(ext))
+}
+
+function canPreviewArtwork(file: File) {
+  return file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.svg')
+}
+
 export default function MylarPackaging() {
   const { addItem } = useCart()
   const pricing = useMemo(() => getPricing(), [])
@@ -132,16 +141,22 @@ export default function MylarPackaging() {
     e.preventDefault()
     setIsDragging(false)
     const file = e.dataTransfer.files?.[0]
-    if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+    if (file && isAcceptedArtwork(file)) {
       setUploadedFile(file)
-      setPreviewUrl(URL.createObjectURL(file))
+      setPreviewUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev)
+        return canPreviewArtwork(file) ? URL.createObjectURL(file) : null
+      })
     }
   }, [])
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadedFile(file)
-    setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file) })
+    setPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return canPreviewArtwork(file) ? URL.createObjectURL(file) : null
+    })
   }
 
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) } }, [previewUrl])
@@ -152,13 +167,16 @@ export default function MylarPackaging() {
 
   const handleAddToCart = () => {
     if (!item || !qtyTier) return
-    const cartAddOns = addOns.filter(a => selectedAddOns.has(a.name)).map(a => ({ name: a.name, price: a.value }))
+    const cartAddOns = addOns
+      .filter(a => selectedAddOns.has(a.name))
+      .map(a => ({ name: a.name, price: +(a.value * quantity).toFixed(2) }))
+    const cartBasePrice = +(unitPrice * quantity).toFixed(2)
     addItem({
       id: `mylar-${item.size}-${Date.now()}`,
       name: `Custom ${item.size}`,
       size: item.size,
       option: `${quantity} pcs · ${finish} · ${pouchColor} · ${selectedAddOns.has('Holographic Upgrade') ? 'Holo' : 'Standard'}`,
-      price: totalPrice,
+      price: cartBasePrice,
       quantity: 1,
       addOns: cartAddOns.length > 0 ? cartAddOns : undefined,
     })
@@ -205,15 +223,15 @@ export default function MylarPackaging() {
                 </div>
                 <div>
                   <p className="text-base font-medium text-foreground">Drag & drop your artwork</p>
-                  <p className="mt-1 text-sm text-muted-foreground">PNG, JPG, PDF, or SVG. You'll receive a proof before printing.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">PNG, JPG, or SVG preview here. PDF, AI, and EPS are accepted for proof.</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
                     <span>Upload file</span>
-                    <input type="file" accept="image/*,.pdf,.svg" className="hidden" onChange={handleFileChange} />
+                    <input type="file" accept="image/*,.pdf,.ai,.eps,.svg" className="hidden" onChange={handleFileChange} />
                   </label>
                   {uploadedFile && (
-                    <button onClick={() => { setUploadedFile(null); setPreviewUrl(null) }} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors">
+                    <button onClick={() => { setUploadedFile(null); setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null }) }} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors">
                       <X className="h-3.5 w-3.5" /> Clear
                     </button>
                   )}
@@ -237,7 +255,7 @@ export default function MylarPackaging() {
                 {activeMockup === 'jar' && <JarMockup previewUrl={previewUrl} />}
               </div>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                {previewUrl ? 'Your design preview' : 'Upload artwork to see it mocked up'} — {item?.size ?? 'Select a size'}
+                {previewUrl ? 'Your design preview' : uploadedFile ? 'File received for proof. Upload an image/SVG for live preview' : 'Upload artwork to see it mocked up'} — {item?.size ?? 'Select a size'}
               </p>
             </motion.div>
           </div>

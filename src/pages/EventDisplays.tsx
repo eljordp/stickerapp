@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Tent, CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
 import PageHero from '@/components/PageHero'
@@ -40,6 +41,16 @@ const process = [
 ]
 
 export default function EventCanopies() {
+  const [activeMockup, setActiveMockup] = useState('canopy')
+  const handleCategoryChange = useCallback((categoryName: string) => {
+    const map: Record<string, string> = {
+      'Event Displays': 'canopy',
+      'Backdrops & Displays': 'backdrop',
+      'Table Covers': 'table',
+    }
+    setActiveMockup(map[categoryName] ?? 'canopy')
+  }, [])
+
   return (
     <>
       <PageHero
@@ -90,7 +101,10 @@ export default function EventCanopies() {
           </motion.div>
 
           <div id="shop" className="scroll-mt-24">
-            <ProductOrder categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']} />
+            <ProductOrder
+              categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']}
+              onCategoryChange={handleCategoryChange}
+            />
           </div>
         </div>
       </section>
@@ -100,6 +114,8 @@ export default function EventCanopies() {
             service="Event Display"
             title="Preview your event setup"
             subtitle="Upload your brand — see it on a canopy, flag, or backdrop before the event."
+            activeKey={activeMockup}
+            onActiveKeyChange={setActiveMockup}
             scenes={[
               {
                 key: 'canopy',
@@ -118,6 +134,21 @@ export default function EventCanopies() {
                 label: 'Backdrop',
                 base: backdropBlank,
                 slot: { left: 15, top: 15, width: 70, height: 70 },
+              },
+              {
+                key: 'table',
+                label: 'Table Cover',
+                variant: 'table-cover',
+                slot: {
+                  left: 31,
+                  top: 58,
+                  width: 38,
+                  height: 16,
+                  radius: '6px',
+                  clipPath: 'polygon(4% 0, 96% 0, 100% 100%, 0 100%)',
+                  imageFit: 'cover',
+                  artworkPadding: 0,
+                },
               },
             ]}
           />

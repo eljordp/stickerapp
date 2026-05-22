@@ -1,4 +1,4 @@
-import { useState, useRef, type ChangeEvent } from 'react'
+import { useEffect, useState, useRef, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, X } from 'lucide-react'
 
@@ -27,6 +27,12 @@ type Props = {
   eyebrow?: string
   title?: string
   subtitle?: string
+  activeKey?: string
+  onActiveKeyChange?: (key: string) => void
+}
+
+function canPreviewArtwork(file: File) {
+  return file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.svg')
 }
 
 /**
@@ -308,19 +314,34 @@ export default function StudioMockup({
   eyebrow = 'See Your Design',
   title,
   subtitle = "Upload your artwork and see exactly how it'll look.",
+  activeKey: controlledActiveKey,
+  onActiveKeyChange,
 }: Props) {
-  const [activeKey, setActiveKey] = useState(scenes[0]?.key ?? '')
+  const [internalActiveKey, setInternalActiveKey] = useState(scenes[0]?.key ?? '')
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null)
   const [artworkName, setArtworkName] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const activeKey = controlledActiveKey ?? internalActiveKey
   const scene = scenes.find((s) => s.key === activeKey) ?? scenes[0]
+
+  useEffect(() => {
+    return () => {
+      if (artworkUrl) URL.revokeObjectURL(artworkUrl)
+    }
+  }, [artworkUrl])
+
   if (!scene) return null
+
+  const setActiveKey = (key: string) => {
+    if (!controlledActiveKey) setInternalActiveKey(key)
+    onActiveKeyChange?.(key)
+  }
 
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    setArtworkUrl(URL.createObjectURL(f))
+    setArtworkUrl(canPreviewArtwork(f) ? URL.createObjectURL(f) : null)
     setArtworkName(f.name)
   }
 
@@ -414,27 +435,32 @@ export default function StudioMockup({
         <input
           ref={fileRef}
           type="file"
-          accept="image/*,.pdf,.ai,.svg"
+          accept="image/*,.pdf,.ai,.eps,.svg"
           className="hidden"
           onChange={handleFile}
         />
         <button onClick={() => fileRef.current?.click()} className="btn-primary w-full sm:w-auto">
-          <Upload size={16} /> {artworkUrl ? 'Change artwork' : 'Upload your artwork'}
+          <Upload size={16} /> {artworkName ? 'Change file' : 'Upload your artwork'}
         </button>
         {artworkName ? (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-primary font-semibold truncate max-w-[200px]">{artworkName}</span>
-            <button
-              onClick={clear}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Remove artwork"
-            >
-              <X size={14} />
-            </button>
+          <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-primary font-semibold truncate max-w-[200px]">{artworkName}</span>
+              <button
+                onClick={clear}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Remove artwork"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            {!artworkUrl && (
+              <span className="text-xs text-muted-foreground">Proof file received. Upload PNG, JPG, or SVG for live preview.</span>
+            )}
           </div>
         ) : (
           <p className="text-xs text-muted-foreground text-center sm:text-left">
-            PNG, JPG, PDF, AI, SVG · preview only, final proof follows
+            PNG, JPG, SVG preview · PDF, AI, EPS accepted for proof
           </p>
         )}
       </div>

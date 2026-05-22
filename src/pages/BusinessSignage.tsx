@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Store, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import PageHero from '@/components/PageHero'
@@ -41,6 +42,17 @@ const process = [
 ]
 
 export default function BusinessSignage() {
+  const [activeMockup, setActiveMockup] = useState('storefront')
+  const handleCategoryChange = useCallback((categoryName: string) => {
+    const map: Record<string, string> = {
+      'Storefront Graphics': 'storefront',
+      'A-Frame Signs': 'aframe',
+      'Retractable Banners': 'retractable',
+      'Wall Graphics': 'wall',
+    }
+    setActiveMockup(map[categoryName] ?? 'storefront')
+  }, [])
+
   return (
     <>
       <PageHero
@@ -90,7 +102,10 @@ export default function BusinessSignage() {
             </div>
           </motion.div>
 
-          <ProductOrder categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']} />
+          <ProductOrder
+            categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']}
+            onCategoryChange={handleCategoryChange}
+          />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">
@@ -99,6 +114,8 @@ export default function BusinessSignage() {
             service="Signage"
             title="See your signage in place"
             subtitle="Upload your logo — we'll preview it on a storefront, wall, or sidewalk sign."
+            activeKey={activeMockup}
+            onActiveKeyChange={setActiveMockup}
             scenes={[
               {
                 key: 'storefront',
@@ -117,6 +134,12 @@ export default function BusinessSignage() {
                 label: 'A-Frame',
                 base: aFrameBlank,
                 slot: { left: 31, top: 23, width: 36, height: 52 },
+              },
+              {
+                key: 'retractable',
+                label: 'Retractable Banner',
+                variant: 'retractable-banner',
+                slot: { left: 36, top: 13, width: 28, height: 58 },
               },
             ]}
           />

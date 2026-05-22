@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon } from 'lucide-react'
+import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
 import PageHero from '@/components/PageHero'
@@ -70,6 +71,17 @@ function formatSizeForShape(size: string, shape: string): string {
 
 const qtyOptions = [50, 100, 250, 500, 1000, 2500]
 const MIN_QTY = 50
+const stickerFormats = [
+  { value: 'handheld', label: 'Individual', cartLabel: 'Individual stickers', icon: Hand },
+  { value: 'sheet', label: 'Sheets', cartLabel: 'Sticker sheets', icon: PanelsTopLeft },
+  { value: 'roll', label: 'Rolls', cartLabel: 'Roll labels', icon: ScrollText },
+] as const
+
+type StickerFormat = (typeof stickerFormats)[number]['value']
+
+function canPreviewArtwork(file: File) {
+  return file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.svg')
+}
 
 function ShapeIcon({ shape }: { shape: string }) {
   return (
@@ -154,12 +166,13 @@ function StickerMockup({ shape, artworkUrl, variant }: { shape: string; artworkU
 
 export default function Order() {
   const { addItem } = useCart()
+  const [searchParams] = useSearchParams()
   const [shape, setShape] = useState('Die-Cut')
   const [material, setMaterial] = useState('Matte Vinyl')
   const [quantity, setQuantity] = useState(50)
   const [customQty, setCustomQty] = useState('')
   const [size, setSize] = useState('2" x 2"')
-  const [mockupView, setMockupView] = useState<'handheld' | 'sheet' | 'roll'>('handheld')
+  const [mockupView, setMockupView] = useState<StickerFormat>('handheld')
   const [artworkFile, setArtworkFile] = useState<File | null>(null)
   const [artworkUrl, setArtworkUrl] = useState('')
   const [added, setAdded] = useState(false)
@@ -168,6 +181,49 @@ export default function Order() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const pricingConfig = useMemo(() => getPricing(), [])
+  const queryString = searchParams.toString()
+
+  useEffect(() => {
+    if (!queryString) return
+    const params = new URLSearchParams(queryString)
+    const product = (params.get('product') || '').toLowerCase()
+    const format = (params.get('format') || '').toLowerCase()
+    const nextFormat =
+      format === 'sheet' || product.includes('sheet') ? 'sheet'
+        : format === 'roll' || product.includes('roll') || product.includes('label') ? 'roll'
+          : format === 'individual' || format === 'handheld' || product.includes('die-cut') || product.includes('sample') ? 'handheld'
+            : null
+
+    if (nextFormat) setMockupView(nextFormat)
+
+    const shapeParam = params.get('shape')
+    const nextShape =
+      product.includes('sheet') ? 'Kiss-Cut'
+        : product.includes('roll') || product.includes('label') ? 'Rectangle'
+          : product.includes('die-cut') || product.includes('sample') ? 'Die-Cut'
+            : shapeData.find(s => s.value.toLowerCase() === shapeParam?.toLowerCase())?.value
+    if (nextShape) {
+      setShape(nextShape)
+      const validSizes = getSizesForShape(nextShape)
+      const sizeParam = params.get('size')
+      setSize(sizeParam && validSizes.includes(sizeParam) ? sizeParam : validSizes[0])
+    }
+
+    const materialParam = params.get('material')
+    const nextMaterial = materialData.find(m => m.value.toLowerCase() === materialParam?.toLowerCase())?.value
+    if (nextMaterial) setMaterial(nextMaterial)
+    if (product.includes('sample')) setMaterial('Holographic')
+
+    const qtyParam = Number(params.get('qty'))
+    if (Number.isFinite(qtyParam) && qtyParam >= MIN_QTY) {
+      if (qtyOptions.includes(qtyParam)) {
+        setQuantity(qtyParam)
+        setCustomQty('')
+      } else {
+        setCustomQty(String(qtyParam))
+      }
+    }
+  }, [queryString])
 
   const effectiveQty = customQty ? (parseInt(customQty) || 50) : quantity
   const basePrice = getBasePrice(effectiveQty, pricingConfig)
@@ -187,11 +243,22 @@ export default function Order() {
 
   const materialLabel = materialData.find(m => m.value === material)?.label || material
   const shapeLabel = shapeData.find(s => s.value === shape)?.name || shape
+  const formatLabel = stickerFormats.find(f => f.value === mockupView)?.cartLabel || 'Individual stickers'
+  const cartProductName =
+    mockupView === 'sheet' ? `${materialLabel} Sticker Sheets`
+      : mockupView === 'roll' ? `${materialLabel} Roll Labels`
+        : `${shapeLabel} ${materialLabel} Stickers`
 
   const handleFile = (file: File) => {
     setArtworkFile(file)
-    setArtworkUrl(URL.createObjectURL(file))
+    setArtworkUrl(canPreviewArtwork(file) ? URL.createObjectURL(file) : '')
   }
+
+  useEffect(() => {
+    return () => {
+      if (artworkUrl) URL.revokeObjectURL(artworkUrl)
+    }
+  }, [artworkUrl])
 
   const handleAddToCart = () => {
     if (effectiveQty < MIN_QTY) return
@@ -200,9 +267,9 @@ export default function Order() {
     if (designAddon) addOns.push({ name: ADDON_DESIGN.label, price: ADDON_DESIGN.price })
     addItem({
       id: `sticker-${Date.now()}`,
-      name: `${shapeLabel} ${materialLabel} Stickers`,
+      name: cartProductName,
       size,
-      option: `${effectiveQty} pcs`,
+      option: `${effectiveQty} pcs · ${formatLabel}`,
       price: stickerSubtotal,
       quantity: 1,
       material,
@@ -398,13 +465,18 @@ export default function Order() {
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="image/*,.pdf,.ai,.svg"
+                  accept="image/*,.pdf,.ai,.eps,.svg"
                   className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
                 />
                 {artworkFile && (
                   <p className="text-xs text-primary font-medium mt-2">
                     &#10003; {artworkFile.name}
+                  </p>
+                )}
+                {artworkFile && !artworkUrl && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    File received for proof. Upload PNG, JPG, or SVG for live preview.
                   </p>
                 )}
               </div>
@@ -414,20 +486,19 @@ export default function Order() {
             <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center">
               {/* View toggle */}
               <div className="flex gap-1 bg-muted/60 p-1 rounded-full mb-6">
-                {(['handheld', 'sheet', 'roll'] as const).map(v => {
-                  const icons: Record<string, string> = { handheld: '\u270B', sheet: '\uD83D\uDCCB', roll: '\uD83D\uDCDC' }
-                  const labels: Record<string, string> = { handheld: 'Hand-held', sheet: 'Sheet', roll: 'Roll' }
+                {stickerFormats.map(format => {
+                  const FormatIcon = format.icon
                   return (
                     <button
-                      key={v}
-                      onClick={() => setMockupView(v)}
+                      key={format.value}
+                      onClick={() => setMockupView(format.value)}
                       className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all ${
-                        mockupView === v
+                        mockupView === format.value
                           ? 'bg-primary text-white shadow-sm'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      <span className="text-[11px]">{icons[v]}</span> {labels[v]}
+                      <FormatIcon size={13} /> {format.label}
                     </button>
                   )
                 })}
@@ -472,6 +543,7 @@ export default function Order() {
                 <p className="text-xl font-black">{effectiveQty} stickers</p>
                 <p className="text-sm text-muted-foreground">{shapeLabel} &middot; {formatSizeForShape(size, shape)}</p>
                 <p className="text-sm text-muted-foreground">{materialLabel}</p>
+                <p className="text-sm text-primary">{formatLabel}</p>
               </div>
 
               {/* Price breakdown */}

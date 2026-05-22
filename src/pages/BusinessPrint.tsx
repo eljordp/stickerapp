@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Printer, CheckCircle, Clock, Shield, Layers, Zap } from 'lucide-react'
 import PageHero from '@/components/PageHero'
@@ -37,6 +38,17 @@ const process = [
 ]
 
 export default function BusinessPrint() {
+  const [activeMockup, setActiveMockup] = useState('card')
+  const handleCategoryChange = useCallback((categoryName: string) => {
+    const map: Record<string, string> = {
+      'Business Cards': 'card',
+      'Flyers & Door Hangers': 'flyer',
+      'Postcards': 'postcard',
+      'Vehicle Magnets': 'magnet',
+    }
+    setActiveMockup(map[categoryName] ?? 'card')
+  }, [])
+
   return (
     <>
       <PageHero
@@ -87,7 +99,10 @@ export default function BusinessPrint() {
           </motion.div>
 
           <div id="shop" className="scroll-mt-24">
-            <ProductOrder categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']} />
+            <ProductOrder
+              categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']}
+              onCategoryChange={handleCategoryChange}
+            />
           </div>
         </div>
       </section>
@@ -97,10 +112,13 @@ export default function BusinessPrint() {
             service="Business Print"
             title="Preview your design on paper"
             subtitle="Upload your artwork — see it rendered on the exact product."
+            activeKey={activeMockup}
+            onActiveKeyChange={setActiveMockup}
             scenes={[
               { key: 'card', label: 'Business Card', shape: 'business-card' },
               { key: 'flyer', label: 'Flyer', shape: 'flyer' },
               { key: 'postcard', label: 'Postcard', shape: 'postcard' },
+              { key: 'magnet', label: 'Vehicle Magnet', shape: 'sticker-rect' },
             ]}
           />
         </div>
