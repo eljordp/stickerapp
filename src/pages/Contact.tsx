@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Send, Mail, MapPin, Phone, Loader2, Paperclip, X } from 'lucide-react'
-import { contactSchema, validateAttachment, type ContactFormErrors } from '@/lib/validation'
+import { Send, Mail, MapPin, Phone, Loader2 } from 'lucide-react'
+import { contactSchema, type ContactFormErrors } from '@/lib/validation'
 import { submitContactRequest } from '@/lib/contactSubmit'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -15,9 +15,6 @@ export default function Contact() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ContactFormErrors>({})
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
-  const [attachment, setAttachment] = useState<File | null>(null)
-  const [attachmentError, setAttachmentError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Prefill from query params — lets other pages hand off context
   // (e.g. /contact?service=Bulk+Sticker+Order&qty=2500&size=3"+x+3"&material=Holographic)
@@ -55,11 +52,6 @@ export default function Contact() {
       return
     }
 
-    if (attachmentError) {
-      toast.error(attachmentError)
-      return
-    }
-
     setLoading(true)
     try {
       const submission = {
@@ -69,10 +61,10 @@ export default function Contact() {
         service: formData.service || undefined,
         message: formData.message.trim(),
       }
-      const submitResult = await submitContactRequest({
+      await submitContactRequest({
         ...submission,
         subject: `New quote request from ${submission.name}`,
-      }, attachment)
+      })
       supabase.from('contact_submissions').insert({
         ...submission,
         phone: submission.phone || null,
@@ -80,11 +72,7 @@ export default function Contact() {
         source: 'contact-page',
       }).then(() => {})
       setSubmitted(true)
-      if (submitResult.attachmentStatus === 'fallback') {
-        toast.warning("Quote sent, but the file couldn't attach. We'll request it by email.")
-      } else {
-        toast.success('Quote request sent!')
-      }
+      toast.success('Quote request sent!')
     } catch (err) {
       toast.error("Couldn't send — please email thestickersmith@gmail.com directly.")
       console.error('Contact form submit failed:', err)
@@ -183,55 +171,6 @@ export default function Contact() {
                       aria-describedby={errors.message ? 'message-error' : undefined}
                     />
                     {errors.message && <p id="message-error" className="text-sm text-destructive mt-1">{errors.message}</p>}
-                  </div>
-                  <div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      id="contact-attachment"
-                      className="sr-only"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null
-                        if (!file) { setAttachment(null); setAttachmentError(null); return }
-                        const err = validateAttachment(file)
-                        if (err) { setAttachment(null); setAttachmentError(err); if (fileInputRef.current) fileInputRef.current.value = ''; return }
-                        setAttachment(file)
-                        setAttachmentError(null)
-                      }}
-                    />
-                    {attachment ? (
-                      <div className="flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl border border-border bg-background">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Paperclip size={18} className="text-primary shrink-0" />
-                          <span className="text-sm truncate">{attachment.name}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {(attachment.size / 1024 / 1024).toFixed(2)} MB
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          aria-label="Remove attachment"
-                          onClick={() => {
-                            setAttachment(null)
-                            setAttachmentError(null)
-                            if (fileInputRef.current) fileInputRef.current.value = ''
-                          }}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <X size={18} />
-                        </button>
-                      </div>
-                    ) : (
-                      <label
-                        htmlFor="contact-attachment"
-                        className="flex items-center gap-3 px-5 py-3.5 rounded-xl border border-dashed border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer transition-colors"
-                      >
-                        <Paperclip size={18} />
-                        <span className="text-sm">Attach a file (PDF, JPG, or PNG — 5 MB max)</span>
-                      </label>
-                    )}
-                    {attachmentError && <p className="text-sm text-destructive mt-1">{attachmentError}</p>}
                   </div>
                   <button type="submit" className="btn-primary w-full" disabled={loading}>
                     {loading ? <><Loader2 size={18} className="animate-spin" /> Sending...</> : <>Send Quote Request<Send size={18} /></>}

@@ -1,8 +1,8 @@
-import { useState, useRef, type FormEvent } from 'react'
-import { Send, ArrowRight, Loader2, Paperclip, X } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Send, ArrowRight, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { contactSchema, validateAttachment, type ContactFormErrors } from '@/lib/validation'
+import { contactSchema, type ContactFormErrors } from '@/lib/validation'
 import { submitContactRequest } from '@/lib/contactSubmit'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -14,9 +14,6 @@ export default function QuickContact() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ContactFormErrors>({})
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
-  const [attachment, setAttachment] = useState<File | null>(null)
-  const [attachmentError, setAttachmentError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -34,11 +31,6 @@ export default function QuickContact() {
       return
     }
 
-    if (attachmentError) {
-      toast.error(attachmentError)
-      return
-    }
-
     setLoading(true)
     try {
       const submission = {
@@ -48,10 +40,10 @@ export default function QuickContact() {
         service: formData.service || undefined,
         message: formData.message.trim(),
       }
-      const submitResult = await submitContactRequest({
+      await submitContactRequest({
         ...submission,
         subject: `New quick message from ${submission.name}`,
-      }, attachment)
+      })
 
       // Best-effort CRM log. Email delivery is handled by Web3Forms above.
       supabase.from('contact_submissions').insert({
@@ -63,11 +55,7 @@ export default function QuickContact() {
         source: 'quick-contact',
       }).then(() => {})
       setSubmitted(true)
-      if (submitResult.attachmentStatus === 'fallback') {
-        toast.warning("Message sent, but the file couldn't attach. We'll request it by email.")
-      } else {
-        toast.success('Message sent!')
-      }
+      toast.success('Message sent!')
     } catch (err) {
       toast.error("Couldn't send — please email thestickersmith@gmail.com directly.")
       console.error('QuickContact submit failed:', err)
@@ -151,55 +139,6 @@ export default function QuickContact() {
                 />
                 {errors.message && <p className="text-sm text-destructive mt-1">{errors.message}</p>}
               </div>
-            </div>
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                id="quick-attachment"
-                className="sr-only"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null
-                  if (!file) { setAttachment(null); setAttachmentError(null); return }
-                  const err = validateAttachment(file)
-                  if (err) { setAttachment(null); setAttachmentError(err); if (fileInputRef.current) fileInputRef.current.value = ''; return }
-                  setAttachment(file)
-                  setAttachmentError(null)
-                }}
-              />
-              {attachment ? (
-                <div className="flex items-center justify-between gap-3 px-5 py-3 rounded-xl border border-border bg-background">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Paperclip size={18} className="text-primary shrink-0" />
-                    <span className="text-sm truncate">{attachment.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {(attachment.size / 1024 / 1024).toFixed(2)} MB
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Remove attachment"
-                    onClick={() => {
-                      setAttachment(null)
-                      setAttachmentError(null)
-                      if (fileInputRef.current) fileInputRef.current.value = ''
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              ) : (
-                <label
-                  htmlFor="quick-attachment"
-                  className="flex items-center gap-3 px-5 py-3 rounded-xl border border-dashed border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer transition-colors"
-                >
-                  <Paperclip size={18} />
-                  <span className="text-sm">Attach a file (optional — PDF, JPG, PNG, 5 MB max)</span>
-                </label>
-              )}
-              {attachmentError && <p className="text-sm text-destructive mt-1">{attachmentError}</p>}
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <button type="submit" className="btn-primary px-8 py-3.5" disabled={loading}>
