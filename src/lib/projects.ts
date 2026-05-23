@@ -70,6 +70,7 @@ export type Project = {
   materials?: string
   year?: string
   caseStudySlug?: string
+  hideOnMobile?: boolean
 }
 
 export const projects: Project[] = [
@@ -210,6 +211,7 @@ export const projects: Project[] = [
       'In-store signage rollout — built in-shop, installed on location with zero downtime to store operations.',
     scope: 'In-store rollout',
     materials: 'Mounted graphics',
+    hideOnMobile: true,
   },
   {
     slug: 'lake-life-storage-sign',

@@ -84,7 +84,9 @@ export default function Projects() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.25 }}
-                  className="group relative overflow-hidden rounded-2xl border border-border aspect-[4/3] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className={`group relative overflow-hidden rounded-2xl border border-border aspect-[4/3] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    project.hideOnMobile ? 'hidden md:block' : ''
+                  }`}
                   aria-label={`View ${project.title}`}
                 >
                   <img src={project.image} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
