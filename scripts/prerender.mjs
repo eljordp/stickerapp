@@ -20,6 +20,9 @@ import puppeteer from 'puppeteer'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const DIST = path.join(ROOT, 'dist')
+// Mirror of the prerender output that is committed to git so Vercel
+// (which can't run puppeteer in its build env) can copy it into dist/.
+const PRERENDERED = path.join(ROOT, 'prerendered')
 
 const CITY_SLUGS = [
   'hayward',
@@ -154,13 +157,17 @@ async function main() {
 
     await browser.close()
 
-    // Write everything to disk now.
+    // Write everything to disk now — to BOTH dist/ (for local testing)
+    // AND prerendered/ (which is committed to git so Vercel can use it).
     for (const [route, html] of rendered) {
-      const outDir = route === '/' ? DIST : path.join(DIST, route.replace(/^\//, ''))
-      await mkdir(outDir, { recursive: true })
-      const outFile = path.join(outDir, 'index.html')
-      await writeFile(outFile, html, 'utf8')
-      console.log(`[prerender] wrote ${path.relative(ROOT, outFile)}`)
+      const sub = route === '/' ? '' : route.replace(/^\//, '')
+      for (const base of [DIST, PRERENDERED]) {
+        const outDir = sub ? path.join(base, sub) : base
+        await mkdir(outDir, { recursive: true })
+        const outFile = path.join(outDir, 'index.html')
+        await writeFile(outFile, html, 'utf8')
+      }
+      console.log(`[prerender] wrote ${route}`)
     }
 
     console.log(`[prerender] done. ${ROUTES.length} routes rendered.`)
