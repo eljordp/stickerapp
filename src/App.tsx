@@ -27,6 +27,8 @@ import Referral from '@/pages/Referral'
 import Account from '@/pages/Account'
 import Admin from '@/pages/Admin'
 import NotFound from '@/pages/NotFound'
+import CityPage from '@/pages/CityPage'
+import { cityBySlug } from '@/lib/cities'
 
 const SITE_URL = 'https://tssprint.com'
 const DEFAULT_DESCRIPTION = 'Premium custom stickers, labels, decals, signage, vehicle graphics & packaging in the Bay Area. Fast turnaround, proof-based printing, and local pickup available.'
@@ -118,6 +120,11 @@ function getPageMeta(pathname: string): PageMeta {
       description: 'A detailed look at a Sticker Smith print, branding, signage, or vehicle graphics project.',
     }
   }
+  const citySlug = pathname.replace(/^\//, '')
+  const city = cityBySlug[citySlug]
+  if (city) {
+    return { title: city.metaTitle, description: city.metaDescription }
+  }
   return pageMeta[pathname] ?? {
     title: 'Page Not Found | The Sticker Smith',
     description: 'This Sticker Smith page could not be found. Browse custom stickers, print services, projects, or contact the studio.',
@@ -200,6 +207,9 @@ export default function App() {
               <Route path="/referral" element={<Referral />} />
               <Route path="/account" element={<Account />} />
               <Route path="/admin" element={<Admin />} />
+              {Object.keys(cityBySlug).map((slug) => (
+                <Route key={slug} path={`/${slug}`} element={<CityPage slug={slug} />} />
+              ))}
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import tssLogo from '@/assets/tss-logo-new.png'
+import { cities } from '@/lib/cities'
 
 const footerLinks = {
   products: [
@@ -23,6 +24,7 @@ const footerLinks = {
     { label: 'Contact', href: '/contact' },
     { label: 'Referral Program', href: '/referral' },
   ],
+  serviceArea: cities.map((c) => ({ label: c.name, href: `/${c.slug}` })),
 }
 
 export default function Footer() {
@@ -76,6 +78,18 @@ export default function Footer() {
               {footerLinks.support.map((link) => (<li key={link.label}><Link to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{link.label}</Link></li>))}
             </ul>
           </div>
+        </div>
+        <div className="mt-12 pt-8 border-t border-border">
+          <h4 className="font-bold text-sm uppercase tracking-wider mb-5 text-foreground">East Bay Service Area</h4>
+          <ul className="flex flex-wrap gap-x-5 gap-y-2">
+            {footerLinks.serviceArea.map((link) => (
+              <li key={link.label}>
+                <Link to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="mt-12 pt-8 border-t border-border">
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between md:gap-6">

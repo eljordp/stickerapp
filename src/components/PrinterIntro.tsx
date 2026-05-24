@@ -14,8 +14,19 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+const isPrerender = () => {
+  if (typeof window === 'undefined') return false
+  const w = window as unknown as { __prerender?: boolean }
+  if (w.__prerender) return true
+  try {
+    return new URLSearchParams(window.location.search).has('prerender')
+  } catch {
+    return false
+  }
+}
+
 export default function PrinterIntro() {
-  const [phase, setPhase] = useState<Phase>('gate')
+  const [phase, setPhase] = useState<Phase>(() => (isPrerender() ? 'hidden' : 'gate'))
   const [vh, setVh] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 800))
   const [statusIdx, setStatusIdx] = useState(0)
   const [showCropMarks, setShowCropMarks] = useState(false)
