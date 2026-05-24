@@ -46,7 +46,7 @@ export default function Footer() {
               <a href="mailto:thestickersmith@gmail.com" className="block text-muted-foreground hover:text-foreground transition-colors">
                 thestickersmith@gmail.com
               </a>
-              <p className="text-muted-foreground">Hayward, California · Bay Area pickup</p>
+              <p className="text-muted-foreground">23673 Connecticut St, Hayward, CA 94545</p>
             </div>
             <div className="flex gap-3">
               <a href="https://instagram.com/thestickersmith" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all" aria-label="Instagram">

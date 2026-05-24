@@ -31,6 +31,7 @@ function injectCitySchema(city: CityConfig) {
       telephone: '+1-510-634-8203',
       address: {
         '@type': 'PostalAddress',
+        streetAddress: '23673 Connecticut St',
         addressLocality: 'Hayward',
         addressRegion: 'CA',
         postalCode: '94545',
