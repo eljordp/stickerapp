@@ -11,7 +11,7 @@ import { isReferralCode, processReferralConversion } from '@/lib/referralRewards
 import { sendOrderEmail } from '@/lib/email'
 import { toast } from 'sonner'
 
-const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test'
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID
 
 interface CustomerInfo {
   firstName: string
@@ -96,7 +96,94 @@ export default function Checkout() {
     .map(i => `${i.name} (${i.option}, ${i.size}) x${i.quantity}`)
     .join(', ')
 
-  const saveOrder = async (orderId: string) => {
+  const customerName = `${customerInfo.firstName} ${customerInfo.lastName}`.trim()
+  const shippingAddress = `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zip}`
+
+  const checkoutPayload = () => ({
+    items: items.map(item => ({ ...item })),
+    customerInfo: { ...customerInfo },
+    promoCode,
+    promoDiscount,
+    total: finalTotal.toFixed(2),
+    orderDescription,
+  })
+
+  const readCheckoutApiResponse = async (response: Response) => {
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(data.error || 'Checkout payment request failed.')
+    }
+    return data
+  }
+
+  const createPayPalOrder = async () => {
+    const response = await fetch('/api/paypal/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(checkoutPayload()),
+    })
+    const data = await readCheckoutApiResponse(response)
+    if (!data.id) throw new Error('PayPal did not return an order ID.')
+    return data.id as string
+  }
+
+  const capturePayPalOrder = async (orderID: string) => {
+    const response = await fetch('/api/paypal/capture-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...checkoutPayload(), orderID }),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      return {
+        ok: false,
+        instrumentDeclined: data.instrumentDeclined === true,
+        error: data.error || 'PayPal capture failed.',
+      }
+    }
+    return {
+      ok: true,
+      orderId: (data.orderID || data.id || orderID) as string,
+      orderSaved: data.orderSaved === true,
+      orderSaveIssue: typeof data.orderSaveIssue === 'string' ? data.orderSaveIssue : '',
+    }
+  }
+
+  const formatOrderRecoveryMessage = (orderId: string, reason: string) => {
+    const itemLines = items.map(item => {
+      const addOnText = item.addOns?.length
+        ? `, add-ons: ${item.addOns.map(addOn => `${addOn.name} (+$${addOn.price.toFixed(2)})`).join('; ')}`
+        : ''
+      return `- ${item.name}: ${item.option}, ${item.size}, qty ${item.quantity}, base $${item.price.toFixed(2)}${addOnText}`
+    }).join('\n')
+
+    return [
+      'Paid PayPal order needs manual recovery.',
+      `PayPal order ID: ${orderId}`,
+      `Reason: ${reason}`,
+      `Customer: ${customerName || 'Unknown'}`,
+      `Email: ${customerInfo.email.trim()}`,
+      `Phone: ${customerInfo.phone.trim()}`,
+      `Shipping: ${shippingAddress}`,
+      `Total paid: $${finalTotal.toFixed(2)}`,
+      `Items:\n${itemLines}`,
+    ].join('\n')
+  }
+
+  const recordOrderRecovery = async (orderId: string, reason: string) => {
+    const { error } = await supabase.from('contact_submissions').insert({
+      name: customerName || 'Paid checkout customer',
+      email: customerInfo.email.trim(),
+      phone: customerInfo.phone.trim(),
+      service: 'Paid order recovery',
+      source: 'checkout-post-payment-fallback',
+      message: formatOrderRecoveryMessage(orderId, reason),
+    })
+
+    if (error) throw error
+  }
+
+  const saveOrder = async (orderId: string, skipRemoteInsert = false) => {
     const order = {
       id: orderId,
       date: new Date().toISOString(),
@@ -106,37 +193,40 @@ export default function Checkout() {
       subtotal: total.toFixed(2),
       promoCode: promoCode || undefined,
       promoDiscount: promoDiscount > 0 ? promoDiscount.toFixed(2) : undefined,
-      status: 'completed' as const,
+      status: 'processing' as const,
+      paymentStatus: 'captured' as const,
     }
 
     const prev = JSON.parse(localStorage.getItem('tss-orders') || '[]')
     localStorage.setItem('tss-orders', JSON.stringify([order, ...prev]))
 
-    try {
-      await supabase.from('orders').insert({
-        id: orderId,
-        customer_first_name: customerInfo.firstName.trim(),
-        customer_last_name: customerInfo.lastName.trim(),
-        customer_email: customerInfo.email.trim(),
-        customer_phone: customerInfo.phone.trim(),
-        customer_address: customerInfo.address.trim(),
-        customer_city: customerInfo.city.trim(),
-        customer_state: customerInfo.state.trim(),
-        customer_zip: customerInfo.zip.trim(),
-        items: items.map(i => ({ ...i })),
-        total: parseFloat(finalTotal.toFixed(2)),
-        status: 'completed',
-      })
-    } catch {
-      // localStorage backup already saved
+    if (skipRemoteInsert) return
+
+    const { error } = await supabase.from('orders').insert({
+      id: orderId,
+      customer_first_name: customerInfo.firstName.trim(),
+      customer_last_name: customerInfo.lastName.trim(),
+      customer_email: customerInfo.email.trim(),
+      customer_phone: customerInfo.phone.trim(),
+      customer_address: customerInfo.address.trim(),
+      customer_city: customerInfo.city.trim(),
+      customer_state: customerInfo.state.trim(),
+      customer_zip: customerInfo.zip.trim(),
+      items: items.map(i => ({ ...i })),
+      total: parseFloat(finalTotal.toFixed(2)),
+      status: 'processing',
+    })
+
+    if (error) {
+      if (error.code === '23505' || error.message?.toLowerCase().includes('duplicate')) return
+      throw error
     }
   }
 
   const inputClass = (field: keyof CustomerInfo) =>
     `w-full px-4 py-3 bg-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all ${errors[field] ? 'border-destructive' : 'border-border'}`
 
-  return (
-    <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: 'USD' }}>
+  const checkoutContent = (
       <section className="py-8 md:py-16">
         <div className="section-container max-w-6xl">
           <Link to="/cart" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
@@ -328,123 +418,125 @@ export default function Checkout() {
                   </div>
                 )}
 
-                <div className={!formValid || processing ? 'opacity-40 pointer-events-none' : ''}>
-                  <PayPalButtons
-                    style={{ layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay', height: 50 }}
-                    disabled={!formValid}
-                    createOrder={(_data, actions) => {
-                      return actions.order.create({
-                        intent: 'CAPTURE',
-                        purchase_units: [{
-                          description: orderDescription.substring(0, 127),
-                          amount: {
-                            currency_code: 'USD',
-                            value: finalTotal.toFixed(2),
-                            breakdown: {
-                              item_total: { currency_code: 'USD', value: total.toFixed(2) },
-                              discount: promoDiscount > 0
-                                ? { currency_code: 'USD', value: promoDiscount.toFixed(2) }
-                                : undefined,
-                            },
-                          },
-                          items: items.map(item => ({
-                            name: item.name.substring(0, 127),
-                            unit_amount: { currency_code: 'USD', value: ((item.price + (item.addOns?.reduce((a, b) => a + b.price, 0) || 0))).toFixed(2) },
-                            quantity: item.quantity.toString(),
-                            description: `${item.option} · ${item.size}`.substring(0, 127),
-                            category: 'PHYSICAL_GOODS' as const,
-                          })),
-                          shipping: {
-                            name: { full_name: `${customerInfo.firstName} ${customerInfo.lastName}` },
-                            address: {
-                              address_line_1: customerInfo.address,
-                              admin_area_2: customerInfo.city,
-                              admin_area_1: customerInfo.state,
-                              postal_code: customerInfo.zip,
-                              country_code: 'US',
-                            },
-                          },
-                        }],
-                      })
-                    }}
-                    onApprove={async (_data, actions) => {
-                      setProcessing(true)
-                      setPaymentError('')
-                      try {
-                        const details = await actions.order!.capture()
-                        finalizePromo()
-                        await saveOrder(details.id!)
-                        await markConverted()
-
-                        // CRM: create/update customer + link referral
+                {PAYPAL_CLIENT_ID ? (
+                  <div className={!formValid || processing ? 'opacity-40 pointer-events-none' : ''}>
+                    <PayPalButtons
+                      style={{ layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay', height: 50 }}
+                      disabled={!formValid}
+                      createOrder={createPayPalOrder}
+                      onApprove={async (data, actions) => {
+                        setProcessing(true)
+                        setPaymentError('')
                         try {
-                          const { data: customerId } = await supabase.rpc('get_or_create_customer', {
-                            _email: customerInfo.email.trim(),
-                            _first_name: customerInfo.firstName.trim(),
-                            _last_name: customerInfo.lastName.trim(),
-                            _phone: customerInfo.phone.trim(),
-                            _source: 'checkout',
-                          })
-                          if (customerId) {
-                            await linkReferral(customerId)
-                            await supabase.rpc('record_purchase', {
-                              _email: customerInfo.email.trim(),
-                              _order_id: details.id!,
-                              _total: parseFloat(finalTotal.toFixed(2)),
-                            })
+                          const capture = await capturePayPalOrder(data.orderID)
+                          if (!capture.ok) {
+                            if (capture.instrumentDeclined) {
+                              await actions.restart()
+                              return
+                            }
+                            throw new Error(capture.error)
                           }
-                        } catch { /* CRM is non-blocking */ }
 
-                        // Referral reward: if promo code used was a referral code, reward the referrer
-                        if (promoCode && isReferralCode(promoCode)) {
+                          const orderId = capture.orderId
+                          if (!orderId) throw new Error('PayPal did not return an order ID.')
+                          finalizePromo()
+
+                          let processingIssue = ''
+
                           try {
-                            processReferralConversion(
-                              promoCode,
-                              customerInfo.email.trim(),
-                              `${customerInfo.firstName} ${customerInfo.lastName}`,
-                              details.id!,
-                              parseFloat(finalTotal.toFixed(2))
-                            )
-                          } catch { /* non-blocking */ }
+                            await saveOrder(orderId, capture.orderSaved)
+                            if (capture.orderSaveIssue) {
+                              console.warn('Server order save warning:', capture.orderSaveIssue)
+                            }
+
+                            // CRM: create/update customer + link referral
+                            try {
+                              const { data: customerId } = await supabase.rpc('get_or_create_customer', {
+                                _email: customerInfo.email.trim(),
+                                _first_name: customerInfo.firstName.trim(),
+                                _last_name: customerInfo.lastName.trim(),
+                                _phone: customerInfo.phone.trim(),
+                                _source: 'checkout',
+                              })
+                              if (customerId) {
+                                await linkReferral(customerId)
+                                await supabase.rpc('record_purchase', {
+                                  _email: customerInfo.email.trim(),
+                                  _order_id: orderId,
+                                  _total: parseFloat(finalTotal.toFixed(2)),
+                                })
+                              }
+                            } catch { /* CRM is non-blocking */ }
+
+                            // Referral reward: if promo code used was a referral code, reward the referrer
+                            if (promoCode && isReferralCode(promoCode)) {
+                              try {
+                                processReferralConversion(
+                                  promoCode,
+                                  customerInfo.email.trim(),
+                                  customerName,
+                                  orderId,
+                                  parseFloat(finalTotal.toFixed(2))
+                                )
+                              } catch { /* non-blocking */ }
+                            }
+
+                            await sendOrderEmail({
+                              orderId,
+                              customerName: customerName || customerInfo.email.trim(),
+                              email: customerInfo.email.trim(),
+                              items: items.map(i => ({ ...i })),
+                              total: finalTotal.toFixed(2),
+                              address: shippingAddress,
+                            })
+                          } catch (postPaymentError) {
+                            const reason = postPaymentError instanceof Error ? postPaymentError.message : 'Unknown post-payment error'
+                            console.error('Post-payment order processing error:', postPaymentError)
+
+                            try {
+                              await recordOrderRecovery(orderId, reason)
+                              processingIssue = 'Payment received, but our confirmation system needs manual review. We saved your order details for the team.'
+                            } catch (recoveryError) {
+                              console.error('Order recovery lead failed:', recoveryError)
+                              processingIssue = 'Payment received, but the automatic order record failed. Please email us with your PayPal order ID.'
+                            }
+                          }
+
+                          await markConverted()
+                          clearCart()
+                          // Mark that this visitor has completed an order — no more auto-discount
+                          localStorage.setItem('tss_order_completed', 'true')
+
+                          toast.success(processingIssue ? 'Payment received — order needs review' : 'Payment successful!')
+                          navigate('/order-confirmation', {
+                            state: {
+                              orderId,
+                              payerName: customerName,
+                              email: customerInfo.email,
+                              total: finalTotal.toFixed(2),
+                              processingIssue,
+                            },
+                          })
+                        } catch (err) {
+                          console.error('Payment capture error:', err)
+                          setPaymentError('Payment capture failed. Please contact us if you were charged.')
+                          toast.error('Payment issue — please contact us')
+                        } finally {
+                          setProcessing(false)
                         }
-
-                        clearCart()
-                        // Mark that this visitor has completed an order — no more auto-discount
-                        localStorage.setItem('tss_order_completed', 'true')
-                        // Send order confirmation emails
-                        sendOrderEmail({
-                          orderId: details.id!,
-                          customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                          email: customerInfo.email.trim(),
-                          items: items.map(i => ({ ...i })),
-                          total: finalTotal.toFixed(2),
-                          address: `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zip}`,
-                        })
-
-                        toast.success('Payment successful!')
-                        navigate('/order-confirmation', {
-                          state: {
-                            orderId: details.id!,
-                            payerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                            email: customerInfo.email,
-                            total: finalTotal.toFixed(2),
-                          },
-                        })
-                      } catch (err) {
-                        console.error('Payment capture error:', err)
-                        setPaymentError('Payment capture failed. Please contact us if you were charged.')
-                        toast.error('Payment issue — please contact us')
-                      } finally {
-                        setProcessing(false)
-                      }
-                    }}
-                    onError={(err) => {
-                      console.error('PayPal error:', err)
-                      setPaymentError('Payment failed. Please try again or contact us.')
-                      toast.error('Payment failed')
-                    }}
-                  />
-                </div>
+                      }}
+                      onError={(err) => {
+                        console.error('PayPal error:', err)
+                        setPaymentError('Payment failed. Please try again or contact us.')
+                        toast.error('Payment failed')
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-sm text-destructive bg-destructive/10 rounded-xl p-4" role="alert">
+                    Online checkout is temporarily unavailable. Please contact us to complete your order.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -493,6 +585,13 @@ export default function Checkout() {
           </div>
         </div>
       </section>
+  )
+
+  if (!PAYPAL_CLIENT_ID) return checkoutContent
+
+  return (
+    <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: 'USD' }}>
+      {checkoutContent}
     </PayPalScriptProvider>
   )
 }

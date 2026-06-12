@@ -7,6 +7,8 @@ const DURATION = 3.8
 const HEAD_TRAVEL_S = DURATION - 0.72
 const HEAD_EASE: [number, number, number, number] = [0.22, 0.08, 0.78, 0.94]
 const STATUS_MESSAGES = ['CALIBRATING', 'LOADING INK', 'PRINTING', 'CURING']
+const INTRO_SEEN_KEY = 'tss-printer-intro-seen-v1'
+const HIGH_INTENT_PATHS = new Set(['/cart', '/checkout', '/order-confirmation', '/account', '/admin', '/contact', '/quote'])
 
 type Phase = 'gate' | 'playing' | 'hidden'
 
@@ -25,14 +27,42 @@ const isPrerender = () => {
   }
 }
 
+const hasSeenIntro = () => {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(INTRO_SEEN_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const markIntroSeen = () => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(INTRO_SEEN_KEY, 'true')
+  } catch { /* ignore unavailable storage */ }
+}
+
+const isHighIntentPath = () => {
+  if (typeof window === 'undefined') return false
+  return HIGH_INTENT_PATHS.has(window.location.pathname.replace(/\/$/, '') || '/')
+}
+
+const shouldSkipIntro = () =>
+  isPrerender() || prefersReducedMotion() || hasSeenIntro() || isHighIntentPath()
+
 export default function PrinterIntro() {
-  const [phase, setPhase] = useState<Phase>(() => (isPrerender() ? 'hidden' : 'gate'))
+  const [phase, setPhase] = useState<Phase>(() => (shouldSkipIntro() ? 'hidden' : 'gate'))
   const [vh, setVh] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 800))
   const [statusIdx, setStatusIdx] = useState(0)
   const [showCropMarks, setShowCropMarks] = useState(false)
   const [showFinishFlash, setShowFinishFlash] = useState(false)
   const audioStoppers = useRef<Array<() => void>>([])
   const timersRef = useRef<Array<number>>([])
+
+  useEffect(() => {
+    if (phase !== 'hidden') markIntroSeen()
+  }, [phase])
 
   useEffect(() => {
     if (typeof window === 'undefined' || phase === 'hidden') return
@@ -51,6 +81,7 @@ export default function PrinterIntro() {
     setShowFinishFlash(false)
 
     if (prefersReducedMotion()) {
+      markIntroSeen()
       setPhase('hidden')
       return
     }
@@ -63,6 +94,7 @@ export default function PrinterIntro() {
     timersRef.current.push(window.setTimeout(() => setShowFinishFlash(true), (DURATION - 0.36) * 1000))
     timersRef.current.push(
       window.setTimeout(() => {
+        markIntroSeen()
         setPhase('hidden')
         document.body.style.overflow = ''
         stopAllSound(audioStoppers)
@@ -81,6 +113,7 @@ export default function PrinterIntro() {
   const finishIntro = () => {
     timersRef.current.forEach((id) => clearTimeout(id))
     timersRef.current = []
+    markIntroSeen()
     setPhase('hidden')
     document.body.style.overflow = ''
     stopAllSound(audioStoppers)

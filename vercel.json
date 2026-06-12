@@ -1,4 +1,6 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     { "source": "/order", "destination": "/stickers", "permanent": true },
     { "source": "/services/mylar-packaging", "destination": "/mylar", "permanent": true },
@@ -6,6 +8,11 @@
     { "source": "/case-studies", "destination": "/projects", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/cart", "destination": "/index.html" },
+    { "source": "/checkout", "destination": "/index.html" },
+    { "source": "/order-confirmation", "destination": "/index.html" },
+    { "source": "/account", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/case-studies/:slug", "destination": "/index.html" }
   ]
 }

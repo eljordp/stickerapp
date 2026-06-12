@@ -1,20 +1,24 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Send, Mail, MapPin, Phone, Loader2 } from 'lucide-react'
 import { contactSchema, type ContactFormErrors } from '@/lib/validation'
 import { submitContactRequest } from '@/lib/contactSubmit'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 import contactPrinter from '@/assets/pages/contact-printer.jpg'
 
 export default function Contact() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const isQuotePage = location.pathname === '/quote'
+  const sourceParam = searchParams.get('source')
+  const isGbpLead = sourceParam === 'gbp'
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ContactFormErrors>({})
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
+  const [emailOptIn, setEmailOptIn] = useState(false)
 
   // Prefill from query params — lets other pages hand off context
   // (e.g. /contact?service=Bulk+Sticker+Order&qty=2500&size=3"+x+3"&material=Holographic)
@@ -63,14 +67,11 @@ export default function Contact() {
       }
       await submitContactRequest({
         ...submission,
-        subject: `New quote request from ${submission.name}`,
+        subject: `${isGbpLead ? '[Google Business Profile] ' : ''}New quote request from ${submission.name}`,
+        source: isGbpLead ? 'google-business-profile' : isQuotePage ? 'quote-page' : 'contact-page',
+        subscribe: emailOptIn,
+        tags: ['quote-request', submission.service || 'general'],
       })
-      supabase.from('contact_submissions').insert({
-        ...submission,
-        phone: submission.phone || null,
-        service: submission.service || null,
-        source: 'contact-page',
-      }).then(() => {})
       setSubmitted(true)
       toast.success('Quote request sent!')
     } catch (err) {
@@ -90,8 +91,14 @@ export default function Contact() {
         </div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative text-center section-container z-10">
           <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Custom Quote</p>
-          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">Get a Free Quote</h1>
-          <p className="text-white/80 text-lg">Tell us about your project and we'll get back within 24 hours.</p>
+          <h1 className="text-4xl md:text-6xl font-black mb-4 text-white">
+            {isQuotePage ? 'Get a Fast Print Quote' : 'Get a Free Quote'}
+          </h1>
+          <p className="text-white/80 text-lg">
+            {isQuotePage
+              ? 'Stickers, signage, wraps, event displays, packaging, and print. Send the basics and we will reply within 24 hours.'
+              : "Tell us about your project and we'll get back within 24 hours."}
+          </p>
         </motion.div>
       </div>
       <section className="py-8 md:py-16">
@@ -172,6 +179,15 @@ export default function Contact() {
                     />
                     {errors.message && <p id="message-error" className="text-sm text-destructive mt-1">{errors.message}</p>}
                   </div>
+                  <label className="flex items-start gap-3 rounded-xl border border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={emailOptIn}
+                      onChange={(e) => setEmailOptIn(e.target.checked)}
+                      className="mt-1 accent-primary"
+                    />
+                    <span>Send me occasional print deals, file tips, and project ideas from The Sticker Smith.</span>
+                  </label>
                   <button type="submit" className="btn-primary w-full" disabled={loading}>
                     {loading ? <><Loader2 size={18} className="animate-spin" /> Sending...</> : <>Send Quote Request<Send size={18} /></>}
                   </button>
@@ -179,6 +195,16 @@ export default function Contact() {
               )}
             </div>
             <div className="space-y-6">
+              {isQuotePage && (
+                <a
+                  href="sms:+15106348203"
+                  className="block bg-primary text-primary-foreground rounded-2xl p-6 hover:brightness-110 transition-all"
+                >
+                  <Send className="mb-3" size={24} aria-hidden="true" />
+                  <h3 className="font-bold mb-1">Text a Quick Question</h3>
+                  <p className="text-sm text-primary-foreground/80">Fastest path for simple quote questions.</p>
+                </a>
+              )}
               <a
                 href="tel:+15106348203"
                 className="block bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-colors"

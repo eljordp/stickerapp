@@ -16,8 +16,10 @@ export async function sendOrderEmail(data: {
   total: string; address: string
 }) {
   try {
-    await supabase.functions.invoke('send-order-email', { body: data })
-  } catch {
-    // Email is non-blocking — order already saved
+    const { error } = await supabase.functions.invoke('send-order-email', { body: data })
+    if (error) throw error
+  } catch (error) {
+    console.error('Order email failed:', error)
+    throw error
   }
 }

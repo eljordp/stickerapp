@@ -6,6 +6,45 @@ import { projects, projectCategories, type Project } from '@/lib/projects'
 import PageHero from '@/components/PageHero'
 import ProjectModal from '@/components/ProjectModal'
 
+const serviceProofLinks = [
+  {
+    label: 'Bay Area custom stickers',
+    category: 'Stickers',
+    href: '/stickers',
+    description: 'Die-cut stickers, sticker sheets, roll labels, holographic runs, and product labels.',
+  },
+  {
+    label: 'Hayward business signs',
+    category: 'Business Signage',
+    href: '/services/business-signage',
+    description: 'Storefront signs, window graphics, wall graphics, A-frames, and in-store installs.',
+  },
+  {
+    label: 'Custom canopies and banners',
+    category: 'Events',
+    href: '/services/event-displays',
+    description: 'Event booths, banners, feather flags, backdrops, table covers, and custom vinyl floors.',
+  },
+  {
+    label: 'Bay Area vehicle graphics',
+    category: 'Vehicle Graphics',
+    href: '/services/vehicle-graphics',
+    description: 'Fleet wraps, truck graphics, door decals, spot graphics, and full vehicle wraps.',
+  },
+  {
+    label: 'Custom mylar packaging',
+    category: 'Mylar Packaging',
+    href: '/mylar',
+    description: 'Printed mylar bags, retail packaging, pouch artwork, and product label systems.',
+  },
+  {
+    label: 'Business print materials',
+    category: 'Business Print',
+    href: '/services/business-print',
+    description: 'Business cards, flyers, posters, coupons, and branded marketing materials.',
+  },
+]
+
 export default function Projects() {
   const [active, setActive] = useState<string>('All')
   const [openProject, setOpenProject] = useState<Project | null>(null)
@@ -46,6 +85,38 @@ export default function Projects() {
                   </p>
                 </div>
               </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-8 md:py-14 border-b border-border/50">
+        <div className="section-container max-w-6xl">
+          <div className="mb-6">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-1.5">Project Proof By Service</p>
+            <h2 className="text-xl md:text-3xl font-black">Proof that this is more than stickers</h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {serviceProofLinks.map((item) => (
+              <div
+                key={item.label}
+                className="group bg-card border border-border rounded-2xl p-5 hover:border-primary/40 transition-all"
+              >
+                <Link
+                  to={item.href}
+                  className="text-sm font-black text-foreground group-hover:text-primary transition-colors"
+                >
+                  {item.label}
+                </Link>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-2">{item.description}</p>
+                <button
+                  type="button"
+                  onClick={() => setActive(item.category)}
+                  className="text-[10px] font-bold uppercase tracking-widest text-primary mt-4"
+                >
+                  Show {item.category}
+                </button>
+              </div>
             ))}
           </div>
         </div>

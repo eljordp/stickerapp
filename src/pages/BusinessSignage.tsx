@@ -41,6 +41,21 @@ const process = [
   { step: '4', title: 'Install or Ship', desc: 'Bay Area: we install it for you. Nationwide: shipped flat or rolled, ready to mount.' },
 ]
 
+const signageFaqs = [
+  {
+    q: 'Do you make business signs in Hayward?',
+    a: 'Yes. The Sticker Smith makes custom business signs and signage in Hayward for storefronts, offices, restaurants, service companies, pop-ups, and retail locations across the East Bay.',
+  },
+  {
+    q: 'Can you install storefront signs and window graphics?',
+    a: 'Yes. Professional Bay Area installation is available for storefront signs, window graphics, wall graphics, vinyl lettering, acrylic signs, and A-frame signage.',
+  },
+  {
+    q: 'What should I send for a signage quote?',
+    a: 'Send photos of the install area, rough dimensions, your logo or artwork, the business location, and whether you need design help, printing only, or full installation.',
+  },
+]
+
 export default function BusinessSignage() {
   const [activeMockup, setActiveMockup] = useState('storefront')
   const handleCategoryChange = useCallback((categoryName: string) => {
@@ -57,8 +72,8 @@ export default function BusinessSignage() {
     <>
       <PageHero
         eyebrow="Business Signage"
-        title="Storefront, wall, sidewalk."
-        subtitle="Storefront signs, wall graphics, A-frames, banners, acrylic, and illuminated. Built to last 3–10 years and installed by our crew in the Bay Area."
+        title="Business signs and signage for Hayward storefronts."
+        subtitle="Storefront signs, wall graphics, A-frames, banners, acrylic signs, and illuminated signage for Hayward and Bay Area businesses. Built to last 3-10 years and installed by our crew."
         image={signageHero}
         imageAlt="Storefront signage"
         icon={Store}
@@ -67,6 +82,22 @@ export default function BusinessSignage() {
       />
       <section className="py-8 md:py-16">
         <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Local signage shop</p>
+            <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black mb-3">A local Hayward sign company for storefronts, offices, and events.</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Sticker Smith produces business signs and signage in Hayward for shops, offices, restaurants, pop-ups, dispensaries, service companies, and event teams across the East Bay and wider Bay Area.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {['Hayward storefront signs', 'A-frame sidewalk signs', 'Window decals', 'Wall graphics', 'Outdoor banners', 'Acrylic signs'].map((item) => (
+                  <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
             <h2 className="text-2xl font-black mb-6">What We Offer</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -159,6 +190,22 @@ export default function BusinessSignage() {
               { src: weddingSignage, alt: 'Wedding display signage', caption: 'Wedding event signage' },
             ]}
           />
+        </div>
+      </section>
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container max-w-4xl">
+          <div className="mb-8 text-center">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Signage FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-black">Business signage questions</h2>
+          </div>
+          <div className="grid gap-4">
+            {signageFaqs.map((faq) => (
+              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <section className="py-10 md:py-14 border-t border-border/50">

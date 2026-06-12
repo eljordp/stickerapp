@@ -15,6 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const SRC = path.join(ROOT, 'prerendered')
 const DEST = path.join(ROOT, 'dist')
+const APP_SHELL_ROUTES = ['/cart', '/checkout', '/order-confirmation', '/account', '/admin']
 
 try {
   await stat(SRC)
@@ -55,6 +56,45 @@ function patchHtml(html) {
   return html
 }
 
+async function assertReferencedAssetsExist(dir) {
+  const missing = []
+
+  async function scan(currentDir) {
+    const entries = await readdir(currentDir, { withFileTypes: true })
+    for (const entry of entries) {
+      const file = path.join(currentDir, entry.name)
+      if (entry.isDirectory()) {
+        await scan(file)
+        continue
+      }
+      if (!entry.name.endsWith('.html')) continue
+
+      const html = await readFile(file, 'utf8')
+      const assets = new Set()
+      for (const match of html.matchAll(/["'(](\/assets\/[^"'()?#]+\.[a-z0-9]+)(?:[?#][^"'()]*)?["')]/gi)) {
+        assets.add(match[1])
+      }
+
+      for (const asset of assets) {
+        try {
+          await stat(path.join(DEST, asset))
+        } catch {
+          missing.push(`${path.relative(DEST, file)} -> ${asset}`)
+        }
+      }
+    }
+  }
+
+  await scan(dir)
+
+  if (missing.length > 0) {
+    console.error('[apply-prerendered] prerendered HTML references missing built assets:')
+    missing.slice(0, 30).forEach((item) => console.error(`  - ${item}`))
+    if (missing.length > 30) console.error(`  ...and ${missing.length - 30} more`)
+    process.exit(1)
+  }
+}
+
 async function walk(srcDir, destDir) {
   await mkdir(destDir, { recursive: true })
   const entries = await readdir(srcDir, { withFileTypes: true })
@@ -73,5 +113,20 @@ async function walk(srcDir, destDir) {
   }
 }
 
+async function writeAppShellAliases(html) {
+  for (const route of APP_SHELL_ROUTES) {
+    const sub = route.replace(/^\//, '')
+    const outDir = path.join(DEST, sub)
+    await mkdir(outDir, { recursive: true })
+    await writeFile(path.join(outDir, 'index.html'), html, 'utf8')
+
+    const aliasFile = path.join(DEST, `${sub}.html`)
+    await mkdir(path.dirname(aliasFile), { recursive: true })
+    await writeFile(aliasFile, html, 'utf8')
+  }
+}
+
 await walk(SRC, DEST)
-console.log('[apply-prerendered] copied prerendered/ -> dist/ with refreshed asset tags')
+await writeAppShellAliases(freshIndex)
+await assertReferencedAssetsExist(DEST)
+console.log('[apply-prerendered] copied prerendered/ -> dist/ with refreshed asset tags and app-shell route aliases')

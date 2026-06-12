@@ -40,6 +40,21 @@ const process = [
   { step: '4', title: 'Set Up & Shine', desc: 'Everything ships with frames, hardware, and carry bags. Easy setup — one person, under 5 minutes.' },
 ]
 
+const eventFaqs = [
+  {
+    q: 'Do you print custom canopy tents in the Bay Area?',
+    a: 'Yes. The Sticker Smith prints custom canopy tents, table covers, flags, banners, and backdrops for Bay Area and Hayward events, markets, trade shows, and pop-ups.',
+  },
+  {
+    q: 'Can I order a full booth kit?',
+    a: 'Yes. You can bundle a canopy, table cover, feather flags, retractable banners, and backdrop graphics so your event setup looks consistent from every angle.',
+  },
+  {
+    q: 'How early should I order before an event?',
+    a: 'Most event displays need 5 to 10 business days after proof approval. Rush options depend on the product, hardware availability, and event date.',
+  },
+]
+
 export default function EventCanopies() {
   const [activeMockup, setActiveMockup] = useState('canopy')
   const handleCategoryChange = useCallback((categoryName: string) => {
@@ -55,8 +70,8 @@ export default function EventCanopies() {
     <>
       <PageHero
         eyebrow="Event Displays"
-        title="Tents, flags, backdrops, banners."
-        subtitle="Everything you need to show up branded — printed on heavy-duty polyester, packed with hardware, ready to set up in 5 minutes."
+        title="Custom canopy tents, banners, and event displays in the Bay Area."
+        subtitle="Custom printed canopy tents, table covers, feather flags, backdrops, and banners for Hayward and Bay Area pop-ups, trade shows, markets, and launches."
         image={eventHero}
         imageAlt="Custom event canopy and feather flags"
         icon={Tent}
@@ -65,6 +80,22 @@ export default function EventCanopies() {
       />
       <section className="py-8 md:py-16">
         <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Bay Area event branding</p>
+            <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black mb-3">Printed canopies, banners, and booth materials for markets, trade shows, and pop-ups.</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  The Sticker Smith prints event displays in Hayward for Bay Area businesses that need custom canopy tents, vinyl banners, table throws, flags, and backdrops that look polished in person and in photos.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {['Custom canopy tents', 'Printed table covers', 'Feather flags', 'Retractable banners', 'Step-and-repeat backdrops', 'Full booth kits'].map((item) => (
+                  <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
             <h2 className="text-2xl font-black mb-6">What We Offer</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -168,6 +199,22 @@ export default function EventCanopies() {
               { src: culturalFloor, alt: 'Cultural event dance floor', caption: 'Cultural event' },
             ]}
           />
+        </div>
+      </section>
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container max-w-4xl">
+          <div className="mb-8 text-center">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Event Display FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-black">Custom event branding questions</h2>
+          </div>
+          <div className="grid gap-4">
+            {eventFaqs.map((faq) => (
+              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">

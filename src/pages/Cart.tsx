@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Plus, Minus, AlertCircle, Mail, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
-import { supabase } from '@/lib/supabase'
-import { sendContactEmail } from '@/lib/email'
+import { submitContactRequest } from '@/lib/contactSubmit'
 import emptyCartImage from '@/assets/pages/cart-empty-stickers.jpg'
 
 const MIN_ORDER = 35
@@ -47,17 +46,14 @@ export default function Cart() {
     setQuoteStatus('sending')
     const message = `Hold this quote for me, please.\n\n${buildQuoteMessage()}`
     try {
-      await supabase.from('contact_submissions').insert({
+      await submitContactRequest({
         name: quoteName,
         email: quoteEmail,
         service: 'Cart Quote Hold',
         message,
-      })
-      sendContactEmail({
-        name: quoteName,
-        email: quoteEmail,
-        service: 'Cart Quote Hold',
-        message,
+        subject: `Cart quote hold from ${quoteName}`,
+        source: 'cart-quote-hold',
+        tags: ['cart-quote'],
       })
       setQuoteStatus('sent')
     } catch {

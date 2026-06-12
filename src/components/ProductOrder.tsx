@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
-import { getPricing, type ProductCategory, type ProductTier } from '@/lib/pricing'
+import { getPricing, loadPricing, type ProductCategory, type ProductTier } from '@/lib/pricing'
 
 interface Props {
   categoryNames: string[]
@@ -53,7 +53,15 @@ function findTier(quantities: { qty: number; price: number }[], qty: number) {
 
 export default function ProductOrder({ categoryNames, onCategoryChange }: Props) {
   const { addItem } = useCart()
-  const pricing = useMemo(() => getPricing(), [])
+  const [pricing, setPricing] = useState(() => getPricing())
+
+  useEffect(() => {
+    let active = true
+    loadPricing().then((config) => {
+      if (active) setPricing(config)
+    })
+    return () => { active = false }
+  }, [])
 
   const categories = categoryNames
     .map(name => pricing.products.find(p => p.name === name))

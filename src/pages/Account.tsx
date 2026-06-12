@@ -168,7 +168,7 @@ function AccountDashboard() {
             id: o.id,
             date: o.created_at,
             total: (o.total || 0).toFixed(2),
-            status: o.status || 'completed',
+            status: o.status || 'processing',
             items: (o.items as Array<{ name: string; quantity: number }>) || [],
           })))
         }

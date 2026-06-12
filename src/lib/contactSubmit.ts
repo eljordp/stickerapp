@@ -1,5 +1,6 @@
-const WEB3FORMS_ACCESS_KEY = 'cb4f54e1-5f12-4ddf-a5e6-d2adb94eb0a3'
-const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit'
+import { sendContactEmail } from './email'
+import { supabase } from './supabase'
+import { trackLeadSubmission } from './analytics'
 
 export type ContactRequest = {
   name: string
@@ -8,6 +9,9 @@ export type ContactRequest = {
   service?: string
   message: string
   subject: string
+  source?: string
+  subscribe?: boolean
+  tags?: string[]
 }
 
 export type ContactSubmitResult = {
@@ -15,45 +19,95 @@ export type ContactSubmitResult = {
   message?: string
 }
 
-type Web3FormsResult = {
-  success?: boolean
-  message?: string
+export type SubscribeRequest = {
+  email: string
+  name?: string
+  phone?: string
+  source: string
+  service?: string
+  tags?: string[]
 }
 
-function createPayload(data: ContactRequest) {
-  const payload = new FormData()
-  payload.append('access_key', WEB3FORMS_ACCESS_KEY)
-  payload.append('subject', data.subject)
-  payload.append('from_name', 'The Sticker Smith Website')
-  payload.append('name', data.name)
-  payload.append('email', data.email)
-  if (data.phone) payload.append('phone', data.phone)
-  if (data.service) payload.append('service', data.service)
-  payload.append('message', data.message)
-
-  return payload
+function splitName(name?: string) {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean)
+  return {
+    firstName: parts[0] || null,
+    lastName: parts.length > 1 ? parts.slice(1).join(' ') : null,
+  }
 }
 
-async function sendToWeb3Forms(payload: FormData) {
-  const response = await fetch(WEB3FORMS_ENDPOINT, {
-    method: 'POST',
-    body: payload,
+export async function subscribeEmail(data: SubscribeRequest): Promise<ContactSubmitResult> {
+  const email = data.email.trim().toLowerCase()
+  if (!email) throw new Error('Email is required')
+
+  const { error } = await supabase.rpc('upsert_email_subscriber', {
+    _email: email,
+    _name: data.name?.trim() || null,
+    _phone: data.phone?.trim() || null,
+    _source: data.source,
+    _service_interest: data.service || null,
+    _tags: data.tags || [],
   })
-  const text = await response.text()
-  let result: Web3FormsResult = {}
+
+  if (error) throw error
+  return { success: true }
+}
+
+async function upsertCustomer(data: ContactRequest) {
+  const { firstName, lastName } = splitName(data.name)
   try {
-    result = text ? JSON.parse(text) : {}
+    await supabase.rpc('get_or_create_customer', {
+      _email: data.email.trim(),
+      _first_name: firstName,
+      _last_name: lastName,
+      _phone: data.phone?.trim() || null,
+      _source: data.source || 'contact',
+    })
   } catch {
-    result = { message: text }
+    // CRM is helpful, but the lead record is the source of truth.
   }
-
-  if (!response.ok || result.success === false) {
-    throw new Error(result.message || `Web3Forms returned ${response.status}`)
-  }
-
-  return result
 }
 
 export async function submitContactRequest(data: ContactRequest): Promise<ContactSubmitResult> {
-  return sendToWeb3Forms(createPayload(data))
+  const payload = {
+    name: data.name.trim(),
+    email: data.email.trim().toLowerCase(),
+    phone: data.phone?.trim() || null,
+    service: data.service || null,
+    message: data.message.trim(),
+    source: data.source || 'contact',
+  }
+
+  const { error } = await supabase.from('contact_submissions').insert(payload)
+  if (error) throw error
+
+  await upsertCustomer(data)
+
+  if (data.subscribe) {
+    await subscribeEmail({
+      email: payload.email,
+      name: payload.name,
+      phone: payload.phone || undefined,
+      source: payload.source,
+      service: payload.service || undefined,
+      tags: data.tags || [payload.service || 'lead'].filter(Boolean),
+    })
+  }
+
+  sendContactEmail({
+    name: payload.name,
+    email: payload.email,
+    phone: payload.phone || undefined,
+    service: payload.service || undefined,
+    message: payload.message,
+  })
+
+  trackLeadSubmission({
+    source: payload.source,
+    service: payload.service,
+    subscribed: !!data.subscribe,
+    tags: data.tags,
+  })
+
+  return { success: true }
 }

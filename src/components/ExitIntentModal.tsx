@@ -1,8 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Gift, Check, Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { sendContactEmail } from '@/lib/email'
+import { submitContactRequest } from '@/lib/contactSubmit'
 
 const DISMISSED_KEY = 'tss_exit_modal_dismissed'
 const SUBMITTED_KEY = 'tss_exit_modal_submitted'
@@ -51,14 +50,16 @@ export default function ExitIntentModal() {
     setStatus('sending')
     const message = "Exit-intent signup — interested in first-order discount. Please send the code + any Bay Area print intro info."
     try {
-      await supabase.from('contact_submissions').insert({
+      await submitContactRequest({
         name: 'Exit signup',
         email,
         service: 'Email Signup',
         message,
+        subject: 'New email signup from exit intent',
         source: 'exit-intent',
+        subscribe: true,
+        tags: ['exit-intent', 'first-order-discount'],
       })
-      sendContactEmail({ name: 'New prospect', email, service: 'Email Signup', message })
       localStorage.setItem(SUBMITTED_KEY, '1')
       setStatus('sent')
     } catch {

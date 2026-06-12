@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   LogOut, Package, DollarSign, Users, ChevronDown, ChevronUp,
   Truck, Clock, CheckCircle, Settings, RotateCcw, Save, Loader2,
   ShoppingCart, BarChart3, UserPlus, Eye, MousePointer, ArrowRight,
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
+  CreditCard, Unplug, Send, AlertCircle, MapPin,
 } from 'lucide-react'
-import { getPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
+import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
 import { getReferralUrl } from '@/lib/referrals'
 import { toast } from 'sonner'
@@ -22,6 +23,9 @@ interface OrderItem {
   material?: string; shape?: string
 }
 
+type OrderStatus = 'completed' | 'shipped' | 'processing'
+type PaymentStatus = 'captured' | 'not_captured' | 'not_found' | 'unverified' | 'checking' | 'error'
+
 interface Order {
   id: string; date: string
   customer: {
@@ -29,7 +33,13 @@ interface Order {
     address: string; city: string; state: string; zip: string
   }
   items: OrderItem[]; total: string
-  status: 'completed' | 'shipped' | 'processing'
+  status: OrderStatus
+  paymentStatus: PaymentStatus
+  paymentCheckedAt?: string
+  paymentIssue?: string
+  paypalCaptureId?: string
+  paymentAmount?: string
+  paymentCurrency?: string
 }
 
 interface CartSession {
@@ -43,6 +53,33 @@ interface Customer {
   phone: string | null; total_spent: number; order_count: number
   referral_code: string | null; source: string | null
   referred_by: string | null; created_at: string
+}
+
+interface EmailSubscriber {
+  id: string
+  email: string
+  name: string | null
+  phone: string | null
+  service_interest: string | null
+  source: string | null
+  status: 'subscribed' | 'unsubscribed'
+  tags: string[] | null
+  consented_at: string
+  created_at: string
+}
+
+interface SquareConnectionStatus {
+  connected: boolean
+  connection: {
+    merchant_id: string | null
+    location_id: string | null
+    location_name: string | null
+    connected_at: string | null
+    token_expires_at: string | null
+    scopes: string[] | null
+  } | null
+  missing: string[]
+  redirectUri: string
 }
 
 type CustomerTag = 'admin' | 'vip' | 'customer'
@@ -148,10 +185,47 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 
 // ─── Shared Components ───────────────────────────────────────────────────────
 
-const statusConfig = {
+const statusConfig: Record<OrderStatus, { label: string; icon: typeof Package; color: string }> = {
   completed: { label: 'Completed', icon: CheckCircle, color: 'text-green-400 bg-green-400/10' },
   shipped: { label: 'Shipped', icon: Truck, color: 'text-blue-400 bg-blue-400/10' },
   processing: { label: 'Processing', icon: Clock, color: 'text-yellow-400 bg-yellow-400/10' },
+}
+
+const paymentReviewConfig = {
+  label: 'Payment Review',
+  icon: AlertCircle,
+  color: 'text-red-400 bg-red-400/10',
+}
+
+const paymentConfig: Record<PaymentStatus, { label: string; icon: typeof Package; color: string }> = {
+  captured: { label: 'PayPal captured', icon: CheckCircle, color: 'text-green-400 bg-green-400/10 border-green-400/20' },
+  not_captured: { label: 'No capture found', icon: AlertCircle, color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+  not_found: { label: 'Not in live PayPal', icon: AlertCircle, color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+  unverified: { label: 'Payment unverified', icon: AlertCircle, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
+  checking: { label: 'Checking PayPal', icon: Loader2, color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+  error: { label: 'Verify failed', icon: AlertCircle, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
+}
+
+function normalizePaymentStatus(value: unknown): PaymentStatus {
+  if (value === 'captured' || value === 'not_captured' || value === 'not_found' || value === 'checking' || value === 'error') {
+    return value
+  }
+  return 'unverified'
+}
+
+function normalizeOrderStatus(value: unknown): OrderStatus {
+  if (value === 'completed' || value === 'shipped' || value === 'processing') return value
+  return 'processing'
+}
+
+function needsPaymentReview(order: Order) {
+  if (order.paymentStatus === 'captured') return false
+  if (order.paymentStatus === 'not_captured' || order.paymentStatus === 'not_found' || order.paymentStatus === 'error') return true
+  return order.status === 'completed'
+}
+
+function getVisibleStatusConfig(order: Order) {
+  return needsPaymentReview(order) ? paymentReviewConfig : statusConfig[order.status]
 }
 
 function StatCard({ icon: Icon, label, value, color = 'text-primary', delay = 0 }: {
@@ -178,43 +252,141 @@ function OrdersTab() {
   const [orders, setOrders] = useState<Order[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const verifyAttempted = useRef<Set<string>>(new Set())
 
   useEffect(() => { fetchOrders() }, [])
 
+  useEffect(() => {
+    if (loading) return
+    orders
+      .filter(order => order.paymentStatus !== 'captured' && order.paymentStatus !== 'checking' && !verifyAttempted.current.has(order.id))
+      .slice(0, 25)
+      .forEach(order => { void verifyPayment(order.id, true) })
+  }, [loading, orders])
+
   const fetchOrders = async () => {
     setLoading(true)
+    setLoadError('')
     try {
       const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
-      if (!error && data && data.length > 0) {
-        setOrders(data.map(o => ({
-          id: o.id, date: o.created_at,
+      if (error) throw error
+
+      setOrders((data || []).map(o => ({
+        id: o.id, date: o.created_at,
+        customer: {
+          firstName: o.customer_first_name, lastName: o.customer_last_name,
+          email: o.customer_email, phone: o.customer_phone || '',
+          address: o.customer_address || '', city: o.customer_city || '',
+          state: o.customer_state || '', zip: o.customer_zip || '',
+        },
+        items: o.items as OrderItem[], total: String(o.total),
+        status: normalizeOrderStatus(o.status),
+        paymentStatus: normalizePaymentStatus(o.payment_status),
+        paymentCheckedAt: typeof o.payment_verified_at === 'string' ? o.payment_verified_at : undefined,
+        paypalCaptureId: typeof o.paypal_capture_id === 'string' ? o.paypal_capture_id : undefined,
+        paymentAmount: o.payment_amount ? String(o.payment_amount) : undefined,
+        paymentCurrency: typeof o.payment_currency === 'string' ? o.payment_currency : undefined,
+      })))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown Supabase error'
+      setLoadError(`Could not load Supabase orders: ${message}. Showing only orders saved in this admin browser.`)
+      try {
+        const localOrders = JSON.parse(localStorage.getItem('tss-orders') || '[]') as Array<Partial<Order>>
+        setOrders(localOrders.map(order => ({
+          id: String(order.id || ''),
+          date: String(order.date || new Date().toISOString()),
           customer: {
-            firstName: o.customer_first_name, lastName: o.customer_last_name,
-            email: o.customer_email, phone: o.customer_phone || '',
-            address: o.customer_address || '', city: o.customer_city || '',
-            state: o.customer_state || '', zip: o.customer_zip || '',
+            firstName: order.customer?.firstName || '',
+            lastName: order.customer?.lastName || '',
+            email: order.customer?.email || '',
+            phone: order.customer?.phone || '',
+            address: order.customer?.address || '',
+            city: order.customer?.city || '',
+            state: order.customer?.state || '',
+            zip: order.customer?.zip || '',
           },
-          items: o.items as OrderItem[], total: String(o.total),
-          status: o.status as Order['status'],
+          items: (order.items || []) as OrderItem[],
+          total: String(order.total || '0.00'),
+          status: normalizeOrderStatus(order.status),
+          paymentStatus: normalizePaymentStatus(order.paymentStatus),
+          paymentCheckedAt: order.paymentCheckedAt,
+          paymentIssue: order.paymentIssue,
+          paypalCaptureId: order.paypalCaptureId,
+          paymentAmount: order.paymentAmount,
+          paymentCurrency: order.paymentCurrency,
         })))
-      } else {
-        setOrders(JSON.parse(localStorage.getItem('tss-orders') || '[]'))
+      } catch {
+        setOrders([])
       }
-    } catch {
-      setOrders(JSON.parse(localStorage.getItem('tss-orders') || '[]'))
     } finally { setLoading(false) }
   }
 
-  const updateStatus = async (orderId: string, status: Order['status']) => {
+  const verifyPayment = async (orderId: string, silent = false) => {
+    verifyAttempted.current.add(orderId)
+    setOrders(prev => prev.map(order => (
+      order.id === orderId
+        ? { ...order, paymentStatus: 'checking', paymentIssue: 'Checking live PayPal for a completed capture.' }
+        : order
+    )))
+
+    try {
+      const response = await fetch(`/api/paypal/verify-order?orderID=${encodeURIComponent(orderId)}`)
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Could not verify PayPal order.')
+
+      const paymentStatus = normalizePaymentStatus(data.paymentStatus)
+      setOrders(prev => prev.map(order => (
+        order.id === orderId
+          ? {
+              ...order,
+              paymentStatus,
+              paymentCheckedAt: data.verifiedAt || new Date().toISOString(),
+              paymentIssue: paymentStatus === 'captured'
+                ? ''
+                : data.error || 'Live PayPal did not return a completed capture for this order ID.',
+              paypalCaptureId: typeof data.captureId === 'string' ? data.captureId : order.paypalCaptureId,
+              paymentAmount: data.amount ? String(data.amount) : order.paymentAmount,
+              paymentCurrency: typeof data.currency === 'string' ? data.currency : order.paymentCurrency,
+            }
+          : order
+      )))
+
+      if (!silent) {
+        if (paymentStatus === 'captured') {
+          toast.success('PayPal capture verified')
+        } else {
+          toast.error('No live PayPal capture found')
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not verify PayPal order.'
+      setOrders(prev => prev.map(order => (
+        order.id === orderId
+          ? { ...order, paymentStatus: 'error', paymentIssue: message, paymentCheckedAt: new Date().toISOString() }
+          : order
+      )))
+      if (!silent) toast.error(message)
+    }
+  }
+
+  const updateStatus = async (orderId: string, status: OrderStatus) => {
     const updated = orders.map(o => o.id === orderId ? { ...o, status } : o)
     setOrders(updated)
-    try { await supabase.from('orders').update({ status }).eq('id', orderId) } catch {
+    try {
+      const { error } = await supabase.from('orders').update({ status }).eq('id', orderId)
+      if (error) throw error
+    } catch {
       localStorage.setItem('tss-orders', JSON.stringify(updated))
+      toast.error('Could not update Supabase order status. Saved only in this browser.')
+      return
     }
     toast.success(`Order status updated to ${status}`)
   }
 
-  const totalRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total), 0)
+  const paidOrders = orders.filter(o => o.paymentStatus === 'captured')
+  const reviewOrders = orders.filter(needsPaymentReview)
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + parseFloat(o.total), 0)
   const uniqueCustomers = new Set(orders.map(o => o.customer.email)).size
 
   if (loading) return (
@@ -226,10 +398,20 @@ function OrdersTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {loadError && (
+        <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-yellow-400" />
+            <p>{loadError}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard icon={Package} label="Total Orders" value={orders.length} delay={0.1} />
-        <StatCard icon={DollarSign} label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} color="text-green-400" delay={0.2} />
-        <StatCard icon={Users} label="Unique Customers" value={uniqueCustomers} color="text-blue-400" delay={0.3} />
+        <StatCard icon={DollarSign} label="Verified Revenue" value={`$${totalRevenue.toFixed(2)}`} color="text-green-400" delay={0.2} />
+        <StatCard icon={AlertCircle} label="Payment Review" value={reviewOrders.length} color="text-yellow-400" delay={0.3} />
+        <StatCard icon={Users} label="Unique Customers" value={uniqueCustomers} color="text-blue-400" delay={0.4} />
       </div>
 
       <h2 className="text-xl font-bold">Orders</h2>
@@ -242,8 +424,12 @@ function OrdersTab() {
         <div className="space-y-3">
           {orders.map((order, i) => {
             const isOpen = expanded === order.id
-            const cfg = statusConfig[order.status] || statusConfig.completed
+            const cfg = getVisibleStatusConfig(order)
             const StatusIcon = cfg.icon
+            const payment = paymentConfig[order.paymentStatus]
+            const PaymentIcon = payment.icon
+            const isPaymentChecking = order.paymentStatus === 'checking'
+            const isPaymentCaptured = order.paymentStatus === 'captured'
             return (
               <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }} className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -260,12 +446,20 @@ function OrdersTab() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
-                    <span className="font-black text-primary">${order.total}</span>
+                    <span className={`font-black ${isPaymentCaptured ? 'text-primary' : 'text-yellow-400'}`}>${order.total}</span>
                     {isOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
                   </div>
                 </button>
                 {isOpen && (
                   <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
+                    {needsPaymentReview(order) && (
+                      <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
+                        <div className="flex items-start gap-3">
+                          <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-400" />
+                          <p>This order is not counted as paid until live PayPal shows a completed capture for this ID.</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Contact</h4>
@@ -297,15 +491,40 @@ function OrdersTab() {
                       </div>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-border">
-                      <p className="text-xs text-muted-foreground break-all">PayPal ID: {order.id}</p>
-                      <div className="flex items-center gap-2">
-                        <label htmlFor={`status-${order.id}`} className="text-xs text-muted-foreground">Status:</label>
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground break-all">PayPal ID: {order.id}</p>
+                        <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold ${payment.color}`}>
+                          <PaymentIcon size={12} className={isPaymentChecking ? 'animate-spin' : ''} />
+                          {payment.label}
+                        </div>
+                        {order.paypalCaptureId && (
+                          <p className="text-xs text-muted-foreground break-all">Capture ID: {order.paypalCaptureId}</p>
+                        )}
+                        {order.paymentCheckedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            Checked {new Date(order.paymentCheckedAt).toLocaleString()}
+                          </p>
+                        )}
+                        {order.paymentIssue && (
+                          <p className="text-xs text-yellow-200 max-w-xl">{order.paymentIssue}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { void verifyPayment(order.id) }}
+                          disabled={isPaymentChecking}
+                          className="text-xs px-3 py-1.5 bg-secondary border border-border rounded-lg text-foreground hover:border-primary/40 disabled:opacity-50"
+                        >
+                          {isPaymentChecking ? 'Checking...' : 'Recheck PayPal'}
+                        </button>
+                        <label htmlFor={`status-${order.id}`} className="text-xs text-muted-foreground">Job Status:</label>
                         <select id={`status-${order.id}`} value={order.status}
-                          onChange={e => updateStatus(order.id, e.target.value as Order['status'])}
+                          onChange={e => updateStatus(order.id, e.target.value as OrderStatus)}
                           className="text-xs px-3 py-1.5 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
-                          <option value="completed">Completed</option>
                           <option value="processing">Processing</option>
                           <option value="shipped">Shipped</option>
+                          <option value="completed">Completed</option>
                         </select>
                       </div>
                     </div>
@@ -375,8 +594,22 @@ function SubTabs({ active, tabs, onChange }: { active: string; tabs: { id: strin
 function PricingTab() {
   const [config, setConfig] = useState<PricingConfig>(() => getPricing())
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('stickers')
   const [subTab, setSubTab] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    let active = true
+    loadPricing()
+      .then((remoteConfig) => {
+        if (active) setConfig(remoteConfig)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [])
 
   const getSubTab = (id: string) => subTab[id] || 'pricing'
   const setSubTabFor = (id: string, val: string) => setSubTab(prev => ({ ...prev, [id]: val }))
@@ -411,8 +644,33 @@ function PricingTab() {
     setConfig({ ...config, products })
   }
 
-  const handleSave = () => { savePricing(config); setSaved(true); toast.success('Pricing saved'); setTimeout(() => setSaved(false), 2000) }
-  const handleReset = () => { setConfig(defaultPricing); savePricing(defaultPricing); setSaved(true); toast.success('Pricing reset to defaults'); setTimeout(() => setSaved(false), 2000) }
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await savePricing(config)
+      setSaved(true)
+      toast.success('Pricing saved store-wide')
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      toast.error('Could not save pricing to Supabase')
+    } finally {
+      setSaving(false)
+    }
+  }
+  const handleReset = async () => {
+    setConfig(defaultPricing)
+    setSaving(true)
+    try {
+      await savePricing(defaultPricing)
+      setSaved(true)
+      toast.success('Pricing reset store-wide')
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      toast.error('Could not reset pricing in Supabase')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const tierLabels = ['1–50', '51–100', '101–250', '251–500', '501–1000', '1000+']
   const activeProduct = categoryTabs.find(t => t.id === activeTab)
@@ -425,11 +683,11 @@ function PricingTab() {
           <h2 className="text-xl font-bold">Pricing Manager</h2>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleReset} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg border border-border hover:border-primary/30">
+          <button onClick={handleReset} disabled={saving} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg border border-border hover:border-primary/30 disabled:opacity-50">
             <RotateCcw size={14} /> Reset All
           </button>
-          <button onClick={handleSave} className={`flex items-center gap-1.5 text-sm font-bold px-4 py-1.5 rounded-lg transition-all ${saved ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:brightness-110'}`}>
-            <Save size={14} /> {saved ? 'Saved!' : 'Save Changes'}
+          <button onClick={handleSave} disabled={saving || loading} className={`flex items-center gap-1.5 text-sm font-bold px-4 py-1.5 rounded-lg transition-all disabled:opacity-50 ${saved ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:brightness-110'}`}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {saved ? 'Saved!' : loading ? 'Loading...' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -1210,6 +1468,377 @@ function CRMTab() {
   )
 }
 
+// ─── Email List Tab ─────────────────────────────────────────────────────────
+
+function SubscribersTab() {
+  const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all')
+
+  useEffect(() => { fetchSubscribers() }, [])
+
+  const fetchSubscribers = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('email_subscribers')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setSubscribers((data || []) as EmailSubscriber[])
+    } catch {
+      toast.error('Could not load email list')
+      setSubscribers([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filtered = subscribers.filter(sub => filter === 'all' || sub.status === filter)
+  const activeCount = subscribers.filter(sub => sub.status === 'subscribed').length
+  const quoteLeadCount = subscribers.filter(sub => (sub.tags || []).some(tag => tag.includes('quote') || tag.includes('estimate'))).length
+  const sources = new Set(subscribers.map(sub => sub.source).filter(Boolean)).size
+
+  const copyEmails = () => {
+    const emails = filtered.map(sub => sub.email).join(', ')
+    if (!emails) return
+    navigator.clipboard.writeText(emails)
+    toast.success('Subscriber emails copied')
+  }
+
+  if (loading) return (
+    <div className="bg-card border border-border rounded-2xl p-12 text-center">
+      <Loader2 size={32} className="mx-auto text-primary animate-spin mb-4" />
+      <p className="text-muted-foreground">Loading email list...</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <StatCard icon={Mail} label="Total Subscribers" value={subscribers.length} delay={0.1} />
+        <StatCard icon={CheckCircle} label="Subscribed" value={activeCount} color="text-green-400" delay={0.2} />
+        <StatCard icon={Tag} label="Quote Leads" value={quoteLeadCount} color="text-yellow-400" delay={0.3} />
+        <StatCard icon={MousePointer} label="Sources" value={sources} color="text-blue-400" delay={0.4} />
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          {(['all', 'subscribed', 'unsubscribed'] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}>
+              {f === 'all' ? `All (${subscribers.length})` : `${f.charAt(0).toUpperCase() + f.slice(1)} (${subscribers.filter(sub => sub.status === f).length})`}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={copyEmails}
+          disabled={filtered.length === 0}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground disabled:opacity-50"
+        >
+          <Copy size={14} /> Copy Emails
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-card border border-border rounded-2xl p-12 text-center">
+          <Mail size={48} className="mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No email subscribers yet.</p>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Subscriber</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Interest</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Source</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Tags</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((sub, i) => (
+                  <motion.tr key={sub.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                    className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{sub.name || 'No name'}</p>
+                      <p className="text-xs text-muted-foreground">{sub.email}</p>
+                      {sub.phone ? <p className="text-xs text-muted-foreground">{sub.phone}</p> : null}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{sub.service_interest || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-lg text-xs bg-muted/50 text-muted-foreground">{sub.source || '-'}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex max-w-xs flex-wrap gap-1">
+                        {(sub.tags || []).length > 0 ? sub.tags?.map(tag => (
+                          <span key={tag} className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{tag}</span>
+                        )) : <span className="text-muted-foreground">-</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${sub.status === 'subscribed' ? 'text-green-400 bg-green-400/10' : 'text-muted-foreground bg-muted/50'}`}>
+                        {sub.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {new Date(sub.created_at || sub.consented_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Square Tab ──────────────────────────────────────────────────────────────
+
+function SquareTab() {
+  const [status, setStatus] = useState<SquareConnectionStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+  const [sendingInvoice, setSendingInvoice] = useState(false)
+  const [invoiceResult, setInvoiceResult] = useState<{ publicUrl?: string; invoiceNumber?: string; status?: string } | null>(null)
+  const [invoiceForm, setInvoiceForm] = useState({
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    title: 'Custom print invoice',
+    description: '',
+    amount: '',
+    dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+  })
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const squareResult = params.get('square')
+    if (squareResult === 'connected') toast.success('Square connected')
+    if (squareResult === 'error') toast.error(`Square connection failed${params.get('message') ? `: ${params.get('message')}` : ''}`)
+    if (squareResult) window.history.replaceState(null, '', '/admin')
+    fetchStatus()
+  }, [])
+
+  const authHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error('Admin session expired')
+    return {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    }
+  }
+
+  const fetchStatus = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/square/status', { headers: await authHeaders() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not load Square status')
+      setStatus(data as SquareConnectionStatus)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not load Square status')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const startConnect = async () => {
+    setConnecting(true)
+    try {
+      const res = await fetch('/api/square/connect', { method: 'POST', headers: await authHeaders() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not start Square connection')
+      window.location.href = data.authorizationUrl
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not start Square connection')
+      setConnecting(false)
+    }
+  }
+
+  const disconnect = async () => {
+    if (!window.confirm('Disconnect Square from this admin portal?')) return
+    setDisconnecting(true)
+    try {
+      const res = await fetch('/api/square/disconnect', { method: 'POST', headers: await authHeaders() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not disconnect Square')
+      toast.success('Square disconnected')
+      await fetchStatus()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not disconnect Square')
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
+  const sendInvoice = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setInvoiceResult(null)
+    setSendingInvoice(true)
+    try {
+      const res = await fetch('/api/square/create-invoice', {
+        method: 'POST',
+        headers: await authHeaders(),
+        body: JSON.stringify({
+          ...invoiceForm,
+          amount: Number(invoiceForm.amount),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not create Square invoice')
+      setInvoiceResult(data.invoice)
+      toast.success('Square invoice sent')
+      setInvoiceForm(prev => ({ ...prev, amount: '', description: '' }))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not create Square invoice')
+    } finally {
+      setSendingInvoice(false)
+    }
+  }
+
+  const connected = !!status?.connected
+  const missing = status?.missing || []
+
+  if (loading) return (
+    <div className="bg-card border border-border rounded-2xl p-12 text-center">
+      <Loader2 size={32} className="mx-auto text-primary animate-spin mb-4" />
+      <p className="text-muted-foreground">Loading Square...</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard icon={CreditCard} label="Square Status" value={connected ? 'Connected' : 'Not Connected'} color={connected ? 'text-green-400' : 'text-yellow-400'} delay={0.1} />
+        <StatCard icon={MapPin} label="Location" value={status?.connection?.location_name || '-'} color="text-blue-400" delay={0.2} />
+        <StatCard icon={Clock} label="Token" value={status?.connection?.token_expires_at ? 'Auto-refresh' : '-'} color="text-primary" delay={0.3} />
+      </div>
+
+      {missing.length > 0 && (
+        <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-5">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={20} className="mt-0.5 shrink-0 text-yellow-400" />
+            <div>
+              <h3 className="font-bold text-yellow-300">Square server setup is missing</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Add these Vercel environment variables before Calvin connects Square:</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {missing.map(item => <code key={item} className="rounded bg-background px-2 py-1 text-xs text-foreground">{item}</code>)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold flex items-center gap-2"><CreditCard size={20} className="text-primary" /> Square Connection</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Calvin connects his Square account once. Staff use TSS admin logins after that.
+            </p>
+            <div className="mt-4 space-y-2 text-sm">
+              <p><span className="text-muted-foreground">Callback URL:</span> <code className="break-all rounded bg-muted/50 px-2 py-1 text-xs text-foreground">{status?.redirectUri || 'https://tssprint.com/api/square/callback'}</code></p>
+              {status?.connection?.merchant_id ? <p><span className="text-muted-foreground">Merchant:</span> {status.connection.merchant_id}</p> : null}
+              {status?.connection?.connected_at ? <p><span className="text-muted-foreground">Connected:</span> {new Date(status.connection.connected_at).toLocaleString()}</p> : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            {connected ? (
+              <button onClick={disconnect} disabled={disconnecting} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-50">
+                {disconnecting ? <Loader2 size={16} className="animate-spin" /> : <Unplug size={16} />} Disconnect
+              </button>
+            ) : (
+              <button onClick={startConnect} disabled={connecting || missing.length > 0} className="btn-primary text-sm disabled:opacity-50">
+                {connecting ? <><Loader2 size={16} className="animate-spin" /> Opening Square...</> : <><CreditCard size={16} /> Connect Square</>}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        <form onSubmit={sendInvoice} className="lg:col-span-3 bg-card border border-border rounded-2xl p-6 space-y-4">
+          <div>
+            <h2 className="text-xl font-bold flex items-center gap-2"><Send size={20} className="text-primary" /> Send Square Invoice</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Manual first version for custom quotes, deposits, and one-off jobs.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="sq-name" className="block text-xs font-medium text-muted-foreground mb-1.5">Customer Name *</label>
+              <input id="sq-name" value={invoiceForm.customerName} onChange={e => setInvoiceForm({ ...invoiceForm, customerName: e.target.value })}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required />
+            </div>
+            <div>
+              <label htmlFor="sq-email" className="block text-xs font-medium text-muted-foreground mb-1.5">Email *</label>
+              <input id="sq-email" type="email" value={invoiceForm.customerEmail} onChange={e => setInvoiceForm({ ...invoiceForm, customerEmail: e.target.value })}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required />
+            </div>
+            <div>
+              <label htmlFor="sq-phone" className="block text-xs font-medium text-muted-foreground mb-1.5">Phone</label>
+              <input id="sq-phone" value={invoiceForm.customerPhone} onChange={e => setInvoiceForm({ ...invoiceForm, customerPhone: e.target.value })}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+            <div>
+              <label htmlFor="sq-amount" className="block text-xs font-medium text-muted-foreground mb-1.5">Amount *</label>
+              <input id="sq-amount" type="number" min="1" step="0.01" value={invoiceForm.amount} onChange={e => setInvoiceForm({ ...invoiceForm, amount: e.target.value })}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required />
+            </div>
+            <div>
+              <label htmlFor="sq-title" className="block text-xs font-medium text-muted-foreground mb-1.5">Invoice Title *</label>
+              <input id="sq-title" value={invoiceForm.title} onChange={e => setInvoiceForm({ ...invoiceForm, title: e.target.value })}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required />
+            </div>
+            <div>
+              <label htmlFor="sq-due" className="block text-xs font-medium text-muted-foreground mb-1.5">Due Date</label>
+              <input id="sq-due" type="date" value={invoiceForm.dueDate} onChange={e => setInvoiceForm({ ...invoiceForm, dueDate: e.target.value })}
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="sq-description" className="block text-xs font-medium text-muted-foreground mb-1.5">Description / Job Notes</label>
+            <textarea id="sq-description" rows={4} value={invoiceForm.description} onChange={e => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+          </div>
+          <button type="submit" disabled={!connected || sendingInvoice || missing.length > 0} className="btn-primary text-sm disabled:opacity-50">
+            {sendingInvoice ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Send size={16} /> Create & Send Invoice</>}
+          </button>
+          {invoiceResult && (
+            <div className="rounded-xl border border-green-400/20 bg-green-400/10 p-4 text-sm">
+              <p className="font-bold text-green-300">Invoice sent{invoiceResult.invoiceNumber ? `: ${invoiceResult.invoiceNumber}` : ''}</p>
+              {invoiceResult.publicUrl ? <a href={invoiceResult.publicUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-primary hover:underline">Open Square invoice <ExternalLink size={13} /></a> : null}
+            </div>
+          )}
+        </form>
+
+        <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+          <h3 className="font-bold mb-3">Team Login Model</h3>
+          <div className="space-y-3 text-sm">
+            {[
+              ['Calvin', 'Owner: Square connection, pricing, users'],
+              ['DeeDee', 'Store lead: invoices, leads, daily operations'],
+              ['Arman', 'Outreach: follow-ups, marketing, lead queue'],
+              ['JP', 'Technical admin: site, integrations, automations'],
+            ].map(([name, role]) => (
+              <div key={name} className="rounded-xl bg-muted/30 p-3">
+                <p className="font-bold">{name}</p>
+                <p className="text-muted-foreground">{role}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
 const mainTabs = [
@@ -1219,13 +1848,17 @@ const mainTabs = [
   { id: 'carts', label: 'Carts', icon: ShoppingCart },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'crm', label: 'CRM', icon: Users },
+  { id: 'subscribers', label: 'Email List', icon: Mail },
+  { id: 'square', label: 'Square', icon: CreditCard },
   { id: 'referrals', label: 'Referrals', icon: Share2 },
 ] as const
 
 type MainTab = (typeof mainTabs)[number]['id']
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState<MainTab>('orders')
+  const [activeTab, setActiveTab] = useState<MainTab>(() => (
+    new URLSearchParams(window.location.search).has('square') ? 'square' : 'orders'
+  ))
 
   const logout = async () => {
     await supabase.auth.signOut()
@@ -1264,6 +1897,8 @@ function Dashboard() {
         {activeTab === 'carts' && <CartsTab />}
         {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'crm' && <CRMTab />}
+        {activeTab === 'subscribers' && <SubscribersTab />}
+        {activeTab === 'square' && <SquareTab />}
         {activeTab === 'referrals' && <ReferralsTab />}
       </div>
     </section>

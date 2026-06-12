@@ -1,9 +1,11 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
-import { getPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
+import { getPricing, loadPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
+import { cities } from '@/lib/cities'
+import { projects } from '@/lib/projects'
 import PageHero from '@/components/PageHero'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import StudioMockup from '@/components/StudioMockup'
@@ -76,6 +78,43 @@ const stickerFormats = [
   { value: 'sheet', label: 'Sheets', cartLabel: 'Sticker sheets', icon: PanelsTopLeft },
   { value: 'roll', label: 'Rolls', cartLabel: 'Roll labels', icon: ScrollText },
 ] as const
+
+const localStickerTypes = [
+  'Die-cut vinyl stickers',
+  'Kiss-cut stickers',
+  'Sticker sheets',
+  'Roll labels',
+  'Holographic stickers',
+  'Clear decals',
+]
+
+const stickerFaqs = [
+  {
+    q: 'Do you print custom stickers in the Bay Area?',
+    a: 'Yes. The Sticker Smith prints custom stickers and labels in Hayward for Bay Area brands, artists, shops, events, and packaging projects, with local pickup available.',
+  },
+  {
+    q: 'What sticker types can I order?',
+    a: 'You can order die-cut stickers, kiss-cut stickers, sticker sheets, roll labels, holographic stickers, clear decals, matte stickers, and waterproof vinyl stickers.',
+  },
+  {
+    q: 'Do I get a proof before printing?',
+    a: 'Yes. Every custom sticker order includes a digital proof before production so cut lines, bleed, sizing, material, and artwork quality can be checked before anything prints.',
+  },
+]
+
+const cityLinks = cities.slice(0, 8)
+const stickerProofSlugs = [
+  'fremontgear-stickers',
+  'tastedeeztreatz-stiiizy',
+  'fuegofamilyfarms-circle',
+  'floodline-sticker',
+  'brothersbroadleaf-halloween',
+  'elevated925-mystery-snack-pack',
+]
+const stickerProofProjects = stickerProofSlugs
+  .map((slug) => projects.find((project) => project.slug === slug))
+  .filter((project): project is (typeof projects)[number] => Boolean(project))
 
 type StickerFormat = (typeof stickerFormats)[number]['value']
 
@@ -180,8 +219,16 @@ export default function Order() {
   const [designAddon, setDesignAddon] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const pricingConfig = useMemo(() => getPricing(), [])
+  const [pricingConfig, setPricingConfig] = useState(() => getPricing())
   const queryString = searchParams.toString()
+
+  useEffect(() => {
+    let active = true
+    loadPricing().then((config) => {
+      if (active) setPricingConfig(config)
+    })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     if (!queryString) return
@@ -285,8 +332,8 @@ export default function Order() {
     <>
       <PageHero
         eyebrow="Custom Stickers"
-        title="Die-cut, kiss-cut, holographic, matte."
-        subtitle="Premium vinyl. Free digital proof in 24 hours. 3–5 day turnaround. Free US shipping or Bay Area pickup."
+        title="Bay Area custom stickers, printed in Hayward."
+        subtitle="Die-cut, kiss-cut, holographic, matte, clear, sticker sheets, and roll labels. Free digital proof in 24 hours, 3–5 day turnaround, and local Bay Area pickup."
         image={stickerHeroImg}
         imageAlt="Stack of custom die-cut stickers"
         icon={StickerIcon}
@@ -650,6 +697,112 @@ export default function Order() {
               </div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container">
+          <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">
+                Bay Area sticker printing
+              </p>
+              <h2 className="text-3xl md:text-4xl font-black mb-4">
+                Custom stickers for Bay Area brands, artists, shops, and events.
+              </h2>
+              <div className="space-y-4 text-muted-foreground leading-relaxed">
+                <p>
+                  The Sticker Smith prints custom stickers in Hayward for customers across the East Bay and the wider Bay Area. If you need a small run for a launch, waterproof vinyl for packaging, or a fast reorder before an event, you can approve your proof online and pick up locally at the shop.
+                </p>
+                <p>
+                  Every order gets a real digital proof before production. We check cut lines, bleed, sizing, material choice, and whether your artwork will hold up as a sticker before anything hits the printer.
+                </p>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {cityLinks.map((city) => (
+                  <Link
+                    key={city.slug}
+                    to={`/${city.slug}`}
+                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                  >
+                    {city.name} stickers
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="grid sm:grid-cols-2 gap-3"
+            >
+              {localStickerTypes.map((type) => (
+                <div key={type} className="bg-card/70 border border-border rounded-xl p-4">
+                  <StickerIcon className="w-5 h-5 text-primary mb-3" />
+                  <h3 className="font-bold text-sm">{type}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Proofed, printed, and finished for local pickup or shipping.
+                  </p>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 border-t border-border/50 bg-card">
+        <div className="section-container max-w-6xl">
+          <div className="mb-8 max-w-3xl">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real Sticker Work</p>
+            <h2 className="text-3xl md:text-4xl font-black">Proof from Bay Area sticker and packaging projects.</h2>
+            <p className="text-muted-foreground mt-3 leading-relaxed">
+              From local brand drops to product packaging, these are real Sticker Smith projects: printed stickers, die-cut artwork, circular labels, and custom mylar packaging that uses sticker-style branding on retail bags.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stickerProofProjects.map((project) => (
+              <Link
+                key={project.slug}
+                to="/projects"
+                className="group bg-background border border-border rounded-xl overflow-hidden hover:border-primary/40 transition-all"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-black">
+                  <img src={project.image} alt={project.title} loading="lazy" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                </div>
+                <div className="p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary/90 mb-1">{project.category}</p>
+                  <h3 className="font-bold text-sm mb-1">{project.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{project.scope || project.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link to="/projects" className="btn-secondary text-sm">See More Sticker Projects</Link>
+            <Link to="/mylar" className="text-sm font-bold text-primary hover:underline">Custom mylar packaging</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container max-w-4xl">
+          <div className="mb-8 text-center">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Sticker FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-black">Bay Area custom sticker questions</h2>
+          </div>
+          <div className="grid gap-4">
+            {stickerFaqs.map((faq) => (
+              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

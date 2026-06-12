@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CheckCircle, Package, Mail } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Package, Mail } from 'lucide-react'
 import printingNow from '@/assets/pages/confirm-printing.jpg'
 
 export default function OrderConfirmation() {
   const location = useLocation()
-  const { orderId, payerName, email, total } = location.state || {}
+  const { orderId, payerName, email, total, processingIssue } = location.state || {}
+  const needsManualReview = Boolean(processingIssue)
 
   if (!orderId) {
     return (
@@ -35,12 +36,12 @@ export default function OrderConfirmation() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.3 }}
-            className="absolute top-4 right-4 w-12 h-12 rounded-full bg-green-500/90 backdrop-blur-sm flex items-center justify-center shadow-lg"
+            className={`absolute top-4 right-4 w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center shadow-lg ${needsManualReview ? 'bg-yellow-500/90' : 'bg-green-500/90'}`}
           >
-            <CheckCircle size={24} className="text-white" strokeWidth={2.5} />
+            {needsManualReview ? <AlertTriangle size={24} className="text-white" strokeWidth={2.5} /> : <CheckCircle size={24} className="text-white" strokeWidth={2.5} />}
           </motion.div>
           <div className="absolute bottom-4 left-4 right-4">
-            <p className="text-xs text-white/70 font-mono tracking-widest uppercase">Now Printing</p>
+            <p className="text-xs text-white/70 font-mono tracking-widest uppercase">{needsManualReview ? 'Payment Received' : 'Now Printing'}</p>
           </div>
         </motion.div>
 
@@ -50,7 +51,7 @@ export default function OrderConfirmation() {
           transition={{ delay: 0.2 }}
           className="text-3xl md:text-5xl font-black mb-4"
         >
-          Order Confirmed!
+          {needsManualReview ? 'Payment Received' : 'Order Confirmed!'}
         </motion.h1>
 
         <motion.p
@@ -59,7 +60,9 @@ export default function OrderConfirmation() {
           transition={{ delay: 0.3 }}
           className="text-lg text-muted-foreground mb-8"
         >
-          Thank you, {payerName}! Your payment went through and your job is in the queue.
+          {needsManualReview
+            ? `Thank you, ${payerName}! Your payment went through. Our team is reviewing the order details manually.`
+            : `Thank you, ${payerName}! Your payment went through and your job is in the queue.`}
         </motion.p>
 
         <motion.div
@@ -79,7 +82,11 @@ export default function OrderConfirmation() {
             <Mail size={20} className="text-primary mt-0.5 shrink-0" />
             <div>
               <p className="font-bold">Confirmation Email</p>
-              <p className="text-muted-foreground text-sm">A receipt has been sent to <span className="text-foreground">{email}</span></p>
+              <p className="text-muted-foreground text-sm">
+                {needsManualReview
+                  ? <>We are checking the confirmation for <span className="text-foreground">{email}</span>.</>
+                  : <>A receipt has been sent to <span className="text-foreground">{email}</span></>}
+              </p>
             </div>
           </div>
           <div className="border-t border-border pt-4 flex justify-between items-center">
@@ -94,7 +101,8 @@ export default function OrderConfirmation() {
           transition={{ delay: 0.5 }}
           className="text-muted-foreground mb-8"
         >
-          We'll start working on your order right away. If you have any questions, reach out to us at{' '}
+          {needsManualReview ? 'Keep this PayPal order ID handy. ' : "We'll start working on your order right away. "}
+          If you have any questions, reach out to us at{' '}
           <a href="mailto:thestickersmith@gmail.com" className="text-primary hover:underline">
             thestickersmith@gmail.com
           </a>

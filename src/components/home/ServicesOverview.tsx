@@ -10,12 +10,12 @@ import windowFilm from '@/assets/services/window-film.jpg'
 import mylarPackaging from '@/assets/services/mylar-packaging.jpg'
 
 const services = [
-  { image: vehicleGraphics, title: 'Vehicle Graphics', description: 'Wraps, fleet branding & door graphics', href: '/services/vehicle-graphics' },
-  { image: eventDisplays, title: 'Event Displays', description: 'Tents, flags, banners & displays', href: '/services/event-displays' },
-  { image: businessPrint, title: 'Business Print', description: 'Cards, flyers & marketing materials', href: '/services/business-print' },
-  { image: businessSignage, title: 'Business Signage', description: 'Storefront, wall graphics & A-frames', href: '/services/business-signage' },
-  { image: windowFilm, title: 'Window Film', description: 'Frosted, solar, security & graphics', href: '/services/window-film' },
-  { image: mylarPackaging, title: 'Mylar Packaging', description: 'Custom branded packaging bags', href: '/mylar' },
+  { image: vehicleGraphics, title: 'Bay Area Vehicle Graphics', description: 'Wraps, fleet branding & door graphics', href: '/services/vehicle-graphics' },
+  { image: eventDisplays, title: 'Custom Canopies & Banners', description: 'Tents, flags, banners & event displays', href: '/services/event-displays' },
+  { image: businessPrint, title: 'Business Print Materials', description: 'Cards, flyers & marketing materials', href: '/services/business-print' },
+  { image: businessSignage, title: 'Business Signs & Signage', description: 'Storefront signs, wall graphics & A-frames', href: '/services/business-signage' },
+  { image: windowFilm, title: 'Window Film & Graphics', description: 'Frosted, solar, security & decorative film', href: '/services/window-film' },
+  { image: mylarPackaging, title: 'Custom Mylar Packaging', description: 'Branded packaging bags & labels', href: '/mylar' },
 ]
 
 export default function ServicesOverview() {

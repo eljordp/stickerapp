@@ -1,21 +1,26 @@
+import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import tssLogo from '@/assets/tss-logo-new.png'
 import { cities } from '@/lib/cities'
+import { subscribeEmail } from '@/lib/contactSubmit'
 
 const footerLinks = {
   products: [
-    { label: 'Die-Cut Stickers', href: '/stickers' },
-    { label: 'Kiss-Cut Stickers', href: '/stickers' },
-    { label: 'Sticker Sheets', href: '/stickers' },
-    { label: 'Holographic Stickers', href: '/stickers' },
+    { label: 'Bay Area Custom Stickers', href: '/stickers' },
+    { label: 'Die-Cut Stickers', href: '/die-cut-stickers' },
+    { label: 'Sticker Sheets', href: '/sticker-sheets' },
+    { label: 'Roll Labels', href: '/roll-labels' },
+    { label: 'Holographic Stickers', href: '/holographic-stickers' },
+    { label: 'Custom Labels', href: '/custom-labels' },
   ],
   services: [
-    { label: 'Vehicle Graphics', href: '/services/vehicle-graphics' },
-    { label: 'Event Displays', href: '/services/event-displays' },
-    { label: 'Business Print', href: '/services/business-print' },
-    { label: 'Business Signage', href: '/services/business-signage' },
-    { label: 'Window Film & Tint', href: '/services/window-film' },
-    { label: 'Mylar Packaging', href: '/mylar' },
+    { label: 'Bay Area Vehicle Graphics', href: '/services/vehicle-graphics' },
+    { label: 'Custom Canopies & Banners', href: '/services/event-displays' },
+    { label: 'Business Print Materials', href: '/services/business-print' },
+    { label: 'Hayward Business Signs', href: '/services/business-signage' },
+    { label: 'Window Film & Graphics', href: '/services/window-film' },
+    { label: 'Custom Mylar Packaging', href: '/mylar' },
   ],
   support: [
     { label: 'Get a Quote', href: '/contact' },
@@ -28,6 +33,29 @@ const footerLinks = {
 }
 
 export default function Footer() {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+  const handleSubscribe = async (e: FormEvent) => {
+    e.preventDefault()
+    const trimmed = email.trim()
+    if (!trimmed) return
+    setStatus('sending')
+    try {
+      await subscribeEmail({
+        email: trimmed,
+        source: 'footer',
+        tags: ['footer-signup'],
+      })
+      setEmail('')
+      setStatus('sent')
+      toast.success('You are on the email list')
+    } catch {
+      setStatus('error')
+      toast.error("Couldn't join the list")
+    }
+  }
+
   return (
     <footer className="bg-surface-overlay border-t border-border pb-20 md:pb-0">
       <div className="section-container py-16">
@@ -59,6 +87,35 @@ export default function Footer() {
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48v-7.13a8.16 8.16 0 004.77 1.52v-3.44a4.85 4.85 0 01-.81-.06 4.8 4.8 0 01-2.38-.88v7.08"/></svg>
               </a>
             </div>
+            <form onSubmit={handleSubscribe} className="mt-7 max-w-sm">
+              <label htmlFor="footer-email" className="block text-sm font-bold text-foreground mb-2">
+                Join the print list
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="footer-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (status !== 'idle') setStatus('idle')
+                  }}
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="you@company.com"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'sending' || !email}
+                  className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:brightness-110 disabled:opacity-50"
+                >
+                  {status === 'sending' ? 'Joining...' : 'Join'}
+                </button>
+              </div>
+              <p className={`mt-2 text-xs ${status === 'error' ? 'text-destructive' : status === 'sent' ? 'text-primary' : 'text-muted-foreground'}`}>
+                {status === 'sent' ? 'You are subscribed.' : status === 'error' ? 'Try again or email us directly.' : 'Deals, file tips, and project ideas.'}
+              </p>
+            </form>
           </div>
           <div>
             <h4 className="font-bold text-sm uppercase tracking-wider mb-5 text-foreground">Products</h4>

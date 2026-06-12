@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { contactSchema, type ContactFormErrors } from '@/lib/validation'
 import { submitContactRequest } from '@/lib/contactSubmit'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 const services = ['Stickers & Labels', 'Vehicle Graphics', 'Business Signage', 'Event Displays', 'Mylar Packaging', 'Business Print', 'Other']
@@ -14,6 +13,7 @@ export default function QuickContact() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<ContactFormErrors>({})
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
+  const [emailOptIn, setEmailOptIn] = useState(false)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -43,17 +43,10 @@ export default function QuickContact() {
       await submitContactRequest({
         ...submission,
         subject: `New quick message from ${submission.name}`,
-      })
-
-      // Best-effort CRM log. Email delivery is handled by Web3Forms above.
-      supabase.from('contact_submissions').insert({
-        name: submission.name,
-        email: submission.email,
-        phone: submission.phone || null,
-        service: submission.service || null,
-        message: submission.message,
         source: 'quick-contact',
-      }).then(() => {})
+        subscribe: emailOptIn,
+        tags: ['quick-contact', submission.service || 'general'],
+      })
       setSubmitted(true)
       toast.success('Message sent!')
     } catch (err) {
@@ -140,6 +133,15 @@ export default function QuickContact() {
                 {errors.message && <p className="text-sm text-destructive mt-1">{errors.message}</p>}
               </div>
             </div>
+            <label className="mx-auto flex max-w-xl items-start gap-3 rounded-xl border border-border bg-background/60 px-4 py-3 text-left text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={emailOptIn}
+                onChange={(e) => setEmailOptIn(e.target.checked)}
+                className="mt-1 accent-primary"
+              />
+              <span>Send me occasional print deals, file tips, and project ideas.</span>
+            </label>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <button type="submit" className="btn-primary px-8 py-3.5" disabled={loading}>
                 {loading ? <><Loader2 size={18} className="animate-spin" /> Sending...</> : <>Send Message<Send size={18} /></>}

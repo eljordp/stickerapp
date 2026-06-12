@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, X, Package, Sparkles, Box, ShoppingCart, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
-import { getPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
+import { getPricing, loadPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
 import PageHero from '@/components/PageHero'
 import EstimateForm from '@/components/EstimateForm'
 import StudioMockup from '@/components/StudioMockup'
@@ -98,8 +98,16 @@ function canPreviewArtwork(file: File) {
 
 export default function MylarPackaging() {
   const { addItem } = useCart()
-  const pricing = useMemo(() => getPricing(), [])
+  const [pricing, setPricing] = useState(() => getPricing())
   const category = pricing.products.find(p => p.name === 'Mylar Packaging') as ProductCategory | undefined
+
+  useEffect(() => {
+    let active = true
+    loadPricing().then((config) => {
+      if (active) setPricing(config)
+    })
+    return () => { active = false }
+  }, [])
 
   const [selectedItem, setSelectedItem] = useState(0)
   const [quantity, setQuantity] = useState(250)

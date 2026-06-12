@@ -11,12 +11,12 @@ import windowFilm from '@/assets/services/window-film.jpg'
 import mylarPackaging from '@/assets/services/mylar-packaging.jpg'
 
 const services = [
-  { image: vehicleGraphics, title: 'Vehicle Graphics', description: 'Full wraps, partial wraps, fleet branding, and door/spot graphics.', href: '/services/vehicle-graphics' },
-  { image: eventDisplays, title: 'Event Displays', description: 'Custom tents, feather flags, table covers, retractable banners.', href: '/services/event-displays' },
-  { image: businessPrint, title: 'Business Print', description: 'Business cards, flyers, brochures, marketing collateral.', href: '/services/business-print' },
-  { image: businessSignage, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, retractable banners.', href: '/services/business-signage' },
-  { image: windowFilm, title: 'Window Film & Tint', description: 'Frosted film, solar film, security film, decorative graphics.', href: '/services/window-film' },
-  { image: mylarPackaging, title: 'Mylar Packaging', description: 'Custom branded mylar bags for products, edibles, and retail.', href: '/mylar' },
+  { image: vehicleGraphics, title: 'Bay Area Vehicle Graphics', description: 'Full wraps, partial wraps, fleet branding, and door/spot graphics.', href: '/services/vehicle-graphics' },
+  { image: eventDisplays, title: 'Custom Canopy Tents & Banners', description: 'Printed tents, feather flags, table covers, retractable banners, and booth displays.', href: '/services/event-displays' },
+  { image: businessPrint, title: 'Business Print Materials', description: 'Business cards, flyers, brochures, postcards, and marketing collateral.', href: '/services/business-print' },
+  { image: businessSignage, title: 'Hayward Business Signs & Signage', description: 'Storefront signs, wall graphics, A-frames, banners, and window graphics.', href: '/services/business-signage' },
+  { image: windowFilm, title: 'Window Film & Graphics', description: 'Frosted film, solar film, security film, decorative graphics.', href: '/services/window-film' },
+  { image: mylarPackaging, title: 'Custom Mylar Packaging', description: 'Custom branded mylar bags, product labels, and retail packaging.', href: '/mylar' },
 ]
 
 export default function Services() {

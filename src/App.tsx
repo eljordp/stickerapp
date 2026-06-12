@@ -29,23 +29,32 @@ import Admin from '@/pages/Admin'
 import NotFound from '@/pages/NotFound'
 import CityPage from '@/pages/CityPage'
 import { cityBySlug } from '@/lib/cities'
+import { getStructuredData, SITE_URL } from '@/lib/structuredData'
+import StickerSupportPage from '@/pages/StickerSupportPage'
+import { stickerSupportPageBySlug } from '@/lib/stickerSupportPages'
 
-const SITE_URL = 'https://tssprint.com'
 const DEFAULT_DESCRIPTION = 'Premium custom stickers, labels, decals, signage, vehicle graphics & packaging in the Bay Area. Fast turnaround, proof-based printing, and local pickup available.'
+const DEFAULT_OG_IMAGE = `${SITE_URL}/videos/epic-rane-print.jpg`
 
 type PageMeta = {
   title: string
   description: string
+  image?: string
+  imageAlt?: string
 }
 
 const pageMeta: Record<string, PageMeta> = {
   '/': {
     title: 'The Sticker Smith | Custom Stickers, Labels & Printing - Bay Area',
     description: DEFAULT_DESCRIPTION,
+    image: DEFAULT_OG_IMAGE,
+    imageAlt: 'The Sticker Smith print work and custom stickers',
   },
   '/stickers': {
-    title: 'Custom Stickers & Labels | The Sticker Smith',
-    description: 'Design and order die-cut, kiss-cut, holographic, matte, clear, sheet, and roll stickers with free digital proofs and Bay Area pickup.',
+    title: 'Bay Area Custom Stickers & Labels | The Sticker Smith',
+    description: 'Order Bay Area custom stickers, die-cut stickers, kiss-cut stickers, holographic stickers, sticker sheets, and roll labels with free proofs and Hayward pickup.',
+    image: `${SITE_URL}/videos/flight-risk-holographic.jpg`,
+    imageAlt: 'Holographic custom stickers printed by The Sticker Smith',
   },
   '/services': {
     title: 'Print & Branding Services | The Sticker Smith',
@@ -54,14 +63,20 @@ const pageMeta: Record<string, PageMeta> = {
   '/services/vehicle-graphics': {
     title: 'Vehicle Graphics & Fleet Wraps | The Sticker Smith',
     description: 'Custom vehicle graphics, wraps, fleet branding, decals, and door graphics for Bay Area businesses.',
+    image: `${SITE_URL}/videos/flying-a-niles.jpg`,
+    imageAlt: 'Bay Area vehicle graphics and fleet decals',
   },
   '/services/business-signage': {
-    title: 'Business Signage | The Sticker Smith',
-    description: 'Storefront signs, wall graphics, A-frames, acrylic signs, window graphics, and branded signage for local businesses.',
+    title: 'Hayward Business Signs & Signage | The Sticker Smith',
+    description: 'Custom business signs and signage in Hayward and the Bay Area: storefront signs, wall graphics, A-frames, banners, window graphics, and branded installs.',
+    image: `${SITE_URL}/videos/epic-rane-print.jpg`,
+    imageAlt: 'Custom storefront signs and signage installed by The Sticker Smith',
   },
   '/services/event-displays': {
-    title: 'Event Displays, Tents & Banners | The Sticker Smith',
-    description: 'Custom event tents, flags, banners, table covers, displays, and branded booth materials for Bay Area events.',
+    title: 'Custom Canopy Tents & Banners Bay Area | The Sticker Smith',
+    description: 'Custom printed canopy tents, banners, table covers, feather flags, backdrops, and event displays for Bay Area and Hayward businesses.',
+    image: `${SITE_URL}/videos/epic-rane-print.jpg`,
+    imageAlt: 'Custom printed canopy tent, banner, and event booth branding',
   },
   '/services/business-print': {
     title: 'Business Print Materials | The Sticker Smith',
@@ -74,6 +89,8 @@ const pageMeta: Record<string, PageMeta> = {
   '/mylar': {
     title: 'Custom Mylar Packaging | The Sticker Smith',
     description: 'Custom branded mylar bags, pouch packaging, labels, and print-ready packaging options for retail products.',
+    image: `${SITE_URL}/videos/mylar-promo-2021.jpg`,
+    imageAlt: 'Custom mylar packaging and product labels',
   },
   '/cart': {
     title: 'Cart | The Sticker Smith',
@@ -90,6 +107,10 @@ const pageMeta: Record<string, PageMeta> = {
   '/contact': {
     title: 'Contact & Free Quote | The Sticker Smith',
     description: 'Request a free quote, ask a print question, or contact The Sticker Smith for custom stickers, signage, wraps, and packaging.',
+  },
+  '/quote': {
+    title: 'Fast Print Quote | Stickers, Signs, Wraps & Event Displays',
+    description: 'Request a fast quote from The Sticker Smith for custom stickers, business signage, vehicle graphics, event displays, mylar packaging, and print projects.',
   },
   '/about': {
     title: 'About The Sticker Smith | Bay Area Print Studio',
@@ -125,15 +146,40 @@ function getPageMeta(pathname: string): PageMeta {
   if (city) {
     return { title: city.metaTitle, description: city.metaDescription }
   }
+  const stickerPage = stickerSupportPageBySlug[citySlug]
+  if (stickerPage) {
+    return {
+      title: stickerPage.metaTitle,
+      description: stickerPage.metaDescription,
+      image: stickerPage.slug === 'holographic-stickers' ? `${SITE_URL}/videos/flight-risk-holographic.jpg` : DEFAULT_OG_IMAGE,
+      imageAlt: stickerPage.imageAlt,
+    }
+  }
   return pageMeta[pathname] ?? {
     title: 'Page Not Found | The Sticker Smith',
     description: 'This Sticker Smith page could not be found. Browse custom stickers, print services, projects, or contact the studio.',
   }
 }
 
-function setMeta(selector: string, attribute: 'content' | 'href', value: string) {
-  const element = document.head.querySelector(selector)
+function setMeta(selector: string, attribute: 'content' | 'href', value: string, create?: () => HTMLElement) {
+  let element = document.head.querySelector(selector) as HTMLElement | null
+  if (!element && create) {
+    element = create()
+    document.head.appendChild(element)
+  }
   element?.setAttribute(attribute, value)
+}
+
+function setStructuredData(pathname: string) {
+  const id = 'structured-data'
+  let script = document.getElementById(id) as HTMLScriptElement | null
+  if (!script) {
+    script = document.createElement('script')
+    script.id = id
+    script.type = 'application/ld+json'
+    document.head.appendChild(script)
+  }
+  script.text = JSON.stringify(getStructuredData(pathname))
 }
 
 function HeadManager() {
@@ -143,14 +189,37 @@ function HeadManager() {
     const meta = getPageMeta(pathname)
     const canonicalPath = pathname === '/' ? '' : pathname
     const canonicalUrl = `${SITE_URL}${canonicalPath}`
+    const image = meta.image ?? DEFAULT_OG_IMAGE
+    const imageAlt = meta.imageAlt ?? 'The Sticker Smith custom print work'
 
     document.title = meta.title
-    setMeta('meta[name="description"]', 'content', meta.description)
+    setMeta('meta[name="description"]', 'content', meta.description, () => {
+      const element = document.createElement('meta')
+      element.setAttribute('name', 'description')
+      return element
+    })
+    setMeta('meta[name="robots"]', 'content', 'index,follow,max-image-preview:large', () => {
+      const element = document.createElement('meta')
+      element.setAttribute('name', 'robots')
+      return element
+    })
     setMeta('meta[property="og:title"]', 'content', meta.title)
     setMeta('meta[property="og:description"]', 'content', meta.description)
     setMeta('meta[property="og:url"]', 'content', canonicalUrl)
+    setMeta('meta[property="og:image"]', 'content', image)
+    setMeta('meta[property="og:image:alt"]', 'content', imageAlt, () => {
+      const element = document.createElement('meta')
+      element.setAttribute('property', 'og:image:alt')
+      return element
+    })
     setMeta('meta[name="twitter:title"]', 'content', meta.title)
     setMeta('meta[name="twitter:description"]', 'content', meta.description)
+    setMeta('meta[name="twitter:image"]', 'content', image)
+    setMeta('meta[name="twitter:image:alt"]', 'content', imageAlt, () => {
+      const element = document.createElement('meta')
+      element.setAttribute('name', 'twitter:image:alt')
+      return element
+    })
 
     let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
     if (!canonical) {
@@ -159,6 +228,7 @@ function HeadManager() {
       document.head.appendChild(canonical)
     }
     canonical.href = canonicalUrl
+    setStructuredData(pathname)
   }, [pathname])
 
   return null
@@ -200,6 +270,7 @@ export default function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/quote" element={<Contact />} />
               <Route path="/about" element={<About />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/case-studies" element={<Navigate to="/projects" replace />} />
@@ -207,6 +278,9 @@ export default function App() {
               <Route path="/referral" element={<Referral />} />
               <Route path="/account" element={<Account />} />
               <Route path="/admin" element={<Admin />} />
+              {Object.keys(stickerSupportPageBySlug).map((slug) => (
+                <Route key={slug} path={`/${slug}`} element={<StickerSupportPage slug={slug} />} />
+              ))}
               {Object.keys(cityBySlug).map((slug) => (
                 <Route key={slug} path={`/${slug}`} element={<CityPage slug={slug} />} />
               ))}

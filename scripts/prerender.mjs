@@ -11,7 +11,7 @@
 // - Waits for route-specific content (page <title>) before snapshotting.
 
 import { spawn } from 'node:child_process'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -23,6 +23,7 @@ const DIST = path.join(ROOT, 'dist')
 // Mirror of the prerender output that is committed to git so Vercel
 // (which can't run puppeteer in its build env) can copy it into dist/.
 const PRERENDERED = path.join(ROOT, 'prerendered')
+const APP_SHELL_ROUTES = ['/cart', '/checkout', '/order-confirmation', '/account', '/admin']
 
 const CITY_SLUGS = [
   'hayward',
@@ -39,17 +40,23 @@ const CITY_SLUGS = [
 // and as a sanity check. Must match what App.tsx HeadManager sets.
 const ROUTE_TITLES = {
   '/': 'The Sticker Smith | Custom Stickers, Labels & Printing - Bay Area',
-  '/stickers': 'Custom Stickers & Labels | The Sticker Smith',
+  '/stickers': 'Bay Area Custom Stickers & Labels | The Sticker Smith',
+  '/die-cut-stickers': 'Die-Cut Stickers Bay Area | The Sticker Smith',
+  '/sticker-sheets': 'Custom Sticker Sheets Bay Area | The Sticker Smith',
+  '/roll-labels': 'Custom Roll Labels Bay Area | The Sticker Smith',
+  '/holographic-stickers': 'Holographic Stickers Bay Area | The Sticker Smith',
+  '/custom-labels': 'Custom Labels Bay Area | The Sticker Smith',
   '/services': 'Print & Branding Services | The Sticker Smith',
   '/services/vehicle-graphics': 'Vehicle Graphics & Fleet Wraps | The Sticker Smith',
-  '/services/business-signage': 'Business Signage | The Sticker Smith',
-  '/services/event-displays': 'Event Displays, Tents & Banners | The Sticker Smith',
+  '/services/business-signage': 'Hayward Business Signs & Signage | The Sticker Smith',
+  '/services/event-displays': 'Custom Canopy Tents & Banners Bay Area | The Sticker Smith',
   '/services/business-print': 'Business Print Materials | The Sticker Smith',
   '/services/window-film': 'Window Film, Tint & Graphics | The Sticker Smith',
   '/mylar': 'Custom Mylar Packaging | The Sticker Smith',
   '/projects': 'Print Projects & Portfolio | The Sticker Smith',
   '/about': 'About The Sticker Smith | Bay Area Print Studio',
   '/contact': 'Contact & Free Quote | The Sticker Smith',
+  '/quote': 'Fast Print Quote | Stickers, Signs, Wraps & Event Displays',
   '/referral': 'Referral Program | The Sticker Smith',
   '/hayward': 'Custom Stickers, Signage & Print in Hayward, CA | The Sticker Smith',
   '/oakland': 'Custom Stickers & Print in Oakland, CA | The Sticker Smith',
@@ -84,6 +91,8 @@ async function main() {
     console.error('dist/ not found. Run `vite build` first.')
     process.exit(1)
   }
+
+  const appShellHtml = await readFile(path.join(DIST, 'index.html'), 'utf8')
 
   const port = 4179
   console.log(`[prerender] starting vite preview on :${port}`)
@@ -166,8 +175,33 @@ async function main() {
         await mkdir(outDir, { recursive: true })
         const outFile = path.join(outDir, 'index.html')
         await writeFile(outFile, html, 'utf8')
+
+        // Also write clean-url aliases like dist/stickers.html and
+        // dist/services/vehicle-graphics.html. Some static servers only
+        // serve route/index.html for the trailing-slash URL, while our
+        // sitemap/canonicals use no trailing slash. Vercel cleanUrls can
+        // then serve /stickers directly from stickers.html.
+        if (sub) {
+          const aliasFile = path.join(base, `${sub}.html`)
+          await mkdir(path.dirname(aliasFile), { recursive: true })
+          await writeFile(aliasFile, html, 'utf8')
+        }
       }
       console.log(`[prerender] wrote ${route}`)
+    }
+
+    for (const route of APP_SHELL_ROUTES) {
+      const sub = route.replace(/^\//, '')
+      for (const base of [DIST, PRERENDERED]) {
+        const outDir = path.join(base, sub)
+        await mkdir(outDir, { recursive: true })
+        await writeFile(path.join(outDir, 'index.html'), appShellHtml, 'utf8')
+
+        const aliasFile = path.join(base, `${sub}.html`)
+        await mkdir(path.dirname(aliasFile), { recursive: true })
+        await writeFile(aliasFile, appShellHtml, 'utf8')
+      }
+      console.log(`[prerender] wrote app shell ${route}`)
     }
 
     console.log(`[prerender] done. ${ROUTES.length} routes rendered.`)

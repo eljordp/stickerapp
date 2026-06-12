@@ -1,4 +1,7 @@
+import { supabase } from './supabase'
+
 const STORAGE_KEY = 'tss-pricing'
+const STORE_PRICING_ID = 'storefront'
 
 export interface AddOn {
   name: string
@@ -303,35 +306,79 @@ export const defaultPricing: PricingConfig = {
   ],
 }
 
+function normalizePricingConfig(input: unknown): PricingConfig {
+  const parsed = (input && typeof input === 'object') ? input as Partial<PricingConfig> : {}
+  const config: PricingConfig = {
+    basePrices: Array.isArray(parsed.basePrices) ? parsed.basePrices.map((t: { maxQty: number | null; price: number }) => ({
+      ...t,
+      maxQty: t.maxQty === null ? Infinity : t.maxQty,
+    })) : defaultPricing.basePrices,
+    sizeMultipliers: Array.isArray(parsed.sizeMultipliers) ? parsed.sizeMultipliers : defaultPricing.sizeMultipliers,
+    materialMultipliers: Array.isArray(parsed.materialMultipliers) ? parsed.materialMultipliers : defaultPricing.materialMultipliers,
+    stickerAddOns: Array.isArray(parsed.stickerAddOns) ? parsed.stickerAddOns : defaultPricing.stickerAddOns,
+    products: Array.isArray(parsed.products) ? [...parsed.products] : [...defaultPricing.products],
+  }
+
+  if (config.products.length < defaultPricing.products.length) {
+    for (let i = config.products.length; i < defaultPricing.products.length; i++) {
+      config.products.push(defaultPricing.products[i])
+    }
+  }
+
+  return config
+}
+
+function pricingForStorage(config: PricingConfig) {
+  return JSON.parse(JSON.stringify(config))
+}
+
+function cachePricing(config: PricingConfig) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(pricingForStorage(config)))
+}
+
 export function getPricing(): PricingConfig {
+  if (typeof window === 'undefined') return defaultPricing
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
-      const parsed = JSON.parse(saved)
-      // Restore Infinity for the last tier
-      parsed.basePrices = parsed.basePrices.map((t: { maxQty: number | null; price: number }) => ({
-        ...t,
-        maxQty: t.maxQty === null ? Infinity : t.maxQty,
-      }))
-      // Ensure new fields exist with defaults
-      if (!parsed.sizeMultipliers) parsed.sizeMultipliers = defaultPricing.sizeMultipliers
-      if (!parsed.stickerAddOns) parsed.stickerAddOns = defaultPricing.stickerAddOns
-      if (!parsed.products) {
-        parsed.products = defaultPricing.products
-      } else if (parsed.products.length < defaultPricing.products.length) {
-        // Append any new default categories that were added after the user last saved
-        for (let i = parsed.products.length; i < defaultPricing.products.length; i++) {
-          parsed.products.push(defaultPricing.products[i])
-        }
-      }
-      return parsed
+      return normalizePricingConfig(JSON.parse(saved))
     }
   } catch { /* use defaults */ }
   return defaultPricing
 }
 
-export function savePricing(config: PricingConfig) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+export async function loadPricing(): Promise<PricingConfig> {
+  try {
+    const { data, error } = await supabase
+      .from('pricing_configs')
+      .select('config')
+      .eq('id', STORE_PRICING_ID)
+      .maybeSingle()
+
+    if (!error && data?.config) {
+      const config = normalizePricingConfig(data.config)
+      cachePricing(config)
+      return config
+    }
+  } catch { /* fall back to local/default pricing */ }
+
+  return getPricing()
+}
+
+export async function savePricing(config: PricingConfig) {
+  const normalized = normalizePricingConfig(config)
+  cachePricing(normalized)
+
+  const { error } = await supabase
+    .from('pricing_configs')
+    .upsert({
+      id: STORE_PRICING_ID,
+      config: pricingForStorage(normalized),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' })
+
+  if (error) throw error
 }
 
 export function getBasePrice(quantity: number, config: PricingConfig): number {

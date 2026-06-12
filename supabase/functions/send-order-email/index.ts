@@ -15,6 +15,23 @@ interface OrderItem {
   addOns?: { name: string; price: number }[]
 }
 
+async function sendResendEmail(payload: Record<string, unknown>) {
+  if (!RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured')
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Resend email failed (${response.status}): ${body}`)
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -63,11 +80,11 @@ serve(async (req) => {
       </div>
     `
 
+    const emailFailures: string[] = []
+
     // Send confirmation to customer
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      await sendResendEmail({
         from: FROM_EMAIL,
         to: [email],
         subject: `Order Confirmed — ${orderId}`,
@@ -80,14 +97,14 @@ serve(async (req) => {
             <p style="color: #666; font-size: 14px;">— The Sticker Smith Team</p>
           </div>
         `,
-      }),
-    })
+      })
+    } catch (error) {
+      emailFailures.push(`customer: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
 
     // Send notification to business owner
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      await sendResendEmail({
         from: FROM_EMAIL,
         to: [OWNER_EMAIL],
         subject: `New Order — $${total} from ${customerName}`,
@@ -98,8 +115,14 @@ serve(async (req) => {
             ${orderHtml}
           </div>
         `,
-      }),
-    })
+      })
+    } catch (error) {
+      emailFailures.push(`owner: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+
+    if (emailFailures.length > 0) {
+      throw new Error(emailFailures.join(' | '))
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

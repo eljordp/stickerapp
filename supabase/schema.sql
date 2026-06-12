@@ -26,7 +26,12 @@ create table if not exists orders (
   customer_zip text,
   items jsonb not null default '[]',
   total numeric(10,2) not null,
-  status text default 'completed' check (status in ('completed', 'shipped', 'processing')),
+  status text default 'processing' check (status in ('processing', 'shipped', 'completed')),
+  payment_status text default 'unverified' check (payment_status in ('unverified', 'captured', 'not_captured', 'not_found', 'refunded')),
+  paypal_capture_id text,
+  payment_verified_at timestamptz,
+  payment_amount numeric(10,2),
+  payment_currency text default 'USD',
   created_at timestamptz default now()
 );
 

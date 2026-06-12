@@ -1,65 +1,19 @@
-import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, MapPin, Truck, Clock, CheckCircle, Sticker, Car, Building2, Tent, Printer, Film, Package } from 'lucide-react'
 import { cityBySlug, type CityConfig } from '@/lib/cities'
 
 const services = [
-  { icon: Sticker, title: 'Custom Stickers', description: 'Die-cut, kiss-cut, sheet, holographic, vinyl labels.', href: '/stickers' },
-  { icon: Car, title: 'Vehicle Graphics', description: 'Full wraps, partial wraps, fleet branding, door decals.', href: '/services/vehicle-graphics' },
-  { icon: Building2, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, window vinyl.', href: '/services/business-signage' },
-  { icon: Tent, title: 'Event Displays', description: 'Tents, feather flags, banners, table covers, retractables.', href: '/services/event-displays' },
-  { icon: Printer, title: 'Business Print', description: 'Cards, flyers, brochures, marketing collateral.', href: '/services/business-print' },
-  { icon: Film, title: 'Window Film', description: 'Privacy, frosted, security, solar, decorative graphics.', href: '/services/window-film' },
-  { icon: Package, title: 'Mylar Packaging', description: 'Custom branded mylar bags and product packaging.', href: '/mylar' },
+  { icon: Sticker, title: (city: string) => `${city} Custom Stickers`, description: 'Die-cut, kiss-cut, sheet, holographic, vinyl labels.', href: '/stickers' },
+  { icon: Car, title: (city: string) => `${city} Vehicle Graphics`, description: 'Wraps, fleet branding, door decals, and spot graphics.', href: '/services/vehicle-graphics' },
+  { icon: Building2, title: (city: string) => `${city} Business Signs`, description: 'Storefront signs, wall graphics, A-frames, banners, and window vinyl.', href: '/services/business-signage' },
+  { icon: Tent, title: (city: string) => `${city} Canopies & Banners`, description: 'Custom canopy tents, feather flags, banners, table covers, and retractables.', href: '/services/event-displays' },
+  { icon: Printer, title: (city: string) => `${city} Business Print`, description: 'Business cards, flyers, brochures, postcards, and marketing collateral.', href: '/services/business-print' },
+  { icon: Film, title: (city: string) => `${city} Window Film`, description: 'Privacy, frosted, security, solar, and decorative window graphics.', href: '/services/window-film' },
+  { icon: Package, title: (city: string) => `${city} Mylar Packaging`, description: 'Custom branded mylar bags, labels, and product packaging.', href: '/mylar' },
 ]
 
-function injectCitySchema(city: CityConfig) {
-  const id = `schema-city-${city.slug}`
-  const existing = document.getElementById(id)
-  if (existing) existing.remove()
-  const script = document.createElement('script')
-  script.id = id
-  script.type = 'application/ld+json'
-  script.text = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'Service',
-    serviceType: 'Custom printing, stickers, signage, vehicle graphics, packaging',
-    provider: {
-      '@type': 'LocalBusiness',
-      name: 'The Sticker Smith',
-      telephone: '+1-510-634-8203',
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: '23673 Connecticut St',
-        addressLocality: 'Hayward',
-        addressRegion: 'CA',
-        postalCode: '94545',
-        addressCountry: 'US',
-      },
-      url: 'https://tssprint.com',
-    },
-    areaServed: {
-      '@type': 'City',
-      name: city.name,
-      containedInPlace: { '@type': 'AdministrativeArea', name: 'San Francisco Bay Area' },
-    },
-    url: `https://tssprint.com/${city.slug}`,
-    name: `Custom Stickers, Signage & Print in ${city.name}, CA`,
-    description: city.metaDescription,
-  })
-  document.head.appendChild(script)
-}
-
 function CityPageInner({ city }: { city: CityConfig }) {
-  useEffect(() => {
-    injectCitySchema(city)
-    return () => {
-      const el = document.getElementById(`schema-city-${city.slug}`)
-      if (el) el.remove()
-    }
-  }, [city])
-
   return (
     <>
       {/* Hero */}
@@ -163,10 +117,10 @@ function CityPageInner({ city }: { city: CityConfig }) {
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {services.map((s, i) => (
-              <motion.div key={s.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+              <motion.div key={s.href} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
                 <Link to={s.href} className="group block bg-background border border-border rounded-2xl p-6 hover:border-primary/40 transition-all h-full">
                   <s.icon className="w-7 h-7 text-primary mb-4" />
-                  <h3 className="font-bold text-lg mb-2">{s.title}</h3>
+                  <h3 className="font-bold text-lg mb-2">{s.title(city.name)}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-3">{s.description}</p>
                   <div className="flex items-center gap-1 text-primary text-sm font-bold group-hover:gap-2 transition-all">Learn more <ArrowRight size={14} /></div>
                 </Link>

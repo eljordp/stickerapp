@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, Send } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { sendContactEmail } from '@/lib/email'
+import { submitContactRequest } from '@/lib/contactSubmit'
 
 export type EstimateField =
   | { name: string; label: string; type: 'text'; placeholder?: string; required?: boolean }
@@ -29,6 +28,7 @@ export default function EstimateForm({
   const [phone, setPhone] = useState('')
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
   const [notes, setNotes] = useState('')
+  const [emailOptIn, setEmailOptIn] = useState(false)
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   const setField = (name: string, value: string) =>
@@ -50,14 +50,17 @@ export default function EstimateForm({
     const message = lines.length ? lines.join('\n') : 'No additional details provided.'
 
     try {
-      await supabase.from('contact_submissions').insert({
+      await submitContactRequest({
         name,
         email,
-        phone: phone || null,
+        phone: phone || undefined,
         service,
         message,
+        subject: `New ${service} estimate request from ${name}`,
+        source: `${service.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-estimate-form`,
+        subscribe: emailOptIn,
+        tags: ['estimate-request', service],
       })
-      sendContactEmail({ name, email, phone, service, message })
       setStatus('sent')
     } catch {
       setStatus('error')
@@ -175,6 +178,16 @@ export default function EstimateForm({
             placeholder="Timeline, budget, links to inspiration, etc."
           />
         </Field>
+
+        <label className="flex items-start gap-3 rounded-xl border border-border bg-background/50 px-4 py-3 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={emailOptIn}
+            onChange={(e) => setEmailOptIn(e.target.checked)}
+            className="mt-1 accent-primary"
+          />
+          <span>Send me occasional print deals, file tips, and project ideas.</span>
+        </label>
 
         <button
           type="submit"
