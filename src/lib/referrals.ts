@@ -1,7 +1,9 @@
 import { supabase } from './supabase'
+import { trackEvent } from './analytics'
 import { trackReferralClick } from './referralRewards'
 
 const REF_KEY = 'tss-ref-code'
+const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const
 
 // Check URL for referral code on page load and store it
 export function captureReferralCode() {
@@ -10,6 +12,15 @@ export function captureReferralCode() {
   if (ref) {
     localStorage.setItem(REF_KEY, ref)
     trackReferralClick(ref) // track the visit for the referrer
+    const campaign = Object.fromEntries(
+      UTM_KEYS
+        .map((key) => [key, params.get(key)] as const)
+        .filter(([, value]) => Boolean(value)),
+    )
+    trackEvent('referral_link_click', {
+      referral_code: ref,
+      ...campaign,
+    })
     // Clean the URL without reload
     const url = new URL(window.location.href)
     url.searchParams.delete('ref')

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { linkReferral } from '@/lib/referrals'
 import { isReferralCode, processReferralConversion } from '@/lib/referralRewards'
 import { sendOrderEmail } from '@/lib/email'
+import { trackCheckoutStarted, trackPayPalCapture } from '@/lib/analytics'
 import { toast } from 'sonner'
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID
@@ -38,8 +39,21 @@ export default function Checkout() {
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
   const [promoSuccess, setPromoSuccess] = useState(false)
+  const checkoutStartedTracked = useRef(false)
 
   const finalTotal = Math.max(0, +(total - promoDiscount).toFixed(2))
+
+  useEffect(() => {
+    if (checkoutStartedTracked.current || items.length === 0) return
+    checkoutStartedTracked.current = true
+    trackCheckoutStarted({
+      items,
+      value: finalTotal,
+      subtotal: total,
+      promoCode,
+      promoDiscount,
+    })
+  }, [finalTotal, items, promoCode, promoDiscount, total])
 
   if (items.length === 0) {
     return (
@@ -440,6 +454,14 @@ export default function Checkout() {
                           const orderId = capture.orderId
                           if (!orderId) throw new Error('PayPal did not return an order ID.')
                           finalizePromo()
+                          trackPayPalCapture({
+                            orderId,
+                            items,
+                            value: finalTotal,
+                            subtotal: total,
+                            promoCode,
+                            promoDiscount,
+                          })
 
                           let processingIssue = ''
 
