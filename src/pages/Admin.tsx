@@ -6,7 +6,7 @@ import {
   ShoppingCart, BarChart3, UserPlus, Eye, MousePointer,
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
   CreditCard, Unplug, Send, AlertCircle, MapPin,
-  TrendingUp, Target, Search,
+  TrendingUp, Target, Search, Globe,
 } from 'lucide-react'
 import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
@@ -1218,12 +1218,15 @@ function AnalyticsTab() {
       // Conversion funnel (unique visitors per stage; final stage = orders placed)
       const visitorsWho = (predicate: (path: string) => boolean) =>
         new Set(views.filter(v => predicate(v.path)).map(v => v.visitor_id)).size
+      // All stages use unique visitors for a consistent cohort. The final stage
+      // uses /order-confirmation views (only reached after a successful order)
+      // rather than the raw order count, which isn't visitor-linked.
       const funnelRaw = [
         { label: 'Visited the site', count: visitors },
         { label: 'Viewed a product', count: visitorsWho(p => !!PRODUCT_PAGE_NAMES[p]) },
         { label: 'Reached the cart', count: visitorsWho(p => p === '/cart') },
         { label: 'Started checkout', count: visitorsWho(p => p === '/checkout') },
-        { label: 'Placed an order', count: orders },
+        { label: 'Completed an order', count: visitorsWho(p => p === '/order-confirmation') },
       ]
       const top = funnelRaw[0].count || 1
       const funnel = funnelRaw.map(s => ({ ...s, pct: Math.round((s.count / top) * 100) }))
@@ -1346,9 +1349,13 @@ interface SeoRanking {
   serp_feature: string | null; source: string; notes: string | null; checked_at: string
 }
 
+interface GscRow { query: string; clicks: number; impressions: number; ctr: number; position: number }
+interface GscResult { configured: boolean; error?: string; range?: { start: string; end: string }; rows?: GscRow[] }
+
 function SeoTab() {
   const [rows, setRows] = useState<SeoRanking[]>([])
   const [loading, setLoading] = useState(true)
+  const [gsc, setGsc] = useState<GscResult | null>(null)
 
   const fetchRankings = useCallback(async () => {
     setLoading(true)
@@ -1359,6 +1366,16 @@ function SeoTab() {
     finally { setLoading(false) }
   }, [])
   useEffect(() => { fetchRankings() }, [fetchRankings])
+
+  // Live Google Search Console data (only returns rows once GSC env vars are set).
+  useEffect(() => {
+    let active = true
+    fetch('/api/seo/gsc')
+      .then(r => r.json())
+      .then(d => { if (active) setGsc(d as GscResult) })
+      .catch(() => { if (active) setGsc({ configured: false }) })
+    return () => { active = false }
+  }, [])
 
   const keyOf = (r: SeoRanking) => `${r.query}|||${r.city || ''}|||${r.device}`
 
@@ -1472,8 +1489,48 @@ function SeoTab() {
           </div>
         </div>
       )}
+      {/* Live Google Search Console */}
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><Globe size={16} className="text-primary" /> Google Search Console (live)</h3>
+        <p className="text-xs text-muted-foreground mb-4">Real clicks, impressions, and average position straight from Google — last 28 days.</p>
+        {!gsc ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : !gsc.configured ? (
+          <p className="text-sm text-muted-foreground">Not connected yet. Once Google Search Console access is set up, real Google performance appears here automatically.</p>
+        ) : gsc.error ? (
+          <p className="text-sm text-red-400">Couldn't load Search Console data: {gsc.error}</p>
+        ) : !gsc.rows || gsc.rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Connected — no query data for the last 28 days yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Search query</th>
+                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Clicks</th>
+                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Impressions</th>
+                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">CTR</th>
+                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Avg position</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gsc.rows.map((r, i) => (
+                  <tr key={i} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="px-3 py-2">{r.query}</td>
+                    <td className="px-3 py-2 text-right font-bold text-primary">{r.clicks}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground">{r.impressions}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground">{(r.ctr * 100).toFixed(1)}%</td>
+                    <td className="px-3 py-2 text-right font-medium">{r.position.toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <p className="text-xs text-muted-foreground">
-        Change is measured against the 5/31 baseline. Google rank varies by searcher location and device — treat these as directional, not absolute.
+        Weekly-monitor change is measured against the 5/31 baseline. Google rank varies by searcher location and device — treat these as directional, not absolute.
       </p>
     </div>
   )
