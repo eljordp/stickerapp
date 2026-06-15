@@ -9,7 +9,6 @@ import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
 import bhogalTruck from '@/assets/projects/bhogal-construction.jpeg'
 import procareFleet from '@/assets/projects/procare-fleet.jpeg'
 import safewayTruck from '@/assets/projects/safeway-truck.jpeg'
-import tecTruck from '@/assets/projects/tec-equipment-truck.jpeg'
 import safewayInstall from '@/assets/projects/safeway-install.jpeg'
 import sedanBlank from '@/assets/mockups/vehicle-sedan-blank.jpg'
 import vanBlank from '@/assets/mockups/vehicle-van-blank.jpg'
@@ -218,7 +217,6 @@ export default function VehicleGraphics() {
               { src: bhogalTruck, alt: 'Bhogal Construction truck wrap', caption: 'Bhogal Construction' },
               { src: procareFleet, alt: 'ProCare fleet branding', caption: 'ProCare fleet' },
               { src: safewayTruck, alt: 'Safeway truck wrap', caption: 'Safeway' },
-              { src: tecTruck, alt: 'TEC Equipment truck', caption: 'TEC Equipment' },
               { src: safewayInstall, alt: 'Safeway installation', caption: 'Install day' },
             ]}
           />

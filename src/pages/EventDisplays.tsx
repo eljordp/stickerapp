@@ -7,7 +7,6 @@ import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
 import eventHero from '@/assets/services/event-displays.jpg'
-import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
 import weddingFloor1 from '@/assets/projects/wedding-vinyl-floor-1.jpeg'
@@ -227,7 +226,6 @@ export default function EventCanopies() {
             title="Events We've Shown Up For"
             subtitle="Trade shows, weddings, pop-ups — full booth and floor setups."
             projects={[
-              { src: eventBooth, alt: 'TSS event booth', caption: 'Trade show booth' },
               { src: featherFlags, alt: 'Feather flags setup', caption: 'Feather flags' },
               { src: weddingSignage, alt: 'Wedding display signage', caption: 'Wedding signage' },
               { src: weddingFloor1, alt: 'Wedding vinyl floor', caption: 'Custom vinyl floor' },
