@@ -9,8 +9,14 @@ const HEAD_EASE: [number, number, number, number] = [0.22, 0.08, 0.78, 0.94]
 const STATUS_MESSAGES = ['CALIBRATING', 'LOADING INK', 'PRINTING', 'CURING']
 const INTRO_SEEN_KEY = 'tss-printer-intro-seen-v1'
 const HIGH_INTENT_PATHS = new Set(['/cart', '/checkout', '/order-confirmation', '/account', '/admin', '/contact', '/quote'])
+const INK_COLORS = ['#22d3ee', '#ec4899', '#facc15']
 
 type Phase = 'gate' | 'playing' | 'hidden'
+
+function seededInkValue(index: number, salt: number) {
+  const raw = Math.sin(index * 41.17 + salt * 97.31) * 10000
+  return raw - Math.floor(raw)
+}
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
@@ -75,33 +81,36 @@ export default function PrinterIntro() {
   useEffect(() => {
     if (phase !== 'playing') return
 
-    setVh(window.innerHeight)
-    setStatusIdx(0)
-    setShowCropMarks(false)
-    setShowFinishFlash(false)
-
     if (prefersReducedMotion()) {
-      markIntroSeen()
-      setPhase('hidden')
-      return
-    }
-
-    const statusStep = (DURATION * 1000) / STATUS_MESSAGES.length
-    STATUS_MESSAGES.forEach((_, index) => {
-      timersRef.current.push(window.setTimeout(() => setStatusIdx(index), index * statusStep))
-    })
-    timersRef.current.push(window.setTimeout(() => setShowCropMarks(true), (DURATION - 0.6) * 1000))
-    timersRef.current.push(window.setTimeout(() => setShowFinishFlash(true), (DURATION - 0.36) * 1000))
-    timersRef.current.push(
-      window.setTimeout(() => {
+      timersRef.current.push(window.setTimeout(() => {
         markIntroSeen()
         setPhase('hidden')
-        document.body.style.overflow = ''
-        stopAllSound(audioStoppers)
-      }, DURATION * 1000),
-    )
+      }, 0))
+    } else {
+      timersRef.current.push(window.setTimeout(() => {
+        setVh(window.innerHeight)
+        setStatusIdx(0)
+        setShowCropMarks(false)
+        setShowFinishFlash(false)
+      }, 0))
 
-    startPrinterSound(audioStoppers)
+      const statusStep = (DURATION * 1000) / STATUS_MESSAGES.length
+      STATUS_MESSAGES.forEach((_, index) => {
+        timersRef.current.push(window.setTimeout(() => setStatusIdx(index), index * statusStep))
+      })
+      timersRef.current.push(window.setTimeout(() => setShowCropMarks(true), (DURATION - 0.6) * 1000))
+      timersRef.current.push(window.setTimeout(() => setShowFinishFlash(true), (DURATION - 0.36) * 1000))
+      timersRef.current.push(
+        window.setTimeout(() => {
+          markIntroSeen()
+          setPhase('hidden')
+          document.body.style.overflow = ''
+          stopAllSound(audioStoppers)
+        }, DURATION * 1000),
+      )
+
+      startPrinterSound(audioStoppers)
+    }
 
     return () => {
       timersRef.current.forEach((id) => clearTimeout(id))
@@ -125,13 +134,12 @@ export default function PrinterIntro() {
   const headEnd = vh - headHeight
 
   const droplets = useMemo(() => Array.from({ length: 16 }, (_, index) => {
-    const colors = ['#22d3ee', '#ec4899', '#facc15']
     return {
       id: index,
-      x: 4 + Math.random() * 92,
-      progress: index / 16 + Math.random() * 0.04,
-      color: colors[index % colors.length],
-      size: 2 + Math.random() * 2,
+      x: 4 + seededInkValue(index, 1) * 92,
+      progress: index / 16 + seededInkValue(index, 2) * 0.04,
+      color: INK_COLORS[index % INK_COLORS.length],
+      size: 2 + seededInkValue(index, 3) * 2,
     }
   }), [])
 

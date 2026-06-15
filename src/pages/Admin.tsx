@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   LogOut, Package, DollarSign, Users, ChevronDown, ChevronUp,
@@ -21,6 +21,12 @@ interface OrderItem {
   price: number; quantity: number
   addOns?: { name: string; price: number }[]
   material?: string; shape?: string
+  artwork?: {
+    path: string
+    fileName: string
+    contentType?: string
+    size?: number
+  }
 }
 
 type OrderStatus = 'completed' | 'shipped' | 'processing'
@@ -53,6 +59,16 @@ interface Customer {
   phone: string | null; total_spent: number; order_count: number
   referral_code: string | null; source: string | null
   referred_by: string | null; created_at: string
+}
+
+type CRMReferral = {
+  id: string
+  referral_code: string
+  status: string
+  created_at: string
+  order_id: string | null
+  referrer: { email: string; first_name: string | null } | null
+  referred: { email: string; first_name: string | null } | null
 }
 
 interface EmailSubscriber {
@@ -226,6 +242,10 @@ function needsPaymentReview(order: Order) {
 
 function getVisibleStatusConfig(order: Order) {
   return needsPaymentReview(order) ? paymentReviewConfig : statusConfig[order.status]
+}
+
+function artworkDownloadUrl(artwork: NonNullable<OrderItem['artwork']>) {
+  return `/api/uploads/artwork-download?path=${encodeURIComponent(artwork.path)}&name=${encodeURIComponent(artwork.fileName)}`
 }
 
 function StatCard({ icon: Icon, label, value, color = 'text-primary', delay = 0 }: {
@@ -483,6 +503,16 @@ function OrdersTab() {
                               <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                               {item.addOns && item.addOns.length > 0 && (
                                 <p className="text-xs text-muted-foreground">Add-ons: {item.addOns.map(a => `${a.name} (+$${a.price.toFixed(2)})`).join(', ')}</p>
+                              )}
+                              {item.artwork?.path && (
+                                <a
+                                  href={artworkDownloadUrl(item.artwork)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                                >
+                                  <ExternalLink size={12} /> Download artwork: {item.artwork.fileName}
+                                </a>
                               )}
                             </div>
                             <span className="font-bold text-sm text-primary">${(item.price * item.quantity).toFixed(2)}</span>
@@ -1093,9 +1123,7 @@ function AnalyticsTab() {
   const [loading, setLoading] = useState(true)
   const [range, setRange] = useState<'today' | '7d' | '30d' | 'all'>('7d')
 
-  useEffect(() => { fetchAnalytics() }, [range])
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true)
     try {
       const now = new Date()
@@ -1159,7 +1187,9 @@ function AnalyticsTab() {
     } catch {
       setData({ totalViews: 0, uniqueVisitors: 0, todayViews: 0, topPages: [], topClicks: [], dropOffs: [], avgDuration: [] })
     } finally { setLoading(false) }
-  }
+  }, [range])
+
+  useEffect(() => { fetchAnalytics() }, [fetchAnalytics])
 
   if (loading) return (
     <div className="bg-card border border-border rounded-2xl p-12 text-center">
@@ -1274,27 +1304,38 @@ function AnalyticsTab() {
 
 function CRMTab() {
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [referrals, setReferrals] = useState<{ id: string; referral_code: string; status: string; created_at: string; order_id: string | null; referrer: { email: string; first_name: string | null } | null; referred: { email: string; first_name: string | null } | null }[]>([])
+  const [referrals, setReferrals] = useState<CRMReferral[]>([])
+  const [lastOrderByEmail, setLastOrderByEmail] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'customers' | 'referrals'>('customers')
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<CustomerTag | 'all'>('all')
   const [tags, setTags] = useState<Record<string, CustomerTag>>(getCustomerTags())
 
-  useEffect(() => { fetchData() }, [])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [{ data: custData }, { data: refData }] = await Promise.all([
+      const [{ data: custData }, { data: refData }, { data: orderData }] = await Promise.all([
         supabase.from('customers').select('*').order('created_at', { ascending: false }),
         supabase.from('referrals').select('*, referrer:referrer_id(email, first_name), referred:referred_id(email, first_name)').order('created_at', { ascending: false }),
+        supabase.from('orders').select('customer_email, created_at').order('created_at', { ascending: false }),
       ])
       if (custData) setCustomers(custData as Customer[])
-      if (refData) setReferrals(refData as typeof referrals)
+      if (refData) setReferrals(refData as CRMReferral[])
+      if (orderData) {
+        // Most recent order per customer email (query is already newest-first).
+        const map: Record<string, string> = {}
+        for (const o of orderData as { customer_email: string | null; created_at: string }[]) {
+          const email = o.customer_email?.toLowerCase()
+          if (email && !map[email]) map[email] = o.created_at
+        }
+        setLastOrderByEmail(map)
+      }
     } catch { /* silent */ }
     finally { setLoading(false) }
-  }
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
 
   const handleTagChange = (customerId: string, tag: CustomerTag) => {
     setCustomerTag(customerId, tag)
@@ -1378,6 +1419,7 @@ function CRMTab() {
                     <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Email</th>
                     <th className="text-right px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Orders</th>
                     <th className="text-right px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Spent</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Last Order</th>
                     <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Source</th>
                     <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Referral Code</th>
                   </tr>
@@ -1403,6 +1445,11 @@ function CRMTab() {
                       <td className="px-4 py-3 text-muted-foreground">{c.email}</td>
                       <td className="px-4 py-3 text-right font-bold">{c.order_count}</td>
                       <td className="px-4 py-3 text-right font-bold text-green-400">${(c.total_spent || 0).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                        {lastOrderByEmail[c.email?.toLowerCase()]
+                          ? new Date(lastOrderByEmail[c.email.toLowerCase()]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          : '—'}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-0.5 rounded-lg text-xs bg-muted/50 text-muted-foreground">{c.source || '—'}</span>
                       </td>
@@ -1618,25 +1665,16 @@ function SquareTab() {
     dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
   })
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const squareResult = params.get('square')
-    if (squareResult === 'connected') toast.success('Square connected')
-    if (squareResult === 'error') toast.error(`Square connection failed${params.get('message') ? `: ${params.get('message')}` : ''}`)
-    if (squareResult) window.history.replaceState(null, '', '/admin')
-    fetchStatus()
-  }, [])
-
-  const authHeaders = async () => {
+  const authHeaders = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) throw new Error('Admin session expired')
     return {
       Authorization: `Bearer ${session.access_token}`,
       'Content-Type': 'application/json',
     }
-  }
+  }, [])
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/square/status', { headers: await authHeaders() })
@@ -1648,7 +1686,16 @@ function SquareTab() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [authHeaders])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const squareResult = params.get('square')
+    if (squareResult === 'connected') toast.success('Square connected')
+    if (squareResult === 'error') toast.error(`Square connection failed${params.get('message') ? `: ${params.get('message')}` : ''}`)
+    if (squareResult) window.history.replaceState(null, '', '/admin')
+    fetchStatus()
+  }, [fetchStatus])
 
   const startConnect = async () => {
     setConnecting(true)
@@ -1908,14 +1955,9 @@ function Dashboard() {
 // ─── Referrals Tab ──────────────────────────────────────────────────────────
 
 function ReferralsTab() {
-  const [referrers, setReferrers] = useState<Referrer[]>([])
-  const [logs, setLogs] = useState(getReferralLog())
+  const [referrers, setReferrers] = useState<Referrer[]>(() => getReferrers())
+  const [logs] = useState(getReferralLog)
   const [view, setView] = useState<'referrers' | 'conversions'>('referrers')
-
-  useEffect(() => {
-    setReferrers(getReferrers())
-    setLogs(getReferralLog())
-  }, [])
 
   const totalClicks = referrers.reduce((s, r) => s + r.clicks, 0)
   const totalConversions = referrers.reduce((s, r) => s + r.conversions, 0)

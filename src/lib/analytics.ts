@@ -1,4 +1,5 @@
 import { track } from '@vercel/analytics'
+import { supabase } from './supabase'
 
 type AnalyticsValue = string | number | boolean | null | undefined
 type AnalyticsProperties = Record<string, AnalyticsValue>
@@ -6,6 +7,8 @@ type Ga4Params = Record<string, unknown>
 
 const GA4_MEASUREMENT_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined
 const GA4_SCRIPT_ID = 'tss-ga4-script'
+const INTERNAL_VERIFICATION_SOURCE = 'codex'
+const INTERNAL_VERIFICATION_MEDIUM = 'verification'
 
 type AnalyticsCartItem = {
   name: string
@@ -26,18 +29,70 @@ declare global {
   }
 }
 
+// ─── Visitor / session identity (for the in-app Admin Analytics tab) ──────────
+const VISITOR_KEY = 'tss_visitor_id'
+const SESSION_KEY = 'tss_session_id'
+
+function randomId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+}
+
+function getVisitorId(): string {
+  if (typeof window === 'undefined') return 'server'
+  try {
+    let id = localStorage.getItem(VISITOR_KEY)
+    if (!id) { id = randomId(); localStorage.setItem(VISITOR_KEY, id) }
+    return id
+  } catch {
+    return 'anon'
+  }
+}
+
+function getSessionId(): string {
+  if (typeof window === 'undefined') return 'server'
+  try {
+    let id = sessionStorage.getItem(SESSION_KEY)
+    if (!id) { id = randomId(); sessionStorage.setItem(SESSION_KEY, id) }
+    return id
+  } catch {
+    return 'anon'
+  }
+}
+
+// Fire-and-forget insert. Must NEVER block or throw into a UI action.
+function logToSupabase(table: 'page_views' | 'click_events' | 'nav_events', row: Record<string, unknown>) {
+  if (typeof window === 'undefined' || shouldSuppressAnalytics()) return
+  void supabase.from(table).insert(row).then(({ error }) => {
+    if (error && import.meta.env.DEV) console.warn(`[analytics] ${table} insert failed:`, error.message)
+  })
+}
+
+// Track time-on-page + navigation funnel between route changes.
+let lastPath: string | null = null
+let lastPathEnteredAt = 0
+
 function cleanProperties(properties: AnalyticsProperties) {
   return Object.fromEntries(
     Object.entries(properties).filter(([, value]) => value !== undefined && value !== null),
   )
 }
 
+function shouldSuppressAnalytics() {
+  if (typeof window === 'undefined') return false
+  const params = new URLSearchParams(window.location.search)
+  const source = params.get('utm_source')?.toLowerCase()
+  const medium = params.get('utm_medium')?.toLowerCase()
+
+  return source === INTERNAL_VERIFICATION_SOURCE && medium === INTERNAL_VERIFICATION_MEDIUM
+}
+
 function initGa4() {
-  if (typeof window === 'undefined' || !GA4_MEASUREMENT_ID) return
+  if (typeof window === 'undefined' || !GA4_MEASUREMENT_ID || shouldSuppressAnalytics()) return
 
   window.dataLayer = window.dataLayer || []
-  window.gtag = window.gtag || function gtag() {
-    window.dataLayer?.push(arguments)
+  window.gtag = window.gtag || function gtag(...args: unknown[]) {
+    window.dataLayer?.push(args)
   }
 
   if (!document.getElementById(GA4_SCRIPT_ID)) {
@@ -77,15 +132,41 @@ function toGa4Items(items: AnalyticsCartItem[]) {
 }
 
 export function trackPageView(path: string) {
+  if (shouldSuppressAnalytics()) return
   // Vercel Analytics auto-tracks page views via route changes.
   sendGa4Event('page_view', {
     page_path: path,
     page_location: window.location.href,
     page_title: document.title,
   })
+
+  // Persist to Supabase so the in-app Admin > Analytics tab has data to read.
+  const now = Date.now()
+  logToSupabase('page_views', {
+    path,
+    referrer: document.referrer || null,
+    session_id: getSessionId(),
+    visitor_id: getVisitorId(),
+    user_agent: navigator.userAgent,
+    screen_width: window.innerWidth,
+  })
+
+  // Navigation funnel: record the previous page + how long they spent on it.
+  if (lastPath && lastPath !== path) {
+    logToSupabase('nav_events', {
+      from_path: lastPath,
+      to_path: path,
+      session_id: getSessionId(),
+      visitor_id: getVisitorId(),
+      duration_ms: lastPathEnteredAt ? now - lastPathEnteredAt : null,
+    })
+  }
+  lastPath = path
+  lastPathEnteredAt = now
 }
 
 export function trackEvent(name: string, properties: AnalyticsProperties = {}) {
+  if (shouldSuppressAnalytics()) return
   const clean = cleanProperties(properties)
   try {
     track(name, clean)
@@ -188,11 +269,26 @@ export function setupClickTracking() {
 
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null
-    const link = target?.closest('a[href]')
-    if (!(link instanceof HTMLAnchorElement)) return
+    const clickable = target?.closest('a[href], button')
+    if (!clickable) return
 
-    const href = link.getAttribute('href') || ''
-    const label = link.textContent?.trim().replace(/\s+/g, ' ').slice(0, 80) || href
+    const label = clickable.textContent?.trim().replace(/\s+/g, ' ').slice(0, 80)
+      || clickable.getAttribute('aria-label')
+      || clickable.tagName.toLowerCase()
+
+    // Log every meaningful click to Supabase for the Admin > Analytics heatmap/top-clicks.
+    logToSupabase('click_events', {
+      path: window.location.pathname,
+      element: label,
+      x_percent: window.innerWidth ? +((event.clientX / window.innerWidth) * 100).toFixed(2) : null,
+      y_percent: window.innerHeight ? +((event.clientY / window.innerHeight) * 100).toFixed(2) : null,
+      session_id: getSessionId(),
+      visitor_id: getVisitorId(),
+    })
+
+    // Vercel/GA4 conversion events for the high-intent link types.
+    if (!(clickable instanceof HTMLAnchorElement)) return
+    const href = clickable.getAttribute('href') || ''
     const properties = {
       path: window.location.pathname,
       label,

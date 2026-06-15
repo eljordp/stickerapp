@@ -40,7 +40,26 @@ const process = [
   { step: '4', title: 'Set Up & Shine', desc: 'Everything ships with frames, hardware, and carry bags. Easy setup — one person, under 5 minutes.' },
 ]
 
+const eventLocalAnswers = [
+  {
+    title: 'Custom canopies in Hayward CA',
+    copy: 'Order branded canopy tents for Hayward markets, pop-ups, festivals, school events, launch booths, and local business activations.',
+  },
+  {
+    title: 'Complete booth branding',
+    copy: 'Match the canopy with table covers, feather flags, retractable banners, backdrops, and vinyl signage for a finished setup.',
+  },
+  {
+    title: 'Built around your event date',
+    copy: 'Send the event date, booth size, artwork, and location so we can confirm proofing, production, and pickup or delivery timing.',
+  },
+]
+
 const eventFaqs = [
+  {
+    q: 'Where can I order custom canopies in Hayward CA?',
+    a: 'The Sticker Smith prints custom canopies in Hayward CA for Bay Area events, pop-ups, markets, trade shows, school events, and branded business booths.',
+  },
   {
     q: 'Do you print custom canopy tents in the Bay Area?',
     a: 'Yes. The Sticker Smith prints custom canopy tents, table covers, flags, banners, and backdrops for Bay Area and Hayward events, markets, trade shows, and pop-ups.',
@@ -94,6 +113,23 @@ export default function EventCanopies() {
                   <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
                 ))}
               </div>
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="max-w-5xl mx-auto mb-8">
+            <div className="mb-5">
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Hayward Custom Canopies</p>
+              <h2 className="text-2xl md:text-3xl font-black mb-3">Custom canopy tents, banners, and booth graphics for Bay Area events.</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                If you need custom canopies in Hayward CA, we can quote the tent, table cover, flags, banners, and backdrop together so the booth looks consistent on event day.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {eventLocalAnswers.map((item) => (
+                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
+                  <h3 className="font-bold mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">

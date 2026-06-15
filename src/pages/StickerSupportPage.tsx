@@ -76,6 +76,35 @@ function StickerSupportPageInner({ page }: { page: StickerSupportPageConfig }) {
         </div>
       </section>
 
+      {page.localAnswer && (
+        <section className="py-12 md:py-16 border-b border-border/50">
+          <div className="section-container max-w-6xl">
+            <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] items-start">
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">{page.localAnswer.eyebrow}</p>
+                <h2 className="text-3xl md:text-4xl font-black mb-4">{page.localAnswer.title}</h2>
+                <p className="text-muted-foreground text-base md:text-lg leading-relaxed">{page.localAnswer.copy}</p>
+              </motion.div>
+              <div className="grid gap-4">
+                {page.localAnswer.points.map((point) => (
+                  <motion.div
+                    key={point.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="bg-card border border-border rounded-xl p-5"
+                  >
+                    <CheckCircle className="w-5 h-5 text-primary mb-3" />
+                    <h3 className="font-bold mb-2">{point.title}</h3>
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{point.copy}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="py-12 md:py-16 border-b border-border/50">
         <div className="section-container max-w-5xl">
           <div className="mb-8 text-center">

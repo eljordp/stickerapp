@@ -198,8 +198,11 @@ function AccountDashboard() {
     loadOrders()
 
     // Load referrer
-    const ref = findReferrerByEmail(userEmail)
-    setReferrer(ref ?? null)
+    const timer = window.setTimeout(() => {
+      const ref = findReferrerByEmail(userEmail)
+      setReferrer(ref ?? null)
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [userEmail])
 
   const handleCopy = (text: string) => {

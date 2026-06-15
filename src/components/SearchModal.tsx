@@ -18,17 +18,19 @@ const searchItems: SearchItem[] = [
   { name: 'UV Coating Stickers', category: 'Stickers', href: '/stickers', keywords: ['uv', 'coating', 'protection', 'spot uv'] },
   { name: 'Embossed Stickers', category: 'Stickers', href: '/stickers', keywords: ['emboss', 'embossed', 'raised', 'textured', '3d'] },
   { name: 'Paper Stickers', category: 'Stickers', href: '/stickers', keywords: ['paper', 'eco', 'recyclable'] },
+  { name: 'Custom Labels in Hayward', category: 'Labels', href: '/custom-labels', keywords: ['custom labels', 'product labels', 'bottle label', 'jar label', 'mylar label', 'hayward', 'bay area'] },
+  { name: 'Roll Labels in Hayward', category: 'Labels', href: '/roll-labels', keywords: ['roll labels', 'labels on rolls', 'product roll labels', 'bottle labels', 'jar labels', 'hayward', 'bay area'] },
 
   // Mylar Packaging
-  { name: 'Mylar Bags – Eighths', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'eighth', '8th', '3x5', 'packaging', 'pouch'] },
-  { name: 'Mylar Bags – Quarters', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'quarter', 'qtr', '4x6', 'packaging'] },
-  { name: 'Mylar Bags – Ounce', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'ounce', 'oz', '5x8', 'packaging'] },
-  { name: 'Mylar Bags – Half Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'half pound', 'hp', '10x12', 'packaging'] },
-  { name: 'Mylar Bags – Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'pound', 'lb', '14x16', 'packaging'] },
+  { name: 'Mylar Bags – Eighths', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'eighth', '8th', '3x5', 'packaging', 'pouch', 'hayward', 'bay area'] },
+  { name: 'Mylar Bags – Quarters', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'quarter', 'qtr', '4x6', 'packaging', 'hayward'] },
+  { name: 'Mylar Bags – Ounce', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'ounce', 'oz', '5x8', 'packaging', 'hayward'] },
+  { name: 'Mylar Bags – Half Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'half pound', 'hp', '10x12', 'packaging', 'hayward'] },
+  { name: 'Mylar Bags – Pound', category: 'Mylar Packaging', href: '/mylar', keywords: ['mylar', 'bag', 'pound', 'lb', '14x16', 'packaging', 'hayward'] },
   { name: '2oz Jar + Custom Label', category: 'Mylar Packaging', href: '/mylar', keywords: ['jar', 'label', '2oz', 'container', 'cannabis', 'bottle'] },
 
   // Event Displays
-  { name: 'Custom Canopy Tents', category: 'Event Displays', href: '/services/event-displays', keywords: ['canopy', 'tent', 'popup', 'pop-up', 'event', 'booth', 'trade show', 'steel', 'aluminum', '5x5', '10x10', '10x15', '10x20'] },
+  { name: 'Custom Canopy Tents', category: 'Event Displays', href: '/services/event-displays', keywords: ['canopy', 'tent', 'popup', 'pop-up', 'event', 'booth', 'trade show', 'steel', 'aluminum', '5x5', '10x10', '10x15', '10x20', 'hayward', 'bay area'] },
   { name: 'Sidewalls & Half Walls', category: 'Event Displays', href: '/services/event-displays', keywords: ['sidewall', 'half wall', 'wall', 'tent wall', 'enclosure'] },
 
   // Backdrops
@@ -48,7 +50,7 @@ const searchItems: SearchItem[] = [
   { name: 'Vehicle Magnets', category: 'Business Print', href: '/services/business-print', keywords: ['magnet', 'vehicle magnet', 'car magnet', 'truck magnet', 'magnetic', '12x18', '18x24', '24x36'] },
 
   // Other Services
-  { name: 'Vehicle Graphics & Wraps', category: 'Vehicle Graphics', href: '/services/vehicle-graphics', keywords: ['vehicle', 'wrap', 'car wrap', 'truck', 'fleet', 'vinyl', 'lettering', 'decal', 'door graphic', 'perforated', 'window'] },
+  { name: 'Vehicle Graphics & Wraps', category: 'Vehicle Graphics', href: '/services/vehicle-graphics', keywords: ['vehicle', 'wrap', 'car wrap', 'truck', 'fleet', 'vinyl', 'lettering', 'decal', 'door graphic', 'perforated', 'window', 'hayward', 'bay area'] },
   { name: 'Business Signage', category: 'Business Signage', href: '/services/business-signage', keywords: ['sign', 'signage', 'storefront', 'wall graphic', 'mural', 'a-frame', 'sidewalk', 'acrylic', 'metal', 'led', 'illuminated'] },
   { name: 'Window Film & Tint', category: 'Window Film', href: '/services/window-film', keywords: ['window', 'film', 'tint', 'frosted', 'privacy', 'solar', 'heat', 'security', 'decorative', 'anti-graffiti'] },
 ]
@@ -58,10 +60,12 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return
+    const timer = window.setTimeout(() => {
       setQuery('')
-      setTimeout(() => inputRef.current?.focus(), 100)
-    }
+      inputRef.current?.focus()
+    }, 100)
+    return () => window.clearTimeout(timer)
   }, [isOpen])
 
   useEffect(() => {

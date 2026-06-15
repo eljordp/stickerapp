@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import { supabase } from '@/lib/supabase'
 import { getPricing, loadPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
 import { cities } from '@/lib/cities'
 import { projects } from '@/lib/projects'
@@ -35,6 +36,15 @@ const shapeData = [
 // Order-level add-ons (per-piece material upgrades are handled by Material column)
 const ADDON_RUSH = { id: 'rush', label: 'Rush (2-day)', description: 'Skip the line — 2-day production', icon: Zap, price: 65 }
 const ADDON_DESIGN = { id: 'design', label: 'Design Assist', description: 'Our designer helps shape your artwork', icon: Palette, price: 75 }
+
+interface ArtworkAttachment {
+  bucket: string
+  path: string
+  fileName: string
+  contentType: string
+  size: number
+  uploadedAt: string
+}
 
 const materialData = [
   { value: 'Matte Vinyl', label: 'Matte', bg: 'radial-gradient(circle at 35% 35%, #f0ece8, #ccc7c0)' },
@@ -214,6 +224,9 @@ export default function Order() {
   const [mockupView, setMockupView] = useState<StickerFormat>('handheld')
   const [artworkFile, setArtworkFile] = useState<File | null>(null)
   const [artworkUrl, setArtworkUrl] = useState('')
+  const [artworkUpload, setArtworkUpload] = useState<ArtworkAttachment | null>(null)
+  const [artworkStatus, setArtworkStatus] = useState<'idle' | 'uploading' | 'uploaded' | 'error'>('idle')
+  const [artworkError, setArtworkError] = useState('')
   const [added, setAdded] = useState(false)
   const [rushAddon, setRushAddon] = useState(false)
   const [designAddon, setDesignAddon] = useState(false)
@@ -296,9 +309,50 @@ export default function Order() {
       : mockupView === 'roll' ? `${materialLabel} Roll Labels`
         : `${shapeLabel} ${materialLabel} Stickers`
 
+  const uploadArtwork = async (file: File) => {
+    setArtworkStatus('uploading')
+    setArtworkError('')
+    setArtworkUpload(null)
+
+    try {
+      const response = await fetch('/api/uploads/create-artwork-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type || 'application/octet-stream',
+          size: file.size,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Could not prepare artwork upload.')
+
+      const { error } = await supabase.storage
+        .from(data.bucket)
+        .uploadToSignedUrl(data.path, data.token, file, {
+          contentType: file.type || data.contentType || 'application/octet-stream',
+        })
+      if (error) throw error
+
+      setArtworkUpload({
+        bucket: data.bucket,
+        path: data.path,
+        fileName: data.fileName || file.name,
+        contentType: file.type || data.contentType || 'application/octet-stream',
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+      })
+      setArtworkStatus('uploaded')
+    } catch (error) {
+      setArtworkStatus('error')
+      setArtworkError(error instanceof Error ? error.message : 'Artwork upload failed.')
+    }
+  }
+
   const handleFile = (file: File) => {
     setArtworkFile(file)
     setArtworkUrl(canPreviewArtwork(file) ? URL.createObjectURL(file) : '')
+    void uploadArtwork(file)
   }
 
   useEffect(() => {
@@ -309,6 +363,7 @@ export default function Order() {
 
   const handleAddToCart = () => {
     if (effectiveQty < MIN_QTY) return
+    if (artworkFile && artworkStatus !== 'uploaded') return
     const addOns: { name: string; price: number }[] = []
     if (rushAddon) addOns.push({ name: ADDON_RUSH.label, price: ADDON_RUSH.price })
     if (designAddon) addOns.push({ name: ADDON_DESIGN.label, price: ADDON_DESIGN.price })
@@ -323,6 +378,7 @@ export default function Order() {
       shape,
       dimensions: size,
       addOns: addOns.length > 0 ? addOns : undefined,
+      artwork: artworkUpload || undefined,
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -521,6 +577,21 @@ export default function Order() {
                     &#10003; {artworkFile.name}
                   </p>
                 )}
+                {artworkStatus === 'uploading' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Uploading artwork so it stays with the order...
+                  </p>
+                )}
+                {artworkStatus === 'uploaded' && (
+                  <p className="text-xs text-green-400 mt-1">
+                    Artwork saved with this cart item.
+                  </p>
+                )}
+                {artworkStatus === 'error' && (
+                  <p className="text-xs text-destructive mt-1">
+                    {artworkError}
+                  </p>
+                )}
                 {artworkFile && !artworkUrl && (
                   <p className="text-xs text-muted-foreground mt-1">
                     File received for proof. Upload PNG, JPG, or SVG for live preview.
@@ -652,11 +723,15 @@ export default function Order() {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={effectiveQty < MIN_QTY}
+                disabled={effectiveQty < MIN_QTY || (Boolean(artworkFile) && artworkStatus !== 'uploaded')}
                 className={`btn-primary w-full mt-5 ${added ? 'bg-green-600' : ''} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!transform-none`}
               >
                 {effectiveQty < MIN_QTY ? (
                   <>Minimum {MIN_QTY} to add</>
+                ) : artworkFile && artworkStatus === 'uploading' ? (
+                  <>Saving artwork...</>
+                ) : artworkFile && artworkStatus === 'error' ? (
+                  <>Fix artwork upload first</>
                 ) : added ? (
                   <><Check size={18} /> Added to Cart!</>
                 ) : (

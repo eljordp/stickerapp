@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, X, Package, Sparkles, Box, ShoppingCart, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import { supabase } from '@/lib/supabase'
 import { getPricing, loadPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
 import PageHero from '@/components/PageHero'
 import EstimateForm from '@/components/EstimateForm'
@@ -16,6 +17,15 @@ import mylarDetail from '@/assets/projects/mylar-pouch-detail.jpg'
 import mylarProduction from '@/assets/projects/mylar-production-line.jpg'
 
 type MockupType = 'pouch' | 'foil' | 'jar'
+
+interface ArtworkAttachment {
+  bucket: string
+  path: string
+  fileName: string
+  contentType: string
+  size: number
+  uploadedAt: string
+}
 
 function PouchMockup({ previewUrl, pouchColor, finish, scale }: { previewUrl: string | null; pouchColor: 'white' | 'black'; finish: string; scale: number }) {
   const w = 140 * scale
@@ -87,13 +97,66 @@ const mockupScales: Record<string, number> = {
   '2oz Jar + Custom Label': 0.7,
 }
 
+const mylarHighlights = [
+  {
+    title: 'Custom mylar bags',
+    copy: 'Eighth, quarter, ounce, half-pound, and pound-size pouch runs with matte, gloss, black, white, and holographic options.',
+  },
+  {
+    title: 'Jar labels and product labels',
+    copy: '2oz jar labels, product label systems, and packaging stickers for retail shelves, delivery menus, and launch drops.',
+  },
+  {
+    title: 'Bay Area proof and pickup',
+    copy: 'Digital proof before production, bulk quoting, and local pickup from Hayward for East Bay and Bay Area brands.',
+  },
+]
+
+const mylarLocalAnswers = [
+  {
+    title: 'Custom mylar bags in Hayward CA',
+    copy: 'We print custom mylar bags, pouch packaging, and product packaging from Hayward for local brands that need proofed artwork and pickup options.',
+  },
+  {
+    title: 'Bay Area packaging runs',
+    copy: 'Use mylar bags for food, retail, cannabis, CBD, coffee, snacks, wellness products, and limited product drops across the Bay Area.',
+  },
+  {
+    title: 'Labels or full packaging',
+    copy: 'If full printed bags are more than you need, we can print jar labels, pouch labels, box labels, and packaging stickers instead.',
+  },
+]
+
+const mylarFaqs = [
+  {
+    q: 'Where can I print custom mylar bags in Hayward CA?',
+    a: 'The Sticker Smith prints custom mylar bags in Hayward CA for Bay Area brands, including pouch packaging, eighth bags, quarter bags, ounce bags, pound bags, jar labels, and product labels.',
+  },
+  {
+    q: 'Do you print custom mylar bags in Hayward?',
+    a: 'Yes. The Sticker Smith prints custom mylar bags, pouch packaging, jar labels, and product labels from Hayward for Bay Area brands and product launches.',
+  },
+  {
+    q: 'Can you help with packaging artwork?',
+    a: 'Yes. You can upload print-ready artwork, send a logo and product details, or request design help. Every order gets a digital proof before anything prints.',
+  },
+  {
+    q: 'What should I include for a quote?',
+    a: 'Send the bag size, quantity, product type, finish preference, artwork status, and any compliance notes so we can price the run correctly.',
+  },
+]
+
 function isAcceptedArtwork(file: File) {
   const name = file.name.toLowerCase()
-  return file.type.startsWith('image/') || ['.pdf', '.ai', '.eps', '.svg'].some(ext => name.endsWith(ext))
+  return file.type.startsWith('image/') || ['.ai', '.eps', '.heic', '.pdf', '.psd', '.svg', '.tif', '.tiff', '.webp'].some(ext => name.endsWith(ext))
 }
 
 function canPreviewArtwork(file: File) {
   return file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.svg')
+}
+
+function createMylarCartItemId(size: string) {
+  return `mylar-${size}-${Date.now()}`
 }
 
 export default function MylarPackaging() {
@@ -116,6 +179,9 @@ export default function MylarPackaging() {
   const [pouchColor, setPouchColor] = useState<'white' | 'black'>('white')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [artworkUpload, setArtworkUpload] = useState<ArtworkAttachment | null>(null)
+  const [artworkStatus, setArtworkStatus] = useState<'idle' | 'uploading' | 'uploaded' | 'error'>('idle')
+  const [artworkError, setArtworkError] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [activeMockup, setActiveMockup] = useState<MockupType>('pouch')
   const [added, setAdded] = useState(false)
@@ -125,7 +191,7 @@ export default function MylarPackaging() {
   const item = items[selectedItem]
 
   // Find the right quantity tier
-  const qtyTier = useMemo(() => {
+  const qtyTier = (() => {
     if (!item) return null
     // Find the tier where qty fits (use the closest lower tier)
     const sorted = [...item.quantities].sort((a, b) => a.qty - b.qty)
@@ -134,7 +200,7 @@ export default function MylarPackaging() {
       if (quantity >= t.qty) tier = t
     }
     return tier
-  }, [item, quantity])
+  })()
 
   const unitPrice = qtyTier?.price ?? 0
   const addOnTotal = addOns.filter(a => selectedAddOns.has(a.name)).reduce((s, a) => s + a.value, 0)
@@ -143,6 +209,66 @@ export default function MylarPackaging() {
   const scale = item ? (mockupScales[item.size] ?? 0.75) : 0.75
   const isJar = item?.size.toLowerCase().includes('jar')
 
+  const uploadArtwork = useCallback(async (file: File) => {
+    setArtworkStatus('uploading')
+    setArtworkError('')
+    setArtworkUpload(null)
+
+    try {
+      const response = await fetch('/api/uploads/create-artwork-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type || 'application/octet-stream',
+          size: file.size,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Could not prepare artwork upload.')
+
+      const { error } = await supabase.storage
+        .from(data.bucket)
+        .uploadToSignedUrl(data.path, data.token, file, {
+          contentType: file.type || data.contentType || 'application/octet-stream',
+        })
+      if (error) throw error
+
+      setArtworkUpload({
+        bucket: data.bucket,
+        path: data.path,
+        fileName: data.fileName || file.name,
+        contentType: file.type || data.contentType || 'application/octet-stream',
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+      })
+      setArtworkStatus('uploaded')
+    } catch (error) {
+      setArtworkStatus('error')
+      setArtworkError(error instanceof Error ? error.message : 'Artwork upload failed.')
+    }
+  }, [])
+
+  const receiveArtworkFile = useCallback((file: File) => {
+    setUploadedFile(file)
+    setPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return canPreviewArtwork(file) ? URL.createObjectURL(file) : null
+    })
+    void uploadArtwork(file)
+  }, [uploadArtwork])
+
+  const clearArtworkFile = useCallback(() => {
+    setUploadedFile(null)
+    setArtworkUpload(null)
+    setArtworkStatus('idle')
+    setArtworkError('')
+    setPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+  }, [])
+
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }, [])
   const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(false) }, [])
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -150,21 +276,13 @@ export default function MylarPackaging() {
     setIsDragging(false)
     const file = e.dataTransfer.files?.[0]
     if (file && isAcceptedArtwork(file)) {
-      setUploadedFile(file)
-      setPreviewUrl(prev => {
-        if (prev) URL.revokeObjectURL(prev)
-        return canPreviewArtwork(file) ? URL.createObjectURL(file) : null
-      })
+      receiveArtworkFile(file)
     }
-  }, [])
+  }, [receiveArtworkFile])
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setUploadedFile(file)
-    setPreviewUrl(prev => {
-      if (prev) URL.revokeObjectURL(prev)
-      return canPreviewArtwork(file) ? URL.createObjectURL(file) : null
-    })
+    if (isAcceptedArtwork(file)) receiveArtworkFile(file)
   }
 
   useEffect(() => { return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) } }, [previewUrl])
@@ -175,18 +293,20 @@ export default function MylarPackaging() {
 
   const handleAddToCart = () => {
     if (!item || !qtyTier) return
+    if (uploadedFile && artworkStatus !== 'uploaded') return
     const cartAddOns = addOns
       .filter(a => selectedAddOns.has(a.name))
       .map(a => ({ name: a.name, price: +(a.value * quantity).toFixed(2) }))
     const cartBasePrice = +(unitPrice * quantity).toFixed(2)
     addItem({
-      id: `mylar-${item.size}-${Date.now()}`,
+      id: createMylarCartItemId(item.size),
       name: `Custom ${item.size}`,
       size: item.size,
       option: `${quantity} pcs · ${finish} · ${pouchColor} · ${selectedAddOns.has('Holographic Upgrade') ? 'Holo' : 'Standard'}`,
       price: cartBasePrice,
       quantity: 1,
       addOns: cartAddOns.length > 0 ? cartAddOns : undefined,
+      artwork: artworkUpload || undefined,
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -203,15 +323,57 @@ export default function MylarPackaging() {
   return (
     <>
       <PageHero
-        eyebrow="Mylar Packaging Suite"
-        title="Custom mylar bags, jars & labels."
-        subtitle="Quarter, 8th, ounce and pound bags, plus 2oz compliant jars. Holographic upgrades, windows, and direct print available."
+        eyebrow="Hayward Mylar Packaging"
+        title="Custom mylar bags and jar labels for Bay Area brands."
+        subtitle="Print eighth, quarter, ounce, half-pound, and pound-size mylar bags, plus 2oz jar labels and product packaging. Upload artwork, get a digital proof, and pick up locally in Hayward."
         image={mylarHero}
-        imageAlt="Custom mylar packaging"
+        imageAlt="Custom mylar bags and product labels"
         icon={Package}
         primaryCta={{ label: 'Configure Bag', href: '#configure' }}
         secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
       />
+
+      <section className="py-12 md:py-16 border-b border-border/50">
+        <div className="section-container max-w-6xl">
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.35fr] items-start">
+            <div>
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Custom Packaging</p>
+              <h2 className="text-3xl md:text-4xl font-black mb-4">Mylar bags, pouch packaging, and labels made locally.</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                The Sticker Smith prints custom mylar packaging for Bay Area product brands that need bags, jar labels, retail labels, and packaging stickers that look finished before the first run goes out.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {mylarHighlights.map((item) => (
+                <div key={item.title} className="bg-card/70 border border-border rounded-xl p-5 h-full">
+                  <h3 className="font-bold text-base mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 border-b border-border/50">
+        <div className="section-container max-w-6xl">
+          <div className="mb-8 max-w-3xl">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Local Mylar Printing</p>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">Custom mylar bags in Hayward for Bay Area product brands.</h2>
+            <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
+              If you are comparing custom mylar bag printers near Hayward, The Sticker Smith can help with artwork proofing, bag sizing, labels, and local pickup once the job is approved.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            {mylarLocalAnswers.map((item) => (
+              <div key={item.title} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section id="configure" className="py-8 md:py-16 scroll-mt-24">
         <div className="section-container max-w-5xl mx-auto">
@@ -231,20 +393,23 @@ export default function MylarPackaging() {
                 </div>
                 <div>
                   <p className="text-base font-medium text-foreground">Drag & drop your artwork</p>
-                  <p className="mt-1 text-sm text-muted-foreground">PNG, JPG, or SVG preview here. PDF, AI, and EPS are accepted for proof.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">PNG, JPG, SVG, PDF, AI, EPS, PSD, TIFF, HEIC, and WebP accepted for proof.</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
                     <span>Upload file</span>
-                    <input type="file" accept="image/*,.pdf,.ai,.eps,.svg" className="hidden" onChange={handleFileChange} />
+                    <input type="file" accept="image/*,.pdf,.ai,.eps,.svg,.psd,.tif,.tiff,.heic,.webp" className="hidden" onChange={handleFileChange} />
                   </label>
                   {uploadedFile && (
-                    <button onClick={() => { setUploadedFile(null); setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null }) }} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors">
+                    <button onClick={clearArtworkFile} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors">
                       <X className="h-3.5 w-3.5" /> Clear
                     </button>
                   )}
                 </div>
                 {uploadedFile && <p className="text-xs text-muted-foreground">Selected: <span className="font-medium text-foreground">{uploadedFile.name}</span></p>}
+                {artworkStatus === 'uploading' && <p className="text-xs text-primary">Uploading artwork for proof...</p>}
+                {artworkStatus === 'uploaded' && <p className="text-xs text-green-400">Artwork attached to this order.</p>}
+                {artworkStatus === 'error' && <p className="text-xs text-red-400">{artworkError}</p>}
               </div>
             </motion.div>
 
@@ -263,7 +428,7 @@ export default function MylarPackaging() {
                 {activeMockup === 'jar' && <JarMockup previewUrl={previewUrl} />}
               </div>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                {previewUrl ? 'Your design preview' : uploadedFile ? 'File received for proof. Upload an image/SVG for live preview' : 'Upload artwork to see it mocked up'} — {item?.size ?? 'Select a size'}
+                {previewUrl ? 'Your design preview' : uploadedFile ? 'File selected. Image and SVG files can preview live' : 'Upload artwork to see it mocked up'} — {item?.size ?? 'Select a size'}
               </p>
             </motion.div>
           </div>
@@ -382,8 +547,20 @@ export default function MylarPackaging() {
               {/* Add to Cart */}
               {quantity > 0 && qtyTier && (
                 <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
-                  <button onClick={handleAddToCart} className={`btn-primary w-full ${added ? 'bg-green-600' : ''}`}>
-                    {added ? <><Check size={18} /> Added to Cart!</> : <><ShoppingCart size={18} /> Add to Cart — ${totalPrice.toFixed(2)}</>}
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={Boolean(uploadedFile) && artworkStatus !== 'uploaded'}
+                    className={`btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed ${added ? 'bg-green-600' : ''}`}
+                  >
+                    {added ? (
+                      <><Check size={18} /> Added to Cart!</>
+                    ) : uploadedFile && artworkStatus === 'uploading' ? (
+                      <>Uploading artwork...</>
+                    ) : uploadedFile && artworkStatus === 'error' ? (
+                      <>Fix artwork upload first</>
+                    ) : (
+                      <><ShoppingCart size={18} /> Add to Cart — ${totalPrice.toFixed(2)}</>
+                    )}
                   </button>
                   <p className="text-[10px] text-muted-foreground text-center mt-2">You'll receive a proof before anything prints.</p>
                 </div>
@@ -429,6 +606,22 @@ export default function MylarPackaging() {
               { src: mylarProduction, alt: 'Mylar production line', caption: 'Production run' },
             ]}
           />
+        </div>
+      </section>
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container max-w-4xl">
+          <div className="mb-8 text-center">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Mylar FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-black">Custom mylar bag questions</h2>
+          </div>
+          <div className="grid gap-4">
+            {mylarFaqs.map((faq) => (
+              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">

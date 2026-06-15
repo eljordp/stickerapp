@@ -12,16 +12,17 @@ const serviceAreas = [
 
 const serviceCatalog = [
   'Custom stickers and labels',
+  'Custom labels in Hayward',
   'Die-cut stickers',
   'Kiss-cut stickers',
   'Sticker sheets',
-  'Roll labels',
-  'Vehicle graphics and fleet wraps',
+  'Roll labels in Hayward',
+  'Vehicle graphics and fleet wraps in Hayward',
   'Business signage and storefront graphics',
-  'Event displays, tents, banners, and table covers',
+  'Custom canopies, event displays, tents, banners, and table covers',
   'Business cards, flyers, postcards, and marketing print',
   'Window film, tint, and decorative graphics',
-  'Custom mylar packaging and product labels',
+  'Custom mylar bags and product labels in Hayward',
 ]
 
 export const localBusinessSchema = {
@@ -127,10 +128,10 @@ const serviceSchemas: Record<string, { name: string; description: string; servic
       'Bay Area custom sticker printing for die-cut stickers, kiss-cut stickers, sticker sheets, roll labels, holographic stickers, matte stickers, and custom vinyl decals.',
   },
   '/services/vehicle-graphics': {
-    name: 'Vehicle Graphics and Fleet Wraps',
-    serviceType: 'Vehicle graphics, wraps, decals, and fleet branding',
+    name: 'Vehicle Graphics and Fleet Wraps in Hayward and the Bay Area',
+    serviceType: 'Vehicle graphics, wraps, decals, vinyl lettering, and fleet branding in Hayward',
     description:
-      'Full wraps, partial wraps, door graphics, fleet branding, perforated window graphics, vinyl lettering, and vehicle decals.',
+      'Custom vehicle graphics in Hayward and the Bay Area, including full wraps, partial wraps, door graphics, fleet branding, perforated window graphics, vinyl lettering, and vehicle decals.',
   },
   '/services/business-signage': {
     name: 'Business Signs and Signage in Hayward and the Bay Area',
@@ -139,10 +140,10 @@ const serviceSchemas: Record<string, { name: string; description: string; servic
       'Custom business signs and signage in Hayward and the Bay Area, including storefront signs, wall graphics, A-frame sidewalk signs, retractable banners, acrylic signs, metal signs, window graphics, and illuminated signage.',
   },
   '/services/event-displays': {
-    name: 'Custom Canopy Tents, Banners, and Event Displays in the Bay Area',
-    serviceType: 'Custom printed canopy tents, banners, feather flags, table covers, and event displays',
+    name: 'Custom Canopies, Banners, and Event Displays in Hayward and the Bay Area',
+    serviceType: 'Custom printed canopy tents, banners, feather flags, table covers, and event displays in Hayward',
     description:
-      'Custom event displays for Bay Area and Hayward businesses, including branded canopy tents, feather flags, vinyl banners, backdrops, table covers, retractable banners, and booth displays.',
+      'Custom canopies and event displays for Hayward and Bay Area businesses, including branded canopy tents, feather flags, vinyl banners, backdrops, table covers, retractable banners, and booth displays.',
   },
   '/services/business-print': {
     name: 'Business Print Materials',
@@ -157,10 +158,10 @@ const serviceSchemas: Record<string, { name: string; description: string; servic
       'Frosted window film, solar tint, security film, privacy film, decorative window graphics, and perforated window vinyl.',
   },
   '/mylar': {
-    name: 'Custom Mylar Packaging',
-    serviceType: 'Custom mylar bags, packaging, and product labels',
+    name: 'Custom Mylar Bags and Jar Labels in Hayward and the Bay Area',
+    serviceType: 'Custom mylar bags, pouch packaging, jar labels, and product labels in Hayward',
     description:
-      'Custom branded mylar bags, pouch packaging, retail packaging, product labels, and print-ready packaging options.',
+      'Custom mylar bags in Hayward and the Bay Area, including pouch packaging, jar labels, and product labels for food projects, cannabis and CBD packaging, retail products, and launch runs.',
   },
 }
 
@@ -328,6 +329,20 @@ const stickerFaqSchema = {
 }
 
 const serviceFaqSchemas: Record<string, { q: string; a: string }[]> = {
+  '/services/vehicle-graphics': [
+    {
+      q: 'Where can I get vehicle graphics in Hayward CA?',
+      a: 'The Sticker Smith produces vehicle graphics in Hayward CA for Bay Area businesses, including door decals, vinyl lettering, partial wraps, full wraps, box truck graphics, van graphics, and fleet branding.',
+    },
+    {
+      q: 'Do you handle vehicle wrap design and installation?',
+      a: 'Yes. We can help with design, digital proofing, premium vinyl production, laminate, and professional installation for most vehicle graphic projects.',
+    },
+    {
+      q: 'What should I send for a vehicle graphics quote?',
+      a: 'Send the year, make, model, vehicle photos, logo files, the graphics you want, and whether you need decals, lettering, a partial wrap, full wrap, or fleet rollout.',
+    },
+  ],
   '/services/business-signage': [
     {
       q: 'Do you make business signs in Hayward?',
@@ -344,6 +359,10 @@ const serviceFaqSchemas: Record<string, { q: string; a: string }[]> = {
   ],
   '/services/event-displays': [
     {
+      q: 'Where can I order custom canopies in Hayward CA?',
+      a: 'The Sticker Smith prints custom canopies in Hayward CA for Bay Area events, pop-ups, markets, trade shows, school events, and branded business booths.',
+    },
+    {
       q: 'Do you print custom canopy tents in the Bay Area?',
       a: 'Yes. The Sticker Smith prints custom canopy tents, table covers, flags, banners, and backdrops for Bay Area and Hayward events, markets, trade shows, and pop-ups.',
     },
@@ -354,6 +373,24 @@ const serviceFaqSchemas: Record<string, { q: string; a: string }[]> = {
     {
       q: 'How early should I order before an event?',
       a: 'Most event displays need 5 to 10 business days after proof approval. Rush options depend on the product, hardware availability, and event date.',
+    },
+  ],
+  '/mylar': [
+    {
+      q: 'Where can I print custom mylar bags in Hayward CA?',
+      a: 'The Sticker Smith prints custom mylar bags in Hayward CA for Bay Area brands, including pouch packaging, eighth bags, quarter bags, ounce bags, pound bags, jar labels, and product labels.',
+    },
+    {
+      q: 'Do you print custom mylar bags in the Bay Area?',
+      a: 'Yes. The Sticker Smith prints custom mylar bags, pouch packaging, jar labels, and product labels from Hayward for Bay Area brands, shops, food projects, cannabis and CBD packaging, and retail launches.',
+    },
+    {
+      q: 'What mylar bag sizes can I order?',
+      a: 'Common options include eighth, quarter, ounce, half-pound, and pound-size mylar bags, plus 2oz jar labels and custom packaging quotes for larger or unusual product runs.',
+    },
+    {
+      q: 'What should I send for a mylar packaging quote?',
+      a: 'Send your bag size, quantity, artwork or logo, product type, finish preference, and any compliance notes. A digital proof is sent before production so the layout can be checked before printing.',
     },
   ],
 }

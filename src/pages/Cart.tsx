@@ -102,6 +102,11 @@ export default function Cart() {
                     ))}
                   </div>
                 ) : null}
+                {item.artwork && (
+                  <p className="mt-2 text-xs font-medium text-green-400">
+                    Artwork attached: {item.artwork.fileName}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">

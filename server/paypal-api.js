@@ -102,6 +102,7 @@ function normalizeItem(item) {
   const addOnTotal = addOns.reduce((sum, addOn) => sum + addOn.price, 0)
   const unitPrice = toMoney(price + addOnTotal)
   const lineTotal = toMoney(unitPrice * quantity)
+  const artwork = normalizeArtwork(item?.artwork)
 
   return {
     id: sanitizeText(item?.id),
@@ -114,8 +115,22 @@ function normalizeItem(item) {
     price,
     quantity,
     addOns,
+    artwork,
     unitPrice,
     lineTotal,
+  }
+}
+
+function normalizeArtwork(artwork) {
+  if (!artwork?.path) return undefined
+
+  return {
+    bucket: truncate(artwork.bucket, 80) || 'order-artwork',
+    path: truncate(artwork.path, 500),
+    fileName: truncate(artwork.fileName, 160) || 'artwork-file',
+    contentType: truncate(artwork.contentType, 120) || 'application/octet-stream',
+    size: Math.max(0, Math.floor(Number(artwork.size) || 0)),
+    uploadedAt: truncate(artwork.uploadedAt, 40) || new Date().toISOString(),
   }
 }
 
@@ -323,6 +338,7 @@ export async function saveCapturedOrder(orderID, checkout, paypalOrder) {
       material: item.material,
       shape: item.shape,
       dimensions: item.dimensions,
+      artwork: item.artwork,
     })),
     total: checkout.total,
     status: 'processing',

@@ -15,6 +15,14 @@ interface CartItem {
   material?: string
   shape?: string
   dimensions?: string
+  artwork?: {
+    bucket: string
+    path: string
+    fileName: string
+    contentType: string
+    size: number
+    uploadedAt: string
+  }
 }
 
 interface CartContextType {
@@ -263,7 +271,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Re-validate promo when cart changes
   useEffect(() => {
-    if (promoCode) {
+    if (!promoCode) return
+    const timer = window.setTimeout(() => {
       const result = validatePromoCode(promoCode, total)
       if (result.valid && result.discount !== undefined) {
         setPromoDiscount(result.discount)
@@ -272,22 +281,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setPromoDiscount(0)
         setPromoLabel(null)
       }
-    }
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [total, promoCode])
 
   // Auto-apply first-order discount for first-time buyers
   useEffect(() => {
     if (items.length === 0) return
     if (promoCode) return // user already has a code applied
-    const hasOrdered = localStorage.getItem('tss_order_completed') === 'true'
-    if (hasOrdered) return
-    const result = validatePromoCode(AUTO_DISCOUNT_CODE, total)
-    if (result.valid && result.code && result.discount !== undefined) {
-      setPromoCode(result.code.code)
-      setPromoDiscount(result.discount)
-      setPromoLabel(`${result.code.value}% off`)
-      localStorage.setItem(AUTO_APPLIED_KEY, 'true')
-    }
+    const timer = window.setTimeout(() => {
+      const hasOrdered = localStorage.getItem('tss_order_completed') === 'true'
+      if (hasOrdered) return
+      const result = validatePromoCode(AUTO_DISCOUNT_CODE, total)
+      if (result.valid && result.code && result.discount !== undefined) {
+        setPromoCode(result.code.code)
+        setPromoDiscount(result.discount)
+        setPromoLabel(`${result.code.value}% off`)
+        localStorage.setItem(AUTO_APPLIED_KEY, 'true')
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [items.length, total, promoCode])
 
   const applyPromo = (code: string): PromoResult => {
@@ -334,6 +347,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
   const ctx = useContext(CartContext)
   if (!ctx) throw new Error('useCart must be used within CartProvider')

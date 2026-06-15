@@ -13,12 +13,12 @@ const navLinks = [
     label: 'Services',
     href: '/services',
     submenu: [
-      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics', products: ['Full Vehicle Wraps', 'Partial Wraps & Accents', 'Fleet Branding', 'Door & Spot Graphics', 'Perforated Window Graphics', 'Vinyl Lettering & Decals'] },
+      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics', products: ['Hayward Vehicle Graphics', 'Full Vehicle Wraps', 'Partial Wraps & Accents', 'Fleet Branding', 'Door & Spot Graphics', 'Perforated Window Graphics', 'Vinyl Lettering & Decals'] },
       { label: 'Business Signage', href: '/services/business-signage', products: ['Storefront & Building Signs', 'Wall Graphics & Murals', 'A-Frame Sidewalk Signs', 'Retractable Banners', 'Acrylic & Metal Signs', 'LED & Illuminated Signs'] },
-      { label: 'Event Displays', href: '/services/event-displays', products: ['Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
+      { label: 'Event Displays', href: '/services/event-displays', products: ['Hayward Custom Canopies', 'Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
       { label: 'Business Print', href: '/services/business-print', products: ['Business Cards', 'Flyers', 'Door Hangers', 'Postcards & Mailers', 'Vehicle Magnets'] },
       { label: 'Window Film & Tint', href: '/services/window-film', products: ['Frosted Privacy Film', 'Solar & Heat Rejection', 'Security & Safety Film', 'Decorative Graphics', 'Custom Cut Logos'] },
-      { label: 'Mylar Packaging', href: '/mylar', products: ['Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', '2oz Jar + Label'] },
+      { label: 'Mylar Packaging', href: '/mylar', products: ['Custom Mylar Bags Hayward', 'Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', '2oz Jar + Label'] },
     ],
   },
   { label: 'Projects', href: '/projects' },
@@ -38,9 +38,15 @@ export default function Header() {
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
   const [showDealPulse, setShowDealPulse] = useState(false)
   useEffect(() => {
-    if (cartCount === 0) { setShowDealPulse(false); return }
-    const hasOrdered = localStorage.getItem('tss_order_completed') === 'true'
-    setShowDealPulse(!hasOrdered)
+    const timer = window.setTimeout(() => {
+      if (cartCount === 0) {
+        setShowDealPulse(false)
+        return
+      }
+      const hasOrdered = localStorage.getItem('tss_order_completed') === 'true'
+      setShowDealPulse(!hasOrdered)
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [cartCount])
 
   useEffect(() => {
@@ -50,10 +56,13 @@ export default function Header() {
   }, [])
 
   useEffect(() => {
-    setIsMobileMenuOpen(false)
-    setOpenDropdown(null)
-    setHoveredService(null)
-    setIsSearchOpen(false)
+    const timer = window.setTimeout(() => {
+      setIsMobileMenuOpen(false)
+      setOpenDropdown(null)
+      setHoveredService(null)
+      setIsSearchOpen(false)
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [location])
 
   useEffect(() => {

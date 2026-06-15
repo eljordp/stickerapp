@@ -61,8 +61,8 @@ const pageMeta: Record<string, PageMeta> = {
     description: 'Explore vehicle graphics, storefront signage, event displays, business print, window film, mylar packaging, and custom branding services.',
   },
   '/services/vehicle-graphics': {
-    title: 'Vehicle Graphics & Fleet Wraps | The Sticker Smith',
-    description: 'Custom vehicle graphics, wraps, fleet branding, decals, and door graphics for Bay Area businesses.',
+    title: 'Vehicle Graphics Hayward & Bay Area | The Sticker Smith',
+    description: 'Custom vehicle graphics in Hayward CA: wraps, fleet branding, decals, vinyl lettering, door graphics, and work truck graphics for Bay Area businesses.',
     image: `${SITE_URL}/videos/flying-a-niles.jpg`,
     imageAlt: 'Bay Area vehicle graphics and fleet decals',
   },
@@ -73,8 +73,8 @@ const pageMeta: Record<string, PageMeta> = {
     imageAlt: 'Custom storefront signs and signage installed by The Sticker Smith',
   },
   '/services/event-displays': {
-    title: 'Custom Canopy Tents & Banners Bay Area | The Sticker Smith',
-    description: 'Custom printed canopy tents, banners, table covers, feather flags, backdrops, and event displays for Bay Area and Hayward businesses.',
+    title: 'Custom Canopies Hayward & Bay Area | The Sticker Smith',
+    description: 'Custom canopies in Hayward CA, plus printed canopy tents, banners, table covers, feather flags, backdrops, and event displays for Bay Area businesses.',
     image: `${SITE_URL}/videos/epic-rane-print.jpg`,
     imageAlt: 'Custom printed canopy tent, banner, and event booth branding',
   },
@@ -87,10 +87,10 @@ const pageMeta: Record<string, PageMeta> = {
     description: 'Frosted film, solar tint, security film, privacy film, and custom window graphics for offices and storefronts.',
   },
   '/mylar': {
-    title: 'Custom Mylar Packaging | The Sticker Smith',
-    description: 'Custom branded mylar bags, pouch packaging, labels, and print-ready packaging options for retail products.',
+    title: 'Custom Mylar Bags Hayward & Bay Area | The Sticker Smith',
+    description: 'Order custom mylar bags in Hayward CA, plus pouch packaging, jar labels, and product labels with digital proofs, bulk quotes, and Bay Area pickup.',
     image: `${SITE_URL}/videos/mylar-promo-2021.jpg`,
-    imageAlt: 'Custom mylar packaging and product labels',
+    imageAlt: 'Custom mylar bags, pouch packaging, and jar labels',
   },
   '/cart': {
     title: 'Cart | The Sticker Smith',

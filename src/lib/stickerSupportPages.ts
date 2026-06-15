@@ -18,6 +18,12 @@ export type StickerSupportPageConfig = {
   intro: string
   bestFor: string[]
   details: string[]
+  localAnswer?: {
+    eyebrow: string
+    title: string
+    copy: string
+    points: { title: string; copy: string }[]
+  }
   faqs: { q: string; a: string }[]
 }
 
@@ -99,30 +105,54 @@ export const stickerSupportPages: StickerSupportPageConfig[] = [
   {
     slug: 'roll-labels',
     title: 'Roll Labels',
-    metaTitle: 'Custom Roll Labels Bay Area | The Sticker Smith',
+    metaTitle: 'Custom Roll Labels Hayward & Bay Area | The Sticker Smith',
     metaDescription:
-      'Custom roll labels for Bay Area product packaging, bottles, jars, bags, and retail goods. Printed in Hayward with proofing and local pickup.',
+      'Custom roll labels printed in Hayward for Bay Area product packaging, bottles, jars, bags, boxes, and retail goods with proofing and local pickup.',
     eyebrow: 'Custom Roll Labels',
-    heroTitle: 'Roll labels for packaging that needs to move fast.',
+    heroTitle: 'Custom roll labels printed in Hayward for Bay Area brands.',
     heroSubtitle:
-      'Clean product labels on rolls for bottles, jars, bags, boxes, and retail packaging.',
+      'Clean product labels on rolls for bottles, jars, bags, boxes, pouches, and retail packaging.',
     image: rollImage,
     imageAlt: 'Custom roll labels printed for product packaging',
     serviceType: 'Bay Area custom roll label printing',
     intro:
-      'Roll labels are built for production workflows: fast peeling, consistent placement, and clean presentation across product runs. They are ideal for packaging teams that need labels ready for bottles, jars, pouches, mailers, and retail goods.',
+      'Roll labels are built for production workflows: fast peeling, consistent placement, and clean presentation across product runs. We print roll labels in Hayward for packaging teams that need labels ready for bottles, jars, pouches, mailers, and retail goods.',
     bestFor: [
       'Food, beverage, and retail packaging',
       'Bottle, jar, and pouch labels',
       'Batch labels and reorderable product lines',
       'Brands applying labels by hand or machine',
     ],
+    localAnswer: {
+      eyebrow: 'Roll Labels in Hayward',
+      title: 'Yes, you can order custom roll labels locally from The Sticker Smith.',
+      copy:
+        'If you are searching for roll labels in Hayward, we handle product labels, bottle labels, jar labels, pouch labels, and reorderable packaging runs from the shop with Bay Area pickup available.',
+      points: [
+        {
+          title: 'For bottles, jars, and pouches',
+          copy: 'We size roll labels around the container, label panel, or bag area so the finished packaging looks intentional.',
+        },
+        {
+          title: 'Proofed before production',
+          copy: 'Barcode, QR code, ingredients, small text, bleed, and spacing are checked during proofing before the roll is printed.',
+        },
+        {
+          title: 'Made for repeat orders',
+          copy: 'Roll labels work well when you need consistent labels across batches, SKUs, seasonal drops, or wholesale packaging.',
+        },
+      ],
+    },
     details: [
       'Matte, gloss, clear, and specialty label materials',
       'Sized for containers, bags, boxes, and product wraps',
       'Proofed for barcode readability, ingredient text, and placement needs',
     ],
     faqs: [
+      {
+        q: 'Where can I print roll labels in Hayward?',
+        a: 'The Sticker Smith prints custom roll labels in Hayward for Bay Area products, including bottle labels, jar labels, pouch labels, retail labels, and packaging stickers.',
+      },
       {
         q: 'Can roll labels be used on bottles and jars?',
         a: 'Yes. We size labels around your container dimensions and recommend materials based on whether the product sees moisture, cold storage, or heavy handling.',
@@ -173,30 +203,54 @@ export const stickerSupportPages: StickerSupportPageConfig[] = [
   {
     slug: 'custom-labels',
     title: 'Custom Labels',
-    metaTitle: 'Custom Labels Bay Area | The Sticker Smith',
+    metaTitle: 'Custom Labels Hayward & Bay Area | The Sticker Smith',
     metaDescription:
-      'Custom labels for Bay Area brands, packaging, bottles, jars, mylar bags, boxes, and retail products. Printed in Hayward with proofing and pickup.',
+      'Custom labels printed in Hayward for Bay Area brands, packaging, bottles, jars, mylar bags, boxes, retail products, and local pickup.',
     eyebrow: 'Custom Product Labels',
-    heroTitle: 'Custom labels for products, packaging, and retail shelves.',
+    heroTitle: 'Custom labels in Hayward for products, packaging, and retail shelves.',
     heroSubtitle:
-      'Labels for bottles, jars, boxes, bags, mylar, and product lines that need to look finished.',
+      'Labels for bottles, jars, boxes, bags, mylar, and product lines that need to look finished before they reach customers.',
     image: labelsImage,
     imageAlt: 'Custom product labels and packaging labels by The Sticker Smith',
     serviceType: 'Bay Area custom label printing',
     intro:
-      'Custom labels are where print quality meets customer trust. We help Bay Area brands turn packaging into something that looks ready for retail, markets, pop-ups, deliveries, and wholesale accounts.',
+      'Custom labels are where print quality meets customer trust. We print labels in Hayward for Bay Area brands that need packaging ready for retail, markets, pop-ups, deliveries, and wholesale accounts.',
     bestFor: [
       'Product labels and packaging stickers',
       'Bottle, jar, and pouch labels',
       'Mylar bag labels and retail packaging',
       'Small-batch launches and reorders',
     ],
+    localAnswer: {
+      eyebrow: 'Custom Labels in Hayward',
+      title: 'The Sticker Smith prints custom labels for local product brands and packaging runs.',
+      copy:
+        'For Hayward and Bay Area businesses, we can produce bottle labels, jar labels, mylar labels, box labels, clear labels, vinyl labels, and reorderable packaging stickers with proofing before print.',
+      points: [
+        {
+          title: 'Product and packaging labels',
+          copy: 'Use custom labels for jars, bottles, pouches, boxes, mailers, retail displays, and product launch kits.',
+        },
+        {
+          title: 'Local pickup or shipping',
+          copy: 'Orders can be picked up in Hayward or shipped after proof approval and production.',
+        },
+        {
+          title: 'Built around the artwork',
+          copy: 'We help check size, material, finish, code readability, and small text before the label job goes to print.',
+        },
+      ],
+    },
     details: [
       'Vinyl, paper, clear, matte, gloss, and specialty label materials',
       'Short-run and reorder-friendly production',
       'Proof checks for compliance text, ingredients, QR codes, barcodes, and sizing',
     ],
     faqs: [
+      {
+        q: 'Where can I print custom labels in Hayward?',
+        a: 'The Sticker Smith prints custom labels in Hayward for Bay Area brands, including product labels, bottle labels, jar labels, mylar labels, box labels, and retail packaging labels.',
+      },
       {
         q: 'Can you print labels for mylar bags and packaging?',
         a: 'Yes. We print mylar labels, product labels, and packaging stickers, and can also help with full custom mylar packaging when labels are not enough.',

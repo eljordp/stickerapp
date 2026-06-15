@@ -39,13 +39,43 @@ const process = [
   { step: '4', title: 'Installation', desc: 'Professional installation at our Bay Area shop. Most wraps completed in 1-2 days.' },
 ]
 
+const localAnswers = [
+  {
+    title: 'Vehicle graphics in Hayward CA',
+    copy: 'We produce door logos, spot graphics, vinyl lettering, decals, partial wraps, full wraps, and fleet graphics for Hayward and Bay Area businesses.',
+  },
+  {
+    title: 'For single vehicles or fleets',
+    copy: 'Bring one work truck, a van, a box truck, or a multi-vehicle fleet. We can design around the vehicle model and brand guidelines.',
+  },
+  {
+    title: 'Proofed before install',
+    copy: 'Artwork is mocked up before production so sizing, placement, color, and legibility can be checked before the vinyl is printed.',
+  },
+]
+
+const vehicleFaqs = [
+  {
+    q: 'Where can I get vehicle graphics in Hayward CA?',
+    a: 'The Sticker Smith produces vehicle graphics in Hayward CA for Bay Area businesses, including door decals, vinyl lettering, partial wraps, full wraps, box truck graphics, van graphics, and fleet branding.',
+  },
+  {
+    q: 'Do you handle vehicle wrap design and installation?',
+    a: 'Yes. We can help with design, digital proofing, premium vinyl production, laminate, and professional installation for most vehicle graphic projects.',
+  },
+  {
+    q: 'What should I send for a vehicle graphics quote?',
+    a: 'Send the year, make, model, vehicle photos, logo files, the graphics you want, and whether you need decals, lettering, a partial wrap, full wrap, or fleet rollout.',
+  },
+]
+
 export default function VehicleGraphics() {
   return (
     <>
       <PageHero
         eyebrow="Vehicle Graphics"
-        title="Wraps, decals, and fleet branding."
-        subtitle="Full wraps, partial wraps, door logos, and fleet rollouts. Premium 3M & Avery vinyl, professional install in the Bay Area."
+        title="Vehicle graphics, wraps, and fleet decals in Hayward."
+        subtitle="Full wraps, partial wraps, door logos, vinyl lettering, and fleet rollouts for Hayward and Bay Area businesses. Premium 3M & Avery vinyl with professional install."
         image={vehicleHero}
         imageAlt="Vehicle wrap install"
         icon={Car}
@@ -54,6 +84,23 @@ export default function VehicleGraphics() {
       />
       <section className="py-8 md:py-16">
         <div className="section-container">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
+            <div className="mb-5">
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Hayward Vehicle Graphics</p>
+              <h2 className="text-2xl md:text-3xl font-black mb-3">Vehicle decals, wraps, and fleet branding made for local business traffic.</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                If you are searching for vehicle graphics in Hayward CA, The Sticker Smith can help turn work vans, trucks, service vehicles, and fleet vehicles into readable brand exposure around the Bay Area.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {localAnswers.map((item) => (
+                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
+                  <h3 className="font-bold mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
             <h2 className="text-2xl font-black mb-6">What We Offer</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -175,6 +222,22 @@ export default function VehicleGraphics() {
               { src: safewayInstall, alt: 'Safeway installation', caption: 'Install day' },
             ]}
           />
+        </div>
+      </section>
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container max-w-4xl">
+          <div className="mb-8 text-center">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Vehicle Graphics FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-black">Wraps, decals, and fleet branding questions</h2>
+          </div>
+          <div className="grid gap-4">
+            {vehicleFaqs.map((faq) => (
+              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">

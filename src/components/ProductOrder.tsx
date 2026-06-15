@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
@@ -51,6 +51,10 @@ function findTier(quantities: { qty: number; price: number }[], qty: number) {
   return tier
 }
 
+function createCartItemId(categoryName: string, size: string) {
+  return `${categoryName}-${size}-${Date.now()}`
+}
+
 export default function ProductOrder({ categoryNames, onCategoryChange }: Props) {
   const { addItem } = useCart()
   const [pricing, setPricing] = useState(() => getPricing())
@@ -77,7 +81,7 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
 
   const category = categories[activeCategory]
   const item = category?.items[selectedItem]
-  const groups = useMemo(() => category ? groupItems(category.items) : [], [category])
+  const groups = category ? groupItems(category.items) : []
 
   useEffect(() => {
     if (category) onCategoryChange?.(category.name)
@@ -124,7 +128,7 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
       .map(a => ({ name: a.name, price: +(a.value * (isPerUnit ? effectiveQty : 1)).toFixed(2) }))
 
     addItem({
-      id: `${category.name}-${item.size}-${Date.now()}`,
+      id: createCartItemId(category.name, item.size),
       name: `${item.size}`,
       size: item.size,
       option: effectiveQty > 1 ? `${effectiveQty} pcs` : '1',
