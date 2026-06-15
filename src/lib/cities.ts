@@ -58,9 +58,9 @@ export const cities: CityConfig[] = [
         a: 'Yes. We install most storefront signage, window graphics, and vehicle wraps ourselves around Hayward — no third-party installer needed.',
       },
     ],
-    metaTitle: 'Custom Stickers, Signage & Print in Hayward, CA | The Sticker Smith',
+    metaTitle: 'Custom Printing Company in Hayward, CA | Stickers, Signage & Stationery | The Sticker Smith',
     metaDescription:
-      'Hayward\'s local print studio for custom stickers, vehicle graphics, storefront signage, mylar packaging and more. Walk-in pickup, same-day rush jobs, free local delivery $100+.',
+      'Hayward\'s local custom printing company: stickers, business cards, stationery, vehicle graphics, storefront signage, custom labels and mylar packaging. Walk-in pickup, same-day rush jobs, free local delivery $100+.',
   },
   {
     slug: 'oakland',

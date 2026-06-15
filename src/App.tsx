@@ -79,8 +79,8 @@ const pageMeta: Record<string, PageMeta> = {
     imageAlt: 'Custom printed canopy tent, banner, and event booth branding',
   },
   '/services/business-print': {
-    title: 'Business Print Materials | The Sticker Smith',
-    description: 'Business cards, flyers, postcards, menus, rack cards, and printed marketing materials for Bay Area brands.',
+    title: 'Custom Printing in Hayward | Business Cards, Flyers & Stationery | The Sticker Smith',
+    description: 'Custom printing company in Hayward and the Bay Area. Business cards, flyers, postcards, stationery, menus, and marketing materials on premium stock with a free proof before we print.',
   },
   '/services/window-film': {
     title: 'Window Film, Tint & Graphics | The Sticker Smith',

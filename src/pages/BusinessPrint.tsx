@@ -52,9 +52,9 @@ export default function BusinessPrint() {
   return (
     <>
       <PageHero
-        eyebrow="Business Print"
-        title="Cards, flyers, postcards — done right."
-        subtitle="Business cards, flyers, postcards, mailers, and marketing essentials. Premium stocks, real finishes, free digital proof before we print."
+        eyebrow="Custom Printing"
+        title="Custom printing for Hayward and the Bay Area."
+        subtitle="A local custom printing company for business cards, flyers, postcards, stationery, and marketing essentials. Premium stocks, real finishes, free digital proof before we print."
         image={businessPrintHero}
         imageAlt="Premium business cards and print collateral"
         icon={Printer}
