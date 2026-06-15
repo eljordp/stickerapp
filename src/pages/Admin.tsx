@@ -6,7 +6,7 @@ import {
   ShoppingCart, BarChart3, UserPlus, Eye, MousePointer,
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
   CreditCard, Unplug, Send, AlertCircle, MapPin,
-  TrendingUp, Target,
+  TrendingUp, Target, Search,
 } from 'lucide-react'
 import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
@@ -1338,6 +1338,147 @@ function AnalyticsTab() {
   )
 }
 
+// ─── SEO Rankings Tab ────────────────────────────────────────────────────────
+
+interface SeoRanking {
+  id: string; query: string; city: string | null; device: string
+  rank: number | null; ranking_url: string | null; local_pack: boolean
+  serp_feature: string | null; source: string; notes: string | null; checked_at: string
+}
+
+function SeoTab() {
+  const [rows, setRows] = useState<SeoRanking[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchRankings = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await supabase.from('seo_rankings').select('*').order('checked_at', { ascending: false })
+      setRows((data || []) as SeoRanking[])
+    } catch { setRows([]) }
+    finally { setLoading(false) }
+  }, [])
+  useEffect(() => { fetchRankings() }, [fetchRankings])
+
+  const keyOf = (r: SeoRanking) => `${r.query}|||${r.city || ''}|||${r.device}`
+
+  // rows are newest-first: first non-baseline row per key = current; first baseline row = comparison.
+  const latest = new Map<string, SeoRanking>()
+  const baseline = new Map<string, SeoRanking>()
+  for (const r of rows) {
+    const k = keyOf(r)
+    if (r.source === 'baseline') { if (!baseline.has(k)) baseline.set(k, r) }
+    else if (!latest.has(k)) latest.set(k, r)
+  }
+  const allKeys = Array.from(new Set([...latest.keys(), ...baseline.keys()]))
+  const rankSort = (n: number | null) => (n == null ? 9999 : n)
+  const current = allKeys
+    .map(k => latest.get(k) || baseline.get(k)!)
+    .sort((a, b) => rankSort(a.rank) - rankSort(b.rank) || a.query.localeCompare(b.query))
+
+  const top3 = current.filter(r => r.rank != null && r.rank <= 3).length
+  const top10 = current.filter(r => r.rank != null && r.rank <= 10).length
+  const notRanking = current.filter(r => r.rank == null).length
+  const lastChecked = rows.find(r => r.source !== 'baseline')?.checked_at || rows[0]?.checked_at || null
+
+  // change vs baseline: positive = moved up, NEW = newly ranking, DROP = fell out
+  const changeFor = (r: SeoRanking): { kind: 'up' | 'down' | 'new' | 'drop' | 'flat'; val: number } | null => {
+    const b = baseline.get(keyOf(r))
+    if (!b || b.id === r.id) return null
+    if (r.rank == null && b.rank == null) return { kind: 'flat', val: 0 }
+    if (r.rank == null) return { kind: 'drop', val: 0 }
+    if (b.rank == null) return { kind: 'new', val: 0 }
+    const d = b.rank - r.rank
+    if (d > 0) return { kind: 'up', val: d }
+    if (d < 0) return { kind: 'down', val: -d }
+    return { kind: 'flat', val: 0 }
+  }
+
+  if (loading) return (
+    <div className="bg-card border border-border rounded-2xl p-12 text-center">
+      <Loader2 size={32} className="mx-auto text-primary animate-spin mb-4" />
+      <p className="text-muted-foreground">Loading rankings...</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold flex items-center gap-2"><Search size={20} className="text-primary" /> Google Rankings</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Where the site ranks for target searches. Auto-updated weekly by the SEO monitor.
+          {lastChecked && <> Last checked {new Date(lastChecked).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.</>}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={Search} label="Tracked searches" value={current.length} delay={0.05} />
+        <StatCard icon={Target} label="Ranking top 3" value={top3} color="text-green-400" delay={0.1} />
+        <StatCard icon={TrendingUp} label="Ranking top 10" value={top10} color="text-blue-400" delay={0.15} />
+        <StatCard icon={AlertCircle} label="Not ranking yet" value={notRanking} color="text-orange-400" delay={0.2} />
+      </div>
+
+      {current.length === 0 ? (
+        <div className="bg-card border border-border rounded-2xl p-12 text-center">
+          <Search size={48} className="mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No rankings recorded yet. The weekly SEO monitor will populate this.</p>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Search term</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Area</th>
+                  <th className="text-right px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Rank</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Change</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Local pack</th>
+                </tr>
+              </thead>
+              <tbody>
+                {current.map(r => {
+                  const change = changeFor(r)
+                  return (
+                    <tr key={r.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors align-top">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{r.query}</div>
+                        {r.notes && <div className="text-xs text-muted-foreground mt-0.5 max-w-md">{r.notes}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{r.city || 'General'}</td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {r.rank == null
+                          ? <span className="text-muted-foreground">Not top 20</span>
+                          : <span className={`font-bold ${r.rank <= 3 ? 'text-green-400' : r.rank <= 10 ? 'text-blue-400' : 'text-foreground'}`}>#{r.rank}</span>}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-medium">
+                        {!change ? <span className="text-muted-foreground">—</span>
+                          : change.kind === 'up' ? <span className="text-green-400">▲ {change.val}</span>
+                          : change.kind === 'down' ? <span className="text-red-400">▼ {change.val}</span>
+                          : change.kind === 'new' ? <span className="text-green-400">NEW</span>
+                          : change.kind === 'drop' ? <span className="text-red-400">Dropped</span>
+                          : <span className="text-muted-foreground">No change</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.local_pack
+                          ? <span className="px-2 py-0.5 rounded-lg text-xs bg-green-500/10 text-green-400 border border-green-500/20">Yes</span>
+                          : <span className="text-muted-foreground text-xs">—</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Change is measured against the 5/31 baseline. Google rank varies by searcher location and device — treat these as directional, not absolute.
+      </p>
+    </div>
+  )
+}
+
 // ─── CRM / Referrals Tab ────────────────────────────────────────────────────
 
 function CRMTab() {
@@ -1932,6 +2073,7 @@ const mainTabs = [
   { id: 'promos', label: 'Promos', icon: Tag },
   { id: 'carts', label: 'Carts', icon: ShoppingCart },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'seo', label: 'SEO', icon: Search },
   { id: 'crm', label: 'CRM', icon: Users },
   { id: 'subscribers', label: 'Email List', icon: Mail },
   { id: 'square', label: 'Square', icon: CreditCard },
@@ -1981,6 +2123,7 @@ function Dashboard() {
         {activeTab === 'promos' && <PromoCodeManager />}
         {activeTab === 'carts' && <CartsTab />}
         {activeTab === 'analytics' && <AnalyticsTab />}
+        {activeTab === 'seo' && <SeoTab />}
         {activeTab === 'crm' && <CRMTab />}
         {activeTab === 'subscribers' && <SubscribersTab />}
         {activeTab === 'square' && <SquareTab />}
