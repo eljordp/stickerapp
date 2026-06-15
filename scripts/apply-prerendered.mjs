@@ -47,12 +47,42 @@ if (freshScripts.length === 0) {
 
 console.log(`[apply-prerendered] fresh build references ${freshScripts.length} JS + ${freshStyles.length} CSS asset(s)`)
 
+// Map of base name ("stickers-roll.jpg") -> current hashed filename
+// ("stickers-roll-Ch1ndUCG.jpg") from the fresh build. Vite re-hashes assets
+// on every build, so prerendered HTML's baked-in image/media/font references go
+// stale whenever a source file changes. We rewrite them to the fresh names so
+// the build self-heals instead of failing the asset-existence check.
+const HASH_RE = /^(.+)-[A-Za-z0-9_-]{8}(\.[A-Za-z0-9]+)$/
+async function buildAssetMap() {
+  const map = new Map()
+  let files = []
+  try {
+    files = await readdir(path.join(DEST, 'assets'))
+  } catch {
+    return map
+  }
+  for (const f of files) {
+    const m = f.match(HASH_RE)
+    if (m) map.set(m[1] + m[2], f)
+  }
+  return map
+}
+const assetMap = await buildAssetMap()
+
 function patchHtml(html) {
   // Strip every existing /assets/*.js script + /assets/*.css link.
   html = html.replace(/<script[^>]+src="\/assets\/[^"]+\.js"[^>]*><\/script>\s*/g, '')
   html = html.replace(/<link[^>]+href="\/assets\/[^"]+\.css"[^>]*>\s*/g, '')
   // Inject the fresh ones right before </head>.
   html = html.replace(/<\/head>/i, `    ${freshTags}\n  </head>`)
+  // Rewrite any remaining hashed asset references (images, fonts, media) to the
+  // fresh build's filenames, matched by base name. Unknown refs pass through.
+  html = html.replace(/\/assets\/([A-Za-z0-9._-]+)/g, (full, file) => {
+    const m = file.match(HASH_RE)
+    if (!m) return full
+    const fresh = assetMap.get(m[1] + m[2])
+    return fresh ? `/assets/${fresh}` : full
+  })
   return html
 }
 
