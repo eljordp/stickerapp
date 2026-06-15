@@ -8,11 +8,11 @@ import PortfolioStrip from '@/components/PortfolioStrip'
 import StudioMockup from '@/components/StudioMockup'
 import businessPrintHero from '@/assets/services/business-print.jpg'
 import bizCardsLuxury from '@/assets/projects/business-cards-luxury.jpg'
-import bizCardsFoil from '@/assets/projects/business-cards-foil.jpg'
+import bizCardsFoil from '@/assets/projects/bp-cleopatra-discount-cards.jpg'
 import flyers from '@/assets/projects/flyers-full-color.jpg'
-import postcards from '@/assets/projects/postcards-set.jpg'
+import postcards from '@/assets/projects/bp-empire-automotive-flyer.jpg'
 import letterpress from '@/assets/projects/letterpress-detail.jpg'
-import pressroom from '@/assets/projects/print-pressroom.jpg'
+import pressroom from '@/assets/projects/bp-cleopatra-tattoo-flyer.jpg'
 
 const features = [
   'Business Cards',
@@ -130,11 +130,11 @@ export default function BusinessPrint() {
             subtitle="Business cards with foil, soft-touch flyers, full-color postcards."
             projects={[
               { src: bizCardsLuxury, alt: 'Premium black business cards', caption: 'Matte black + foil' },
-              { src: bizCardsFoil, alt: 'Specialty finish cards', caption: 'Specialty finishes' },
+              { src: bizCardsFoil, alt: 'Printed discount cards for Cleopatra Ink', caption: 'Discount cards' },
               { src: flyers, alt: 'Full color flyers', caption: 'Full-color flyers' },
-              { src: postcards, alt: 'Postcards', caption: 'Postcards' },
+              { src: postcards, alt: 'Printed automotive promo flyers', caption: 'Automotive flyers' },
               { src: letterpress, alt: 'Letterpress detail', caption: 'Letterpress texture' },
-              { src: pressroom, alt: 'Print shop', caption: 'Fresh off the press' },
+              { src: pressroom, alt: 'Printed tattoo studio flyers', caption: 'Tattoo studio flyers' },
             ]}
           />
         </div>

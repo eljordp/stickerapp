@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import dieCutCategory from '@/assets/stickers/die-cut-category.png'
-import stickerSheetsCategory from '@/assets/stickers/sticker-sheets-category.png'
+import stickerSheetsCategory from '@/assets/stickers/sticker-group.png'
 import samplePacksCategory from '@/assets/stickers/sample-packs-category.png'
 import labelsRollCategory from '@/assets/stickers/labels-roll-category.png'
 

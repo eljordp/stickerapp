@@ -5,7 +5,6 @@ import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
 import windowHero from '@/assets/services/window-film.jpg'
-import windowFrosted from '@/assets/projects/window-frosted-office.jpg'
 import windowAutoTint from '@/assets/projects/window-auto-tint.jpg'
 import windowStorefront from '@/assets/projects/window-storefront-vinyl.jpg'
 import windowDecorative from '@/assets/projects/window-decorative-pattern.jpg'
@@ -118,7 +117,6 @@ export default function WindowFilm() {
             title="Film + Tint Jobs"
             subtitle="Frosted privacy, auto tint, storefront vinyl, security film."
             projects={[
-              { src: windowFrosted, alt: 'Office frosted film', caption: 'Office frosted film' },
               { src: windowStorefront, alt: 'Storefront vinyl graphics', caption: 'Storefront vinyl' },
               { src: windowAutoTint, alt: 'Auto tint install', caption: 'Auto tint install' },
               { src: windowDecorative, alt: 'Decorative pattern', caption: 'Decorative pattern' },
