@@ -78,13 +78,29 @@ function cleanProperties(properties: AnalyticsProperties) {
   )
 }
 
+const STAFF_OPTOUT_KEY = 'tss_analytics_optout'
+
 function shouldSuppressAnalytics() {
   if (typeof window === 'undefined') return false
+
+  // Never record internal/staff areas — keeps owner-facing stats to real customers.
+  if (window.location.pathname.startsWith('/admin')) return true
+  try {
+    if (localStorage.getItem(STAFF_OPTOUT_KEY) === '1') return true
+  } catch { /* localStorage unavailable — fall through */ }
+
   const params = new URLSearchParams(window.location.search)
   const source = params.get('utm_source')?.toLowerCase()
   const medium = params.get('utm_medium')?.toLowerCase()
 
   return source === INTERNAL_VERIFICATION_SOURCE && medium === INTERNAL_VERIFICATION_MEDIUM
+}
+
+// Mark this browser as staff so the owner's own browsing never pollutes customer stats.
+// Called when someone reaches the admin dashboard.
+export function markStaffDevice() {
+  if (typeof window === 'undefined') return
+  try { localStorage.setItem(STAFF_OPTOUT_KEY, '1') } catch { /* ignore */ }
 }
 
 function initGa4() {

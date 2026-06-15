@@ -3,13 +3,15 @@ import { motion } from 'framer-motion'
 import {
   LogOut, Package, DollarSign, Users, ChevronDown, ChevronUp,
   Truck, Clock, CheckCircle, Settings, RotateCcw, Save, Loader2,
-  ShoppingCart, BarChart3, UserPlus, Eye, MousePointer, ArrowRight,
+  ShoppingCart, BarChart3, UserPlus, Eye, MousePointer,
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
   CreditCard, Unplug, Send, AlertCircle, MapPin,
+  TrendingUp, Target,
 } from 'lucide-react'
 import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
 import { getReferralUrl } from '@/lib/referrals'
+import { markStaffDevice } from '@/lib/analytics'
 import { toast } from 'sonner'
 import { getPromoCodes, savePromoCodes, categoryLabels, type PromoCode } from '@/lib/promoCodes'
 import { getReferrers, saveReferrers, getReferralLog, getReferralShareUrl, type Referrer, type ReferrerTier } from '@/lib/referralRewards'
@@ -121,11 +123,41 @@ const tagConfig: Record<CustomerTag, { label: string; color: string; bg: string 
 }
 
 interface AnalyticsSummary {
-  totalViews: number; uniqueVisitors: number; todayViews: number
-  topPages: { path: string; views: number }[]
+  visitors: number; pageViews: number
+  leads: number; orders: number; revenue: number; ctaClicks: number
+  topProducts: { name: string; views: number }[]
   topClicks: { element: string; count: number }[]
-  dropOffs: { from_path: string; to_path: string; count: number }[]
-  avgDuration: { path: string; avg_ms: number }[]
+  funnel: { label: string; count: number; pct: number }[]
+}
+
+// Customer-facing product/service pages → owner-friendly names.
+const PRODUCT_PAGE_NAMES: Record<string, string> = {
+  '/stickers': 'Stickers',
+  '/sticker-sheets': 'Sticker Sheets',
+  '/die-cut-stickers': 'Die-Cut Stickers',
+  '/holographic-stickers': 'Holographic Stickers',
+  '/custom-labels': 'Custom Labels',
+  '/roll-labels': 'Roll Labels',
+  '/mylar': 'Mylar Packaging',
+  '/services': 'Services (overview)',
+  '/services/vehicle-graphics': 'Vehicle Graphics',
+  '/services/business-signage': 'Business Signage',
+  '/services/event-displays': 'Event Displays',
+  '/services/business-print': 'Business Print',
+  '/services/window-film': 'Window Film & Tint',
+  '/projects': 'Projects / Portfolio',
+}
+
+// Pages that are NOT product interest (internal, utility, or staff areas).
+function isInternalPath(path: string) {
+  return path.startsWith('/admin') || path.startsWith('/account')
+}
+
+// Labels that signal buying intent when clicked.
+const CTA_KEYWORDS = ['start my project', 'get a quote', 'request a quote', 'quote', 'order', 'add to cart', 'checkout', 'call', 'contact', 'get started']
+function isCtaLabel(label: string) {
+  const l = (label || '').toLowerCase()
+  return CTA_KEYWORDS.some(k => l.includes(k)) || /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(l)
 }
 
 // ─── Login Form ──────────────────────────────────────────────────────────────
@@ -1132,60 +1164,73 @@ function AnalyticsTab() {
       else if (range === '7d') since = new Date(now.getTime() - 7 * 86400000).toISOString()
       else if (range === '30d') since = new Date(now.getTime() - 30 * 86400000).toISOString()
 
-      // Page views
+      // Page views — drop internal/staff areas so owners see real customers only.
       let pvQuery = supabase.from('page_views').select('path, visitor_id, created_at')
       if (since) pvQuery = pvQuery.gte('created_at', since)
       const { data: pvData } = await pvQuery
+      const views = (pvData || []).filter(v => !isInternalPath(v.path))
 
-      const views = pvData || []
-      const totalViews = views.length
-      const uniqueVisitors = new Set(views.map(v => v.visitor_id)).size
+      const pageViews = views.length
+      const visitors = new Set(views.map(v => v.visitor_id)).size
 
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-      const todayViews = views.filter(v => v.created_at >= today).length
+      // Most-viewed products/services
+      const productCounts: Record<string, number> = {}
+      views.forEach(v => {
+        if (PRODUCT_PAGE_NAMES[v.path]) productCounts[v.path] = (productCounts[v.path] || 0) + 1
+      })
+      const topProducts = Object.entries(productCounts)
+        .sort((a, b) => b[1] - a[1]).slice(0, 8)
+        .map(([path, count]) => ({ name: PRODUCT_PAGE_NAMES[path], views: count }))
 
-      // Top pages
-      const pageCounts: Record<string, number> = {}
-      views.forEach(v => { pageCounts[v.path] = (pageCounts[v.path] || 0) + 1 })
-      const topPages = Object.entries(pageCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([path, count]) => ({ path, views: count }))
-
-      // Top clicks
-      let clickQuery = supabase.from('click_events').select('element')
+      // Clicks — most-clicked buttons + buy-intent count
+      let clickQuery = supabase.from('click_events').select('element, path, created_at')
       if (since) clickQuery = clickQuery.gte('created_at', since)
       const { data: clickData } = await clickQuery
+      const clicks = (clickData || []).filter(c => !isInternalPath(c.path || ''))
 
       const clickCounts: Record<string, number> = {}
-      ;(clickData || []).forEach(c => { clickCounts[c.element] = (clickCounts[c.element] || 0) + 1 })
-      const topClicks = Object.entries(clickCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([element, count]) => ({ element, count }))
-
-      // Navigation / drop-offs
-      let navQuery = supabase.from('nav_events').select('from_path, to_path, duration_ms')
-      if (since) navQuery = navQuery.gte('created_at', since)
-      const { data: navData } = await navQuery
-
-      const navPairs: Record<string, number> = {}
-      const durationByPath: Record<string, number[]> = {}
-      ;(navData || []).forEach(n => {
-        const key = `${n.from_path} → ${n.to_path}`
-        navPairs[key] = (navPairs[key] || 0) + 1
-        if (!durationByPath[n.from_path]) durationByPath[n.from_path] = []
-        durationByPath[n.from_path].push(n.duration_ms || 0)
+      let ctaClicks = 0
+      clicks.forEach(c => {
+        const label = c.element || '—'
+        clickCounts[label] = (clickCounts[label] || 0) + 1
+        if (isCtaLabel(label)) ctaClicks++
       })
+      const topClicks = Object.entries(clickCounts)
+        .sort((a, b) => b[1] - a[1]).slice(0, 8)
+        .map(([element, count]) => ({ element, count }))
 
-      const dropOffs = Object.entries(navPairs).sort((a, b) => b[1] - a[1]).slice(0, 10)
-        .map(([pair, count]) => {
-          const [from_path, to_path] = pair.split(' → ')
-          return { from_path, to_path, count }
-        })
+      // Leads — contact / quote form submissions
+      let leadQuery = supabase.from('contact_submissions').select('id', { count: 'exact', head: true })
+      if (since) leadQuery = leadQuery.gte('created_at', since)
+      const { count: leadCount } = await leadQuery
+      const leads = leadCount || 0
 
-      const avgDuration = Object.entries(durationByPath)
-        .map(([path, durations]) => ({ path, avg_ms: Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) }))
-        .sort((a, b) => b.avg_ms - a.avg_ms)
-        .slice(0, 10)
+      // Orders + paid revenue
+      let orderQuery = supabase.from('orders').select('total, payment_status, created_at')
+      if (since) orderQuery = orderQuery.gte('created_at', since)
+      const { data: orderData } = await orderQuery
+      const ordersInRange = orderData || []
+      const orders = ordersInRange.length
+      const revenue = ordersInRange
+        .filter(o => o.payment_status === 'captured')
+        .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
 
-      setData({ totalViews, uniqueVisitors, todayViews, topPages, topClicks, dropOffs, avgDuration })
+      // Conversion funnel (unique visitors per stage; final stage = orders placed)
+      const visitorsWho = (predicate: (path: string) => boolean) =>
+        new Set(views.filter(v => predicate(v.path)).map(v => v.visitor_id)).size
+      const funnelRaw = [
+        { label: 'Visited the site', count: visitors },
+        { label: 'Viewed a product', count: visitorsWho(p => !!PRODUCT_PAGE_NAMES[p]) },
+        { label: 'Reached the cart', count: visitorsWho(p => p === '/cart') },
+        { label: 'Started checkout', count: visitorsWho(p => p === '/checkout') },
+        { label: 'Placed an order', count: orders },
+      ]
+      const top = funnelRaw[0].count || 1
+      const funnel = funnelRaw.map(s => ({ ...s, pct: Math.round((s.count / top) * 100) }))
+
+      setData({ visitors, pageViews, leads, orders, revenue, ctaClicks, topProducts, topClicks, funnel })
     } catch {
-      setData({ totalViews: 0, uniqueVisitors: 0, todayViews: 0, topPages: [], topClicks: [], dropOffs: [], avgDuration: [] })
+      setData({ visitors: 0, pageViews: 0, leads: 0, orders: 0, revenue: 0, ctaClicks: 0, topProducts: [], topClicks: [], funnel: [] })
     } finally { setLoading(false) }
   }, [range])
 
@@ -1200,16 +1245,13 @@ function AnalyticsTab() {
 
   if (!data) return null
 
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-    return `${(ms / 60000).toFixed(1)}m`
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold flex items-center gap-2"><BarChart3 size={20} className="text-primary" /> Site Analytics</h2>
+        <div>
+          <h2 className="text-xl font-bold flex items-center gap-2"><BarChart3 size={20} className="text-primary" /> Business Snapshot</h2>
+          <p className="text-xs text-muted-foreground mt-1">Real customer activity — your own admin and account visits are not counted.</p>
+        </div>
         <div className="flex gap-1">
           {(['today', '7d', '30d', 'all'] as const).map(r => (
             <button key={r} onClick={() => setRange(r)}
@@ -1220,22 +1262,53 @@ function AnalyticsTab() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Eye} label="Total Page Views" value={data.totalViews} delay={0.1} />
-        <StatCard icon={Users} label="Unique Visitors" value={data.uniqueVisitors} color="text-blue-400" delay={0.2} />
-        <StatCard icon={BarChart3} label="Views Today" value={data.todayViews} color="text-green-400" delay={0.3} />
+      {/* Headline business numbers */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard icon={DollarSign} label="Revenue (paid)" value={`$${data.revenue.toFixed(2)}`} color="text-green-400" delay={0.05} />
+        <StatCard icon={ShoppingCart} label="Orders" value={data.orders} color="text-green-400" delay={0.1} />
+        <StatCard icon={Send} label="Leads (quotes)" value={data.leads} color="text-yellow-400" delay={0.15} />
+        <StatCard icon={Target} label="Buy-intent clicks" value={data.ctaClicks} color="text-orange-400" delay={0.2} />
+        <StatCard icon={Users} label="Visitors" value={data.visitors} color="text-blue-400" delay={0.25} />
+      </div>
+
+      {/* Conversion funnel */}
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><TrendingUp size={16} className="text-primary" /> Where customers go (and drop off)</h3>
+        <p className="text-xs text-muted-foreground mb-4">How visitors move from browsing toward buying. Big drops show where sales are leaking.</p>
+        {data.funnel[0]?.count === 0 ? <p className="text-sm text-muted-foreground">No visitor activity yet for this period.</p> : (
+          <div className="space-y-3">
+            {data.funnel.map((s, i) => {
+              const prev = i > 0 ? data.funnel[i - 1].count : s.count
+              const dropPct = prev > 0 ? Math.round(((prev - s.count) / prev) * 100) : 0
+              return (
+                <div key={s.label}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="font-medium">{s.label}</span>
+                    <span className="text-muted-foreground">
+                      <span className="font-bold text-foreground">{s.count}</span> ({s.pct}%)
+                      {i > 0 && dropPct > 0 && <span className="text-red-400 ml-2">−{dropPct}%</span>}
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(s.pct, 100)}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2"><Eye size={16} className="text-primary" /> Top Pages</h3>
-          {data.topPages.length === 0 ? <p className="text-sm text-muted-foreground">No data yet</p> : (
+          <h3 className="font-bold mb-4 flex items-center gap-2"><Eye size={16} className="text-primary" /> Most-viewed products</h3>
+          {data.topProducts.length === 0 ? <p className="text-sm text-muted-foreground">No product views yet.</p> : (
             <div className="space-y-2">
-              {data.topPages.map((p, i) => (
-                <div key={p.path} className="flex items-center justify-between gap-2">
+              {data.topProducts.map((p, i) => (
+                <div key={p.name} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}.</span>
-                    <span className="text-sm font-mono truncate">{p.path}</span>
+                    <span className="text-sm truncate">{p.name}</span>
                   </div>
                   <span className="text-sm font-bold text-primary shrink-0">{p.views}</span>
                 </div>
@@ -1245,8 +1318,8 @@ function AnalyticsTab() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2"><MousePointer size={16} className="text-primary" /> Top Clicks</h3>
-          {data.topClicks.length === 0 ? <p className="text-sm text-muted-foreground">No data yet</p> : (
+          <h3 className="font-bold mb-4 flex items-center gap-2"><MousePointer size={16} className="text-primary" /> Most-clicked buttons</h3>
+          {data.topClicks.length === 0 ? <p className="text-sm text-muted-foreground">No clicks yet.</p> : (
             <div className="space-y-2">
               {data.topClicks.map((c, i) => (
                 <div key={i} className="flex items-center justify-between gap-2">
@@ -1255,41 +1328,6 @@ function AnalyticsTab() {
                     <span className="text-sm truncate">{c.element}</span>
                   </div>
                   <span className="text-sm font-bold text-primary shrink-0">{c.count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2"><ArrowRight size={16} className="text-primary" /> Navigation Flow</h3>
-          {data.dropOffs.length === 0 ? <p className="text-sm text-muted-foreground">No data yet</p> : (
-            <div className="space-y-2">
-              {data.dropOffs.map((d, i) => (
-                <div key={i} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1 min-w-0 text-sm">
-                    <span className="font-mono truncate">{d.from_path}</span>
-                    <ArrowRight size={12} className="text-muted-foreground shrink-0" />
-                    <span className="font-mono truncate">{d.to_path}</span>
-                  </div>
-                  <span className="text-sm font-bold text-primary shrink-0">{d.count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2"><Clock size={16} className="text-primary" /> Avg Time on Page</h3>
-          {data.avgDuration.length === 0 ? <p className="text-sm text-muted-foreground">No data yet</p> : (
-            <div className="space-y-2">
-              {data.avgDuration.map((d, i) => (
-                <div key={d.path} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}.</span>
-                    <span className="text-sm font-mono truncate">{d.path}</span>
-                  </div>
-                  <span className="text-sm font-bold text-primary shrink-0">{formatDuration(d.avg_ms)}</span>
                 </div>
               ))}
             </div>
@@ -2105,6 +2143,10 @@ export default function Admin() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => { checkSession() }, [])
+
+  // Once confirmed as an admin, flag this browser as staff so the owner's own
+  // browsing is excluded from the customer-facing analytics.
+  useEffect(() => { if (authed) markStaffDevice() }, [authed])
 
   const checkSession = async () => {
     try {
