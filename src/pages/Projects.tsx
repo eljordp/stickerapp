@@ -48,7 +48,9 @@ const serviceProofLinks = [
 export default function Projects() {
   const [active, setActive] = useState<string>('All')
   const [openProject, setOpenProject] = useState<Project | null>(null)
-  const filtered = active === 'All' ? projects : projects.filter((p) => p.category === active)
+  // Exclude projects already featured up top as case studies so they don't appear twice.
+  const gridProjects = projects.filter((p) => !p.caseStudySlug)
+  const filtered = active === 'All' ? gridProjects : gridProjects.filter((p) => p.category === active)
 
   return (
     <>
