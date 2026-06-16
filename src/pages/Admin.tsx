@@ -1349,8 +1349,8 @@ interface SeoRanking {
   serp_feature: string | null; source: string; notes: string | null; checked_at: string
 }
 
-interface GscRow { query: string; clicks: number; impressions: number; ctr: number; position: number }
-interface GscResult { configured: boolean; error?: string; range?: { start: string; end: string }; rows?: GscRow[] }
+interface GscRow { query: string; clicks: number; impressions: number; ctr: number; position: number; variants?: number }
+interface GscResult { configured: boolean; error?: string; range?: { start: string; end: string }; rows?: GscRow[]; grouped?: GscRow[] }
 
 function SeoTab() {
   const [rows, setRows] = useState<SeoRanking[]>([])
@@ -1492,41 +1492,43 @@ function SeoTab() {
       {/* Live Google Search Console */}
       <div className="bg-card border border-border rounded-2xl p-6">
         <h3 className="font-bold mb-1 flex items-center gap-2"><Globe size={16} className="text-primary" /> Google Search Console (live)</h3>
-        <p className="text-xs text-muted-foreground mb-4">Real clicks, impressions, and average position straight from Google — last 28 days.</p>
-        {!gsc ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : !gsc.configured ? (
-          <p className="text-sm text-muted-foreground">Not connected yet. Once Google Search Console access is set up, real Google performance appears here automatically.</p>
-        ) : gsc.error ? (
-          <p className="text-sm text-red-400">Couldn't load Search Console data: {gsc.error}</p>
-        ) : !gsc.rows || gsc.rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Connected — no query data for the last 28 days yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Search query</th>
-                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Clicks</th>
-                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Impressions</th>
-                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">CTR</th>
-                  <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Avg position</th>
-                </tr>
-              </thead>
-              <tbody>
-                {gsc.rows.map((r, i) => (
-                  <tr key={i} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="px-3 py-2">{r.query}</td>
-                    <td className="px-3 py-2 text-right font-bold text-primary">{r.clicks}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">{r.impressions}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">{(r.ctr * 100).toFixed(1)}%</td>
-                    <td className="px-3 py-2 text-right font-medium">{r.position.toFixed(1)}</td>
+        <p className="text-xs text-muted-foreground mb-4">Real clicks, impressions, and average position straight from Google — last 28 days. Different word orders of the same search are combined.</p>
+        {(() => {
+          const gscRows = gsc?.grouped ?? gsc?.rows ?? []
+          if (!gsc) return <p className="text-sm text-muted-foreground">Loading…</p>
+          if (!gsc.configured) return <p className="text-sm text-muted-foreground">Not connected yet. Once Google Search Console access is set up, real Google performance appears here automatically.</p>
+          if (gsc.error) return <p className="text-sm text-red-400">Couldn't load Search Console data: {gsc.error}</p>
+          if (gscRows.length === 0) return <p className="text-sm text-muted-foreground">Connected — no query data for the last 28 days yet.</p>
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Search query</th>
+                    <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Clicks</th>
+                    <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Impressions</th>
+                    <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">CTR</th>
+                    <th className="text-right px-3 py-2 text-xs font-bold uppercase text-muted-foreground">Avg position</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {gscRows.map((r, i) => (
+                    <tr key={i} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                      <td className="px-3 py-2">
+                        {r.query}
+                        {r.variants && r.variants > 1 ? <span className="ml-2 text-xs text-muted-foreground">+{r.variants - 1} variant{r.variants > 2 ? 's' : ''}</span> : null}
+                      </td>
+                      <td className="px-3 py-2 text-right font-bold text-primary">{r.clicks}</td>
+                      <td className="px-3 py-2 text-right text-muted-foreground">{r.impressions}</td>
+                      <td className="px-3 py-2 text-right text-muted-foreground">{(r.ctr * 100).toFixed(1)}%</td>
+                      <td className="px-3 py-2 text-right font-medium">{r.position.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        })()}
       </div>
 
       <p className="text-xs text-muted-foreground">
