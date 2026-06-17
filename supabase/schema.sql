@@ -76,6 +76,8 @@ $$;
 alter table contact_submissions enable row level security;
 alter table orders enable row level security;
 alter table cart_sessions enable row level security;
+grant select, insert, update on cart_sessions to anon;
+grant select, insert, update on cart_sessions to authenticated;
 alter table user_roles enable row level security;
 
 -- Anyone can insert contact submissions

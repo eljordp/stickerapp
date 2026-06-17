@@ -155,9 +155,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('tss-cart', JSON.stringify(items))
   }, [items])
 
-  // Sync cart session to Supabase
+  // Sync cart session to Supabase — track every cart, email-optional.
+  // Email is captured separately (modal or checkout) and added to the row if/when available.
   const syncSession = useCallback(async (currentItems: CartItem[], email: string | null) => {
-    if (!email || currentItems.length === 0) return
+    if (currentItems.length === 0) return
 
     const sessionId = localStorage.getItem('tss-cart-session-id')
     const totalPrice = currentItems.reduce((sum, i) => {
@@ -165,33 +166,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return sum + (i.price + addOnTotal) * i.quantity
     }, 0)
 
-    try {
-      if (sessionId) {
-        await supabase.from('cart_sessions').update({
-          email,
-          items: currentItems,
-          total_price: totalPrice,
-          updated_at: new Date().toISOString(),
-        }).eq('id', sessionId)
-      } else {
-        const { data } = await supabase.from('cart_sessions').insert({
-          email,
-          items: currentItems,
-          total_price: totalPrice,
-        }).select('id').single()
-
-        if (data?.id) {
-          localStorage.setItem('tss-cart-session-id', data.id)
-        }
+    if (sessionId) {
+      const { error } = await supabase.from('cart_sessions').update({
+        email,
+        items: currentItems,
+        total_price: totalPrice,
+        updated_at: new Date().toISOString(),
+      }).eq('id', sessionId)
+      if (error) console.error('[cart_sessions] update failed:', error)
+    } else {
+      const { data, error } = await supabase.from('cart_sessions').insert({
+        email,
+        items: currentItems,
+        total_price: totalPrice,
+      }).select('id').single()
+      if (error) {
+        console.error('[cart_sessions] insert failed:', error)
+        return
       }
-    } catch {
-      // Silent fail — localStorage is the backup
+      if (data?.id) localStorage.setItem('tss-cart-session-id', data.id)
     }
   }, [])
 
-  // Sync whenever items or email change
+  // Sync whenever items or email change — email no longer gates tracking
   useEffect(() => {
-    if (cartEmail && items.length > 0) {
+    if (items.length > 0) {
       syncSession(items, cartEmail)
     }
   }, [items, cartEmail, syncSession])
@@ -252,14 +251,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const markConverted = async () => {
     const sessionId = localStorage.getItem('tss-cart-session-id')
-    if (sessionId) {
-      try {
-        await supabase.from('cart_sessions').update({ converted: true }).eq('id', sessionId)
-      } catch {
-        // Silent fail
-      }
-      localStorage.removeItem('tss-cart-session-id')
-    }
+    if (!sessionId) return
+    const { error } = await supabase.from('cart_sessions').update({ converted: true }).eq('id', sessionId)
+    if (error) console.error('[cart_sessions] mark converted failed:', error)
+    localStorage.removeItem('tss-cart-session-id')
   }
 
   const total = items.reduce((sum, i) => {
