@@ -2129,7 +2129,7 @@ function SquareTab() {
 // see exactly what's been done from launch to now. Reconstructed from the build
 // history. Read-only — to add an entry, prepend it to WORK_LOG below.
 
-type WorkLogEntry = { date: string; cat: string; title: string; detail: string }
+type WorkLogEntry = { date: string; cat: string; title: string; detail: string; items: string[] }
 
 const WORK_LOG_CATS: Record<string, string> = {
   Launch:    'bg-primary/10 text-primary border-primary/20',
@@ -2148,29 +2148,148 @@ const WORK_LOG_CATS: Record<string, string> = {
 }
 
 const WORK_LOG: WorkLogEntry[] = [
-  { date: '2026-06-16', cat: 'Admin', title: 'Cart tracking + this Work Log', detail: 'Fixed cart tracking so every cart is captured (dropped the email gate), added cross-device cart restore by email, hooked the weekly ranking feed into the SEO tab, and built this Work Log so you can see everything that’s been done.' },
-  { date: '2026-06-15', cat: 'Admin', title: 'Owner dashboard + artwork uploads', detail: 'Big owner-tools day: customers can now upload their artwork with orders (you download it right from the order), reshaped Analytics into a plain-English business snapshot (revenue, orders, leads, top products), added an SEO Rankings tab fed by an automatic weekly check, a "last order" column in the CRM, and replaced the remaining AI images with real photos of your work.' },
-  { date: '2026-06-12', cat: 'Analytics', title: 'Search indexing + sales tracking', detail: 'Released the search-indexing updates and set up full analytics (GA4) with checkout tracking and search attribution — so we can see what brings people to the site and what they buy.' },
-  { date: '2026-05-24', cat: 'SEO', title: 'Google Business match', detail: 'Matched the site’s business name, address and phone exactly to your Google Business Profile (Google rewards consistency) and fixed a deploy issue that could blank the page.' },
-  { date: '2026-05-23', cat: 'SEO', title: 'Local SEO foundation', detail: 'Laid the search-engine foundation: pre-rendered pages so Google reads the full site, added local-business data, built 8 East Bay city pages (Hayward, etc.) to rank locally, and verified the site in Google Search Console.' },
-  { date: '2026-05-22', cat: 'SEO', title: 'Per-page SEO + store polish', detail: 'Gave every page its own search title and description, deep-linked the homepage tiles straight into the price configurator, rebuilt the printer intro animation, synced the product mockups with the order widget, and fixed the favicon so it shows on Google.' },
-  { date: '2026-05-18', cat: 'Forms', title: 'File uploads on forms', detail: 'Added a file-upload field to the contact forms so customers can send artwork, with reliable email delivery and attachment handling.' },
-  { date: '2026-05-16', cat: 'Forms', title: 'Contact form going live', detail: 'Wired the contact form to actually send you emails when someone reaches out.' },
-  { date: '2026-05-15', cat: 'Content', title: 'Real client work showcase', detail: 'Added click-to-open project pop-ups, pulled in real client work from Instagram, added hero and services videos, and swapped stock imagery for real jobs (including the Cleopatra Ink wall poster).' },
-  { date: '2026-05-10', cat: 'Store', title: 'Flow + pricing polish', detail: 'Improved the homepage flow and printer intro, fixed product price tiers, and sharpened the product mockup previews.' },
-  { date: '2026-04-25', cat: 'Imagery', title: 'Realistic product mockups', detail: 'Built cleaner, more realistic product mockup shapes — die-cut stickers, jars, pouches, and card stacks.' },
-  { date: '2026-04-24', cat: 'Imagery', title: 'Real studio photography', detail: 'Replaced the dark/AI product photos across the whole site with clean, bright studio shots, added the storefront photo to the About page, and put the real phone number on Contact and the footer.' },
-  { date: '2026-04-23', cat: 'Fixes', title: 'Mobile + projects cleanup', detail: 'Mobile audit fixes and merged the case studies into the Projects page so everything lives in one place.' },
-  { date: '2026-04-22', cat: 'Store', title: 'Major storefront build', detail: 'Huge build day: service-card photography, the cinematic printer intro animation, a reworked mobile hero, a tighter homepage, per-service quote forms, a bulk-quote and square-foot calculator, save-as-quote, artwork mockup previews on every product page, customer case studies (Safeway, Bhogal, Atlas Pizza), and an automatic first-order discount.' },
-  { date: '2026-04-21', cat: 'Pricing', title: 'Pricing overhaul + About page', detail: 'Overhauled sticker pricing with proper size tiers, margins and volume discounts, corrected the material pricing, rebuilt the About page with full content and 7 added projects, and replaced product images with original artwork.' },
-  { date: '2026-03-11', cat: 'Mobile', title: 'Mobile + referral tiers', detail: 'Optimized the whole site for phones (responsive text, faster images, carousel and footer fixes) and added referral commission tiers — 5% standard, 10% partner.' },
-  { date: '2026-03-10', cat: 'Backend', title: 'Accounts, CRM & referrals', detail: 'Connected the database backend and added customer accounts (login, order history, referral dashboard), the referral & rewards system with promo codes, CRM customer tagging (Admin/VIP/Customer), a Google Reviews carousel, FAQ, and order email notifications.' },
-  { date: '2026-03-03', cat: 'Store', title: 'Admin, checkout & catalog', detail: 'Built the admin dashboard, the checkout flow, and the pricing configuration — plus the full product catalog across every service page with a smart price calculator, search bar, category filters, and a redesigned Order Stickers page.' },
-  { date: '2026-02-25', cat: 'Design', title: 'Service pages & branding', detail: 'Built out the dedicated service pages, refined the hero and titles, dialed in the blue brand frame and page banners, and made the phone number required on the contact form.' },
-  { date: '2026-02-22', cat: 'Launch', title: 'Project kickoff', detail: 'First build of the Sticker Smith site — homepage, hero photography, category cards, project gallery, and the sample-pack call-to-action.' },
+  { date: '2026-06-16', cat: 'Admin', title: 'Cart tracking + this Work Log', detail: 'Fixed cart tracking so every cart is captured, added cross-device cart restore, and built this Work Log so you can see everything that’s been done.', items: [
+    'Fixed cart tracking so every cart is captured — removed the email step that was blocking it',
+    'Added cross-device cart restore — a customer’s cart follows them when they sign in by email',
+    'Removed the leftover email-capture popup from the cart',
+    'Connected the weekly Google-ranking check into the SEO tab',
+    'Built this Work Log',
+  ] },
+  { date: '2026-06-15', cat: 'Admin', title: 'Owner dashboard + artwork uploads', detail: 'Big owner-tools day — artwork uploads on orders, a plain-English business snapshot, and a live SEO rankings view.', items: [
+    'Customers can now upload artwork with their order — you download the files straight from the order',
+    'Rebuilt Analytics into a plain-English business snapshot: revenue, orders, leads, top products, buy-intent clicks',
+    'Added an SEO Rankings tab showing where you rank for target keywords',
+    'Set up an automatic weekly Google-ranking check (runs every Monday) that feeds that tab',
+    'Added a "Last Order" column to the CRM',
+    'Did a Hayward local-SEO pass across the service pages',
+    'Connected Google Search Console for live search data',
+    'Replaced the remaining AI images with real photos of your work',
+    'Fixed deploy issues so image updates ship reliably',
+  ] },
+  { date: '2026-06-12', cat: 'Analytics', title: 'Search indexing + sales tracking', detail: 'Released the search-indexing updates and set up full analytics so we can see what brings people in and what they buy.', items: [
+    'Released the search-indexing updates',
+    'Set up Google Analytics (GA4) with checkout tracking',
+    'Added search attribution — see which Google searches bring people in',
+  ] },
+  { date: '2026-05-24', cat: 'SEO', title: 'Google Business match', detail: 'Matched the site to your Google Business Profile and fixed a deploy bug.', items: [
+    'Matched the site’s business name, address and phone exactly to your Google Business Profile (Google rewards consistency)',
+    'Fixed a deploy bug that could blank the page',
+  ] },
+  { date: '2026-05-23', cat: 'SEO', title: 'Local SEO foundation', detail: 'Laid the search-engine foundation — pre-rendering, local-business data, and 8 East Bay city pages.', items: [
+    'Pre-rendered every page so Google reads the full content, not an empty shell',
+    'Added local-business structured data (helps you show in local results)',
+    'Built 8 East Bay city pages (Hayward and nearby) to rank in those areas',
+    'Verified the site in Google Search Console',
+  ] },
+  { date: '2026-05-22', cat: 'SEO', title: 'Per-page SEO + store polish', detail: 'Per-page search titles, deep-linked homepage tiles, and a rebuilt printer intro.', items: [
+    'Gave every page its own search title and description',
+    'Deep-linked the homepage category tiles straight into the price configurator',
+    'Rebuilt the printer intro animation with a status sequence and crop marks',
+    'Synced the product mockups with the order widget and fixed add-on pricing',
+    'Inverted the favicon to black so it shows on Google’s white background',
+    'Moved the logo marquee above the project gallery',
+  ] },
+  { date: '2026-05-18', cat: 'Forms', title: 'File uploads on forms', detail: 'Added artwork upload to the contact forms with reliable delivery.', items: [
+    'Added a file-upload field to the contact forms so customers can send artwork',
+    'Made email delivery reliable whether or not a file is attached',
+  ] },
+  { date: '2026-05-16', cat: 'Forms', title: 'Contact form going live', detail: 'Wired the contact form to send you real emails.', items: [
+    'Wired the contact form to send you real emails when someone reaches out',
+  ] },
+  { date: '2026-05-15', cat: 'Content', title: 'Real client work showcase', detail: 'Swapped stock for real client work, with project pop-ups and video.', items: [
+    'Added click-to-open project pop-ups',
+    'Pulled real client work in from Instagram',
+    'Added hero and services videos',
+    'Swapped stock images for real client jobs, including the Cleopatra Ink wall poster',
+  ] },
+  { date: '2026-05-10', cat: 'Store', title: 'Audit + flow polish (via Codex)', detail: 'A full site audit and polish pass run through Codex — tightened the homepage flow, printer intro, pricing, and previews.', items: [
+    'Ran a full audit of the live site and listed what to fix',
+    'Improved the homepage flow',
+    'Made the printer intro smoother and lower-friction',
+    'Fixed the product price tiers',
+    'Sharpened the product mockup previews',
+  ] },
+  { date: '2026-04-25', cat: 'Imagery', title: 'Realistic product mockups', detail: 'Built cleaner, more realistic product mockup shapes.', items: [
+    'Built realistic mockup shapes — die-cut stickers, jars, pouches, and card stacks',
+  ] },
+  { date: '2026-04-24', cat: 'Imagery', title: 'Real studio photography', detail: 'Replaced dark/AI photos with clean, bright studio shots across the whole site.', items: [
+    'Replaced the dark/AI sticker photos with clean, bright studio shots',
+    'Replaced 22 moody mockup backgrounds with bright daylit surfaces',
+    'Restored the "PRESS PRINT" intro gate and unified the dark hero across pages',
+    'Added clean product mockups built in code (stay sharp at any size)',
+    'Added the real phone number to Contact and the footer',
+    'Swapped the About hero to a real photo of the storefront',
+  ] },
+  { date: '2026-04-23', cat: 'Fixes', title: 'Mobile + projects cleanup', detail: 'Mobile audit fixes and merged case studies into Projects.', items: [
+    'Mobile audit fixes across the site',
+    'Merged the case studies into the Projects page so it’s all in one place',
+  ] },
+  { date: '2026-04-22', cat: 'Store', title: 'Major storefront build', detail: 'The biggest build day — the printer intro, quote tools, mockup previews, case studies, and the first-order discount.', items: [
+    'Added service-card photography for all 6 services',
+    'Built the cinematic printer intro animation — CMYK droplets, crop marks, sound',
+    'Reworked the mobile hero to show stickers above the fold',
+    'Trimmed the homepage from 11 sections to 9 and merged promo + referral',
+    'Added per-service quote forms with live estimates',
+    'Added a bulk-quote tool, a square-foot calculator, and save-as-quote',
+    'Added artwork mockup previews on every product page',
+    'Shipped customer case studies — Safeway, Bhogal, Atlas Pizza',
+    'Added an automatic first-order discount and an exit-intent offer',
+    'Set sticker minimum quantities and tuned pricing on resold items',
+  ] },
+  { date: '2026-04-21', cat: 'Pricing', title: 'Pricing overhaul + About page', detail: 'Overhauled sticker pricing and rebuilt the About page with real projects.', items: [
+    'Overhauled sticker pricing — proper size tiers, healthier margins, flatter volume curve',
+    'Corrected the material pricing (paper, embossed, UV)',
+    'Rebuilt the About page with full content and added 7 projects to the gallery',
+    'Replaced product images with original artwork as true transparent PNGs',
+    'Updated the hero to "Bay Area’s Full-Service Print & Branding Studio"',
+    'Renamed Event Canopies to Event Displays and fixed page routing + the promo banner timing',
+  ] },
+  { date: '2026-03-11', cat: 'Mobile', title: 'Mobile + referral tiers', detail: 'Optimized the whole site for phones and added referral commission tiers.', items: [
+    'Optimized the whole site for phones — responsive text, faster-loading images, carousel and footer fixes',
+    'Added referral commission tiers — 5% standard, 10% partner',
+  ] },
+  { date: '2026-03-10', cat: 'Backend', title: 'Accounts, CRM & referrals', detail: 'Connected the backend and added customer accounts, the referral system, CRM, reviews, and order emails.', items: [
+    'Connected the database backend with proper validation and error handling',
+    'Added customer accounts — login, order history, personal referral dashboard',
+    'Built the referral and rewards system with promo codes',
+    'Added CRM customer tagging — Admin / VIP / Customer',
+    'Added a Google Reviews carousel',
+    'Added the FAQ section',
+    'Added order email notifications',
+    'Added a sticky promo-code banner and a homepage promo section',
+  ] },
+  { date: '2026-03-03', cat: 'Store', title: 'Admin, checkout & catalog', detail: 'Built the admin dashboard, checkout, pricing config, and the full product catalog with a smart calculator.', items: [
+    'Built the admin dashboard',
+    'Built the checkout flow',
+    'Built the pricing configuration, organized by category with tabs',
+    'Added the full product catalog across every service page',
+    'Added a smart price calculator with size tiers and add-ons',
+    'Added a product search bar and category filter buttons',
+    'Redesigned the Order Stickers page with a 4-column layout',
+  ] },
+  { date: '2026-02-25', cat: 'Design', title: 'Service pages & branding', detail: 'Built out the dedicated service pages and the blue brand identity across the site.', items: [
+    'Built the dedicated service pages (stickers, mylar, business print, vehicle graphics, window film, signage)',
+    'Refined the hero wording and gave the title more space',
+    'Added the blue brand frame and page banners across the site',
+    'Made the phone number required on the contact form',
+    'Renamed the project gallery to "More Than Stickers"',
+  ] },
+  { date: '2026-02-22', cat: 'Launch', title: 'Project kickoff', detail: 'First build of the Sticker Smith website.', items: [
+    'First build of the Sticker Smith website',
+    'Homepage with hero photography',
+    'Category cards with product images',
+    'Project gallery',
+    'Sample-pack call-to-action',
+  ] },
 ]
 
 function WorkLogTab() {
+  const [open, setOpen] = useState<Set<number>>(new Set())
+  const toggle = (i: number) => setOpen(prev => {
+    const next = new Set(prev)
+    next.has(i) ? next.delete(i) : next.add(i)
+    return next
+  })
   const days = new Set(WORK_LOG.map(e => e.date)).size
   const months = new Set(WORK_LOG.map(e => e.date.slice(0, 7))).size
   const first = WORK_LOG[WORK_LOG.length - 1]?.date
@@ -2205,29 +2324,54 @@ function WorkLogTab() {
       </div>
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
-        {WORK_LOG.map((e, i) => (
-          <motion.div
-            key={e.date + i}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.02, 0.3) }}
-            className="flex gap-4 px-5 py-4 border-b border-border/50 last:border-b-0 hover:bg-white/[0.02] transition-colors"
-          >
-            <div className="w-24 shrink-0 pt-0.5">
-              <p className="text-sm font-semibold">{fmtShort(e.date)}</p>
-              <p className="text-xs text-muted-foreground">{e.date.slice(0, 4)}</p>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${WORK_LOG_CATS[e.cat] || 'bg-muted/50 text-muted-foreground border-border'}`}>{e.cat}</span>
-                <p className="font-bold">{e.title}</p>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">{e.detail}</p>
-            </div>
-          </motion.div>
-        ))}
+        {WORK_LOG.map((e, i) => {
+          const isOpen = open.has(i)
+          return (
+            <motion.div
+              key={e.date + i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(i * 0.02, 0.3) }}
+              className="border-b border-border/50 last:border-b-0"
+            >
+              <button
+                onClick={() => toggle(i)}
+                aria-expanded={isOpen}
+                className="w-full flex gap-4 px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="w-24 shrink-0 pt-0.5">
+                  <p className="text-sm font-semibold">{fmtShort(e.date)}</p>
+                  <p className="text-xs text-muted-foreground">{e.date.slice(0, 4)}</p>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${WORK_LOG_CATS[e.cat] || 'bg-muted/50 text-muted-foreground border-border'}`}>{e.cat}</span>
+                    <p className="font-bold">{e.title}</p>
+                    <span className="text-[10px] text-muted-foreground">· {e.items.length} {e.items.length === 1 ? 'item' : 'items'}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{e.detail}</p>
+                </div>
+                <ChevronDown size={18} className={`shrink-0 mt-0.5 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isOpen && (
+                <motion.ul
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="px-5 pb-4 pl-[7.75rem] space-y-1.5 overflow-hidden"
+                >
+                  {e.items.map((it, j) => (
+                    <li key={j} className="flex gap-2 text-sm text-foreground/90 leading-relaxed">
+                      <CheckCircle size={14} className="shrink-0 mt-1 text-primary/70" />
+                      <span>{it}</span>
+                    </li>
+                  ))}
+                </motion.ul>
+              )}
+            </motion.div>
+          )
+        })}
       </div>
-      <p className="text-xs text-muted-foreground">Maintained by JP — always current.</p>
+      <p className="text-xs text-muted-foreground">Tap any day to see the full breakdown. Maintained by JP — always current.</p>
     </div>
   )
 }
