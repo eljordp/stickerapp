@@ -23,6 +23,12 @@ interface CartItem {
   }
 }
 
+export interface SavedCartLookup {
+  items: CartItem[]
+  totalPrice: number
+  savedAt: Date
+}
+
 interface CartContextType {
   items: CartItem[]
   addItem: (item: CartItem) => 'added' | 'pending'
@@ -33,6 +39,9 @@ interface CartContextType {
   total: number
   totalItems: number
   cartEmail: string | null
+  setCartEmail: (email: string | null) => void
+  lookupSavedCart: (email: string) => Promise<SavedCartLookup | null>
+  restoreCart: (saved: SavedCartLookup, email: string) => void
   // Promo code
   promoCode: string | null
   promoDiscount: number
@@ -49,7 +58,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('tss-cart')
     return saved ? JSON.parse(saved) : []
   })
-  const [cartEmail] = useState<string | null>(() => localStorage.getItem('tss-cart-email'))
+  const [cartEmail, setCartEmailState] = useState<string | null>(() => localStorage.getItem('tss-cart-email'))
+
+  const setCartEmail = useCallback((email: string | null) => {
+    setCartEmailState(email)
+    if (email) localStorage.setItem('tss-cart-email', email)
+    else localStorage.removeItem('tss-cart-email')
+  }, [])
   const [promoCode, setPromoCode] = useState<string | null>(null)
   const [promoDiscount, setPromoDiscount] = useState(0)
   const [promoLabel, setPromoLabel] = useState<string | null>(null)
@@ -127,6 +142,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setPromoDiscount(0)
     setPromoLabel(null)
   }
+
+  const lookupSavedCart = useCallback(async (email: string): Promise<SavedCartLookup | null> => {
+    const trimmed = email.trim()
+    if (!trimmed) return null
+    const { data, error } = await supabase.rpc('get_saved_cart', { p_email: trimmed })
+    if (error) {
+      console.error('[cart restore] lookup failed:', error)
+      return null
+    }
+    const row = Array.isArray(data) ? data[0] : data
+    if (!row || !row.items || row.items.length === 0) return null
+    return {
+      items: row.items as CartItem[],
+      totalPrice: Number(row.total_price) || 0,
+      savedAt: new Date(row.updated_at || row.created_at),
+    }
+  }, [])
+
+  const restoreCart = useCallback((saved: SavedCartLookup, email: string) => {
+    // Drop the existing session id so the next sync creates a fresh row tied to this restore.
+    // (We don't want to clobber the saved row — it stays as-is until the user adds/changes items.)
+    localStorage.removeItem('tss-cart-session-id')
+    setItems(saved.items)
+    setCartEmail(email)
+  }, [setCartEmail])
 
   const markConverted = async () => {
     const sessionId = localStorage.getItem('tss-cart-session-id')
@@ -206,7 +246,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartContext.Provider value={{
       items, addItem, removeItem, updateQuantity, clearCart, markConverted,
-      total, totalItems, cartEmail,
+      total, totalItems, cartEmail, setCartEmail,
+      lookupSavedCart, restoreCart,
       promoCode, promoDiscount, promoLabel,
       applyPromo, removePromo, finalizePromo,
     }}>

@@ -2,11 +2,14 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Gift, Check, Loader2 } from 'lucide-react'
 import { submitContactRequest } from '@/lib/contactSubmit'
+import { useCart } from '@/context/CartContext'
+import { toast } from 'sonner'
 
 const DISMISSED_KEY = 'tss_exit_modal_dismissed'
 const SUBMITTED_KEY = 'tss_exit_modal_submitted'
 
 export default function ExitIntentModal() {
+  const { items, lookupSavedCart, restoreCart } = useCart()
   const [show, setShow] = useState(false)
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -62,6 +65,16 @@ export default function ExitIntentModal() {
       })
       localStorage.setItem(SUBMITTED_KEY, '1')
       setStatus('sent')
+
+      // If the visitor has no local cart, try to restore one from their email.
+      // Quiet by design — toast confirms success, silent if nothing to restore.
+      if (items.length === 0) {
+        const saved = await lookupSavedCart(email)
+        if (saved) {
+          restoreCart(saved, email)
+          toast.success(`We found your saved cart — ${saved.items.length} ${saved.items.length === 1 ? 'item' : 'items'}, ready when you are.`)
+        }
+      }
     } catch {
       setStatus('error')
     }

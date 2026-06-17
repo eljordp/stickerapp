@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Plus, Minus, AlertCircle, Mail, Check, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { submitContactRequest } from '@/lib/contactSubmit'
+import RestoreCartWidget from '@/components/cart/RestoreCartWidget'
 import emptyCartImage from '@/assets/pages/cart-empty-stickers.jpg'
 
 const MIN_ORDER = 35
@@ -79,6 +80,7 @@ export default function Cart() {
             <Link to="/stickers" className="btn-primary">Make Custom Stickers</Link>
             <Link to="/services" className="btn-secondary">Browse Services <ArrowRight size={16} /></Link>
           </div>
+          <RestoreCartWidget />
         </div>
       </section>
     )

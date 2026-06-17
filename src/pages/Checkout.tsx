@@ -26,7 +26,7 @@ interface CustomerInfo {
 }
 
 export default function Checkout() {
-  const { items, total, clearCart, markConverted, promoCode, promoDiscount, promoLabel, applyPromo, removePromo, finalizePromo } = useCart()
+  const { items, total, clearCart, markConverted, setCartEmail, promoCode, promoDiscount, promoLabel, applyPromo, removePromo, finalizePromo } = useCart()
   const navigate = useNavigate()
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     firstName: '', lastName: '', email: '', phone: '',
@@ -70,6 +70,15 @@ export default function Checkout() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const updated = { ...customerInfo, [e.target.name]: e.target.value }
     setCustomerInfo(updated)
+
+    // Persist email back to cart context so the cart_sessions row carries it.
+    // Enables cross-device cart restore by email later.
+    if (e.target.name === 'email') {
+      const trimmed = e.target.value.trim()
+      if (trimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+        setCartEmail(trimmed)
+      }
+    }
 
     const result = checkoutSchema.safeParse(updated)
     if (result.success) {
