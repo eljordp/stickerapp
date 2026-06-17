@@ -1,6 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShoppingBag, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { validatePromoCode, applyPromoCode, type PromoResult, AUTO_DISCOUNT_CODE, AUTO_APPLIED_KEY } from '@/lib/promoCodes'
 
@@ -46,106 +44,12 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-// Email Capture Modal
-function EmailCaptureModal({
-  isOpen,
-  onSubmit,
-  onClose,
-  onSkip,
-}: {
-  isOpen: boolean
-  onSubmit: (email: string) => void
-  onClose: () => void
-  onSkip: () => void
-}) {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmed = email.trim()
-    if (!trimmed) { setError('Email is required'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { setError('Please enter a valid email'); return }
-    onSubmit(trimmed)
-    setEmail('')
-    setError('')
-  }
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl"
-          >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <ShoppingBag size={24} className="text-primary" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Save your cart?</h3>
-                <p className="text-sm text-muted-foreground">Drop your email and we'll save it so you can come back anytime.</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => { setEmail(e.target.value); setError('') }}
-                    placeholder="your@email.com"
-                    className={`w-full pl-10 pr-4 py-3 bg-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all ${error ? 'border-destructive' : 'border-border'}`}
-                    autoFocus
-                  />
-                </div>
-                {error && <p className="text-sm text-destructive mt-1">{error}</p>}
-              </div>
-              <button type="submit" className="btn-primary w-full">
-                Save & Add to Cart
-              </button>
-              <button
-                type="button"
-                onClick={onSkip}
-                className="block w-full text-xs text-muted-foreground hover:text-foreground text-center transition-colors py-2"
-              >
-                Skip — just add to cart
-              </button>
-            </form>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('tss-cart')
     return saved ? JSON.parse(saved) : []
   })
-  const [cartEmail, setCartEmail] = useState<string | null>(() => localStorage.getItem('tss-cart-email'))
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [pendingItem, setPendingItem] = useState<CartItem | null>(null)
+  const [cartEmail] = useState<string | null>(() => localStorage.getItem('tss-cart-email'))
   const [promoCode, setPromoCode] = useState<string | null>(null)
   const [promoDiscount, setPromoDiscount] = useState(0)
   const [promoLabel, setPromoLabel] = useState<string | null>(null)
@@ -208,31 +112,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (item: CartItem): 'added' | 'pending' => {
     doAddItem(item)
     return 'added'
-  }
-
-  const handleEmailSubmit = (email: string) => {
-    setCartEmail(email)
-    localStorage.setItem('tss-cart-email', email)
-    setShowEmailModal(false)
-
-    if (pendingItem) {
-      doAddItem(pendingItem)
-      setPendingItem(null)
-    }
-  }
-
-  const handleEmailClose = () => {
-    setShowEmailModal(false)
-    setPendingItem(null)
-  }
-
-  const handleEmailSkip = () => {
-    // Add the item without saving an email — guest checkout
-    setShowEmailModal(false)
-    if (pendingItem) {
-      doAddItem(pendingItem)
-      setPendingItem(null)
-    }
   }
 
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id))
@@ -332,12 +211,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       applyPromo, removePromo, finalizePromo,
     }}>
       {children}
-      <EmailCaptureModal
-        isOpen={showEmailModal}
-        onSubmit={handleEmailSubmit}
-        onClose={handleEmailClose}
-        onSkip={handleEmailSkip}
-      />
     </CartContext.Provider>
   )
 }
