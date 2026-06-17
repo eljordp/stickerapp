@@ -6,7 +6,7 @@ import {
   ShoppingCart, BarChart3, UserPlus, Eye, MousePointer,
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
   CreditCard, Unplug, Send, AlertCircle, MapPin,
-  TrendingUp, Target, Search, Globe,
+  TrendingUp, Target, Search, Globe, History,
 } from 'lucide-react'
 import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
@@ -2124,10 +2124,119 @@ function SquareTab() {
   )
 }
 
+// ─── Work Log Tab ─────────────────────────────────────────────────────────────
+// A plain-language record of every build session on the site so the owner can
+// see exactly what's been done from launch to now. Reconstructed from the build
+// history. Read-only — to add an entry, prepend it to WORK_LOG below.
+
+type WorkLogEntry = { date: string; cat: string; title: string; detail: string }
+
+const WORK_LOG_CATS: Record<string, string> = {
+  Launch:    'bg-primary/10 text-primary border-primary/20',
+  Design:    'bg-purple-400/10 text-purple-400 border-purple-400/20',
+  Store:     'bg-blue-400/10 text-blue-400 border-blue-400/20',
+  Backend:   'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+  Mobile:    'bg-cyan-400/10 text-cyan-400 border-cyan-400/20',
+  Pricing:   'bg-yellow-400/10 text-yellow-400 border-yellow-400/20',
+  Imagery:   'bg-pink-400/10 text-pink-400 border-pink-400/20',
+  Content:   'bg-orange-400/10 text-orange-400 border-orange-400/20',
+  Forms:     'bg-teal-400/10 text-teal-400 border-teal-400/20',
+  SEO:       'bg-green-400/10 text-green-400 border-green-400/20',
+  Analytics: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+  Admin:     'bg-primary/10 text-primary border-primary/20',
+  Fixes:     'bg-slate-400/10 text-slate-400 border-slate-400/20',
+}
+
+const WORK_LOG: WorkLogEntry[] = [
+  { date: '2026-06-16', cat: 'Admin', title: 'Cart tracking + this Work Log', detail: 'Fixed cart tracking so every cart is captured (dropped the email gate), added cross-device cart restore by email, hooked the weekly ranking feed into the SEO tab, and built this Work Log so you can see everything that’s been done.' },
+  { date: '2026-06-15', cat: 'Admin', title: 'Owner dashboard + artwork uploads', detail: 'Big owner-tools day: customers can now upload their artwork with orders (you download it right from the order), reshaped Analytics into a plain-English business snapshot (revenue, orders, leads, top products), added an SEO Rankings tab fed by an automatic weekly check, a "last order" column in the CRM, and replaced the remaining AI images with real photos of your work.' },
+  { date: '2026-06-12', cat: 'Analytics', title: 'Search indexing + sales tracking', detail: 'Released the search-indexing updates and set up full analytics (GA4) with checkout tracking and search attribution — so we can see what brings people to the site and what they buy.' },
+  { date: '2026-05-24', cat: 'SEO', title: 'Google Business match', detail: 'Matched the site’s business name, address and phone exactly to your Google Business Profile (Google rewards consistency) and fixed a deploy issue that could blank the page.' },
+  { date: '2026-05-23', cat: 'SEO', title: 'Local SEO foundation', detail: 'Laid the search-engine foundation: pre-rendered pages so Google reads the full site, added local-business data, built 8 East Bay city pages (Hayward, etc.) to rank locally, and verified the site in Google Search Console.' },
+  { date: '2026-05-22', cat: 'SEO', title: 'Per-page SEO + store polish', detail: 'Gave every page its own search title and description, deep-linked the homepage tiles straight into the price configurator, rebuilt the printer intro animation, synced the product mockups with the order widget, and fixed the favicon so it shows on Google.' },
+  { date: '2026-05-18', cat: 'Forms', title: 'File uploads on forms', detail: 'Added a file-upload field to the contact forms so customers can send artwork, with reliable email delivery and attachment handling.' },
+  { date: '2026-05-16', cat: 'Forms', title: 'Contact form going live', detail: 'Wired the contact form to actually send you emails when someone reaches out.' },
+  { date: '2026-05-15', cat: 'Content', title: 'Real client work showcase', detail: 'Added click-to-open project pop-ups, pulled in real client work from Instagram, added hero and services videos, and swapped stock imagery for real jobs (including the Cleopatra Ink wall poster).' },
+  { date: '2026-05-10', cat: 'Store', title: 'Flow + pricing polish', detail: 'Improved the homepage flow and printer intro, fixed product price tiers, and sharpened the product mockup previews.' },
+  { date: '2026-04-25', cat: 'Imagery', title: 'Realistic product mockups', detail: 'Built cleaner, more realistic product mockup shapes — die-cut stickers, jars, pouches, and card stacks.' },
+  { date: '2026-04-24', cat: 'Imagery', title: 'Real studio photography', detail: 'Replaced the dark/AI product photos across the whole site with clean, bright studio shots, added the storefront photo to the About page, and put the real phone number on Contact and the footer.' },
+  { date: '2026-04-23', cat: 'Fixes', title: 'Mobile + projects cleanup', detail: 'Mobile audit fixes and merged the case studies into the Projects page so everything lives in one place.' },
+  { date: '2026-04-22', cat: 'Store', title: 'Major storefront build', detail: 'Huge build day: service-card photography, the cinematic printer intro animation, a reworked mobile hero, a tighter homepage, per-service quote forms, a bulk-quote and square-foot calculator, save-as-quote, artwork mockup previews on every product page, customer case studies (Safeway, Bhogal, Atlas Pizza), and an automatic first-order discount.' },
+  { date: '2026-04-21', cat: 'Pricing', title: 'Pricing overhaul + About page', detail: 'Overhauled sticker pricing with proper size tiers, margins and volume discounts, corrected the material pricing, rebuilt the About page with full content and 7 added projects, and replaced product images with original artwork.' },
+  { date: '2026-03-11', cat: 'Mobile', title: 'Mobile + referral tiers', detail: 'Optimized the whole site for phones (responsive text, faster images, carousel and footer fixes) and added referral commission tiers — 5% standard, 10% partner.' },
+  { date: '2026-03-10', cat: 'Backend', title: 'Accounts, CRM & referrals', detail: 'Connected the database backend and added customer accounts (login, order history, referral dashboard), the referral & rewards system with promo codes, CRM customer tagging (Admin/VIP/Customer), a Google Reviews carousel, FAQ, and order email notifications.' },
+  { date: '2026-03-03', cat: 'Store', title: 'Admin, checkout & catalog', detail: 'Built the admin dashboard, the checkout flow, and the pricing configuration — plus the full product catalog across every service page with a smart price calculator, search bar, category filters, and a redesigned Order Stickers page.' },
+  { date: '2026-02-25', cat: 'Design', title: 'Service pages & branding', detail: 'Built out the dedicated service pages, refined the hero and titles, dialed in the blue brand frame and page banners, and made the phone number required on the contact form.' },
+  { date: '2026-02-22', cat: 'Launch', title: 'Project kickoff', detail: 'First build of the Sticker Smith site — homepage, hero photography, category cards, project gallery, and the sample-pack call-to-action.' },
+]
+
+function WorkLogTab() {
+  const days = new Set(WORK_LOG.map(e => e.date)).size
+  const months = new Set(WORK_LOG.map(e => e.date.slice(0, 7))).size
+  const first = WORK_LOG[WORK_LOG.length - 1]?.date
+  const last = WORK_LOG[0]?.date
+  const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const fmtShort = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  const stats = [
+    { label: 'Build sessions', value: days, icon: History },
+    { label: 'Months active', value: months, icon: Clock },
+    { label: 'Updates shipped', value: WORK_LOG.length, icon: CheckCircle },
+    { label: 'First build', value: first ? fmtShort(first) : '—', icon: TrendingUp },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h2 className="text-2xl font-black mb-1">Work Log</h2>
+        <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
+          Everything that’s been built and improved on the Sticker Smith site, from launch to now
+          {first && last ? ` (${fmt(first)} – ${fmt(last)})` : ''}. Newest first.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map(s => (
+          <div key={s.label} className="bg-card border border-border rounded-2xl p-5">
+            <div className="flex items-center gap-2 text-muted-foreground mb-2"><s.icon size={16} /><span className="text-xs font-medium">{s.label}</span></div>
+            <p className="text-2xl font-black">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        {WORK_LOG.map((e, i) => (
+          <motion.div
+            key={e.date + i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: Math.min(i * 0.02, 0.3) }}
+            className="flex gap-4 px-5 py-4 border-b border-border/50 last:border-b-0 hover:bg-white/[0.02] transition-colors"
+          >
+            <div className="w-24 shrink-0 pt-0.5">
+              <p className="text-sm font-semibold">{fmtShort(e.date)}</p>
+              <p className="text-xs text-muted-foreground">{e.date.slice(0, 4)}</p>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${WORK_LOG_CATS[e.cat] || 'bg-muted/50 text-muted-foreground border-border'}`}>{e.cat}</span>
+                <p className="font-bold">{e.title}</p>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">{e.detail}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">Maintained by JP — always current.</p>
+    </div>
+  )
+}
+
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
 const mainTabs = [
   { id: 'orders', label: 'Orders', icon: Package },
+  { id: 'worklog', label: 'Work Log', icon: History },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
   { id: 'promos', label: 'Promos', icon: Tag },
   { id: 'carts', label: 'Carts', icon: ShoppingCart },
@@ -2178,6 +2287,7 @@ function Dashboard() {
         </div>
 
         {activeTab === 'orders' && <OrdersTab />}
+        {activeTab === 'worklog' && <WorkLogTab />}
         {activeTab === 'pricing' && <PricingTab />}
         {activeTab === 'promos' && <PromoCodeManager />}
         {activeTab === 'carts' && <CartsTab />}
