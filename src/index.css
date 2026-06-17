@@ -30,6 +30,26 @@
   --shadow-glow: 0 0 40px hsl(199 89% 64% / 0.15);
 }
 
+/* Admin-only light theme. Wraps the admin dashboard and overrides the theme
+   variables, so every existing Tailwind utility (bg-background, text-foreground,
+   bg-card, etc.) flips without component-level changes. */
+.admin-light {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(220 15% 12%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(220 15% 12%);
+  --color-secondary: hsl(220 14% 96%);
+  --color-secondary-foreground: hsl(220 15% 12%);
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(220 10% 38%);
+  --color-border: hsl(220 13% 88%);
+  --color-input: hsl(220 13% 88%);
+  --color-surface-elevated: hsl(0 0% 98%);
+  --color-surface-overlay: hsl(0 0% 100%);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
 * { border-color: var(--color-border); box-sizing: border-box; }
 html { scroll-behavior: smooth; overflow-x: hidden; }
 body {

@@ -7,6 +7,7 @@ import {
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
   CreditCard, Unplug, Send, AlertCircle, MapPin,
   TrendingUp, Target, Search, Globe, History,
+  Sun, Moon,
 } from 'lucide-react'
 import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
@@ -2398,6 +2399,16 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState<MainTab>(() => (
     new URLSearchParams(window.location.search).has('square') ? 'square' : 'orders'
   ))
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
+    (localStorage.getItem('tss-admin-theme') as 'dark' | 'light') || 'dark'
+  )
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark'
+      localStorage.setItem('tss-admin-theme', next)
+      return next
+    })
+  }
 
   const logout = async () => {
     await supabase.auth.signOut()
@@ -2405,15 +2416,21 @@ function Dashboard() {
   }
 
   return (
-    <section className="py-8 md:py-16">
+    <section className={`py-8 md:py-16 min-h-screen ${theme === 'light' ? 'admin-light' : ''}`}>
       <div className="section-container max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl md:text-5xl font-black">
             Admin Dashboard
           </motion.h1>
-          <button onClick={logout} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Sign out">
-            <LogOut size={18} /> Sign Out
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={toggleTheme} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+            <button onClick={logout} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Sign out">
+              <LogOut size={18} /> Sign Out
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1 mb-8 scrollbar-hide" role="tablist" aria-label="Admin sections">
