@@ -34,7 +34,7 @@ import StickerSupportPage from '@/pages/StickerSupportPage'
 import { stickerSupportPageBySlug } from '@/lib/stickerSupportPages'
 
 const DEFAULT_DESCRIPTION = 'Premium custom stickers, labels, decals, signage, vehicle graphics & packaging in the Bay Area. Fast turnaround, proof-based printing, and local pickup available.'
-const DEFAULT_OG_IMAGE = `${SITE_URL}/videos/epic-rane-print.jpg`
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`
 
 type PageMeta = {
   title: string
@@ -53,8 +53,6 @@ const pageMeta: Record<string, PageMeta> = {
   '/stickers': {
     title: 'Bay Area Custom Stickers & Labels | The Sticker Smith',
     description: 'Order Bay Area custom stickers, die-cut stickers, kiss-cut stickers, holographic stickers, sticker sheets, and roll labels with free proofs and Hayward pickup.',
-    image: `${SITE_URL}/videos/flight-risk-holographic.jpg`,
-    imageAlt: 'Holographic custom stickers printed by The Sticker Smith',
   },
   '/services': {
     title: 'Print & Branding Services | The Sticker Smith',
@@ -63,20 +61,14 @@ const pageMeta: Record<string, PageMeta> = {
   '/services/vehicle-graphics': {
     title: 'Vehicle Graphics Hayward & Bay Area | The Sticker Smith',
     description: 'Custom vehicle graphics in Hayward CA: wraps, fleet branding, decals, vinyl lettering, door graphics, and work truck graphics for Bay Area businesses.',
-    image: `${SITE_URL}/videos/flying-a-niles.jpg`,
-    imageAlt: 'Bay Area vehicle graphics and fleet decals',
   },
   '/services/business-signage': {
     title: 'Hayward Business Signs & Signage | The Sticker Smith',
     description: 'Custom business signs and signage in Hayward and the Bay Area: storefront signs, wall graphics, A-frames, banners, window graphics, and branded installs.',
-    image: `${SITE_URL}/videos/epic-rane-print.jpg`,
-    imageAlt: 'Custom storefront signs and signage installed by The Sticker Smith',
   },
   '/services/event-displays': {
     title: 'Custom Canopies Hayward & Bay Area | The Sticker Smith',
     description: 'Custom canopies in Hayward CA, plus printed canopy tents, banners, table covers, feather flags, backdrops, and event displays for Bay Area businesses.',
-    image: `${SITE_URL}/videos/epic-rane-print.jpg`,
-    imageAlt: 'Custom printed canopy tent, banner, and event booth branding',
   },
   '/services/business-print': {
     title: 'Custom Printing in Hayward | Business Cards, Flyers & Stationery | The Sticker Smith',
@@ -89,8 +81,6 @@ const pageMeta: Record<string, PageMeta> = {
   '/mylar': {
     title: 'Custom Mylar Bags Hayward & Bay Area | The Sticker Smith',
     description: 'Order custom mylar bags in Hayward CA, plus pouch packaging, jar labels, and product labels with digital proofs, bulk quotes, and Bay Area pickup.',
-    image: `${SITE_URL}/videos/mylar-promo-2021.jpg`,
-    imageAlt: 'Custom mylar bags, pouch packaging, and jar labels',
   },
   '/cart': {
     title: 'Cart | The Sticker Smith',
@@ -151,7 +141,7 @@ function getPageMeta(pathname: string): PageMeta {
     return {
       title: stickerPage.metaTitle,
       description: stickerPage.metaDescription,
-      image: stickerPage.slug === 'holographic-stickers' ? `${SITE_URL}/videos/flight-risk-holographic.jpg` : DEFAULT_OG_IMAGE,
+      image: DEFAULT_OG_IMAGE,
       imageAlt: stickerPage.imageAlt,
     }
   }
@@ -190,7 +180,7 @@ function HeadManager() {
     const canonicalPath = pathname === '/' ? '' : pathname
     const canonicalUrl = `${SITE_URL}${canonicalPath}`
     const image = meta.image ?? DEFAULT_OG_IMAGE
-    const imageAlt = meta.imageAlt ?? 'The Sticker Smith custom print work'
+    const imageAlt = meta.imageAlt ?? 'The Sticker Smith — custom stickers, labels, decals and vehicle graphics, Bay Area'
 
     document.title = meta.title
     setMeta('meta[name="description"]', 'content', meta.description, () => {
@@ -207,6 +197,21 @@ function HeadManager() {
     setMeta('meta[property="og:description"]', 'content', meta.description)
     setMeta('meta[property="og:url"]', 'content', canonicalUrl)
     setMeta('meta[property="og:image"]', 'content', image)
+    setMeta('meta[property="og:image:width"]', 'content', '1200', () => {
+      const element = document.createElement('meta')
+      element.setAttribute('property', 'og:image:width')
+      return element
+    })
+    setMeta('meta[property="og:image:height"]', 'content', '630', () => {
+      const element = document.createElement('meta')
+      element.setAttribute('property', 'og:image:height')
+      return element
+    })
+    setMeta('meta[property="og:image:type"]', 'content', 'image/jpeg', () => {
+      const element = document.createElement('meta')
+      element.setAttribute('property', 'og:image:type')
+      return element
+    })
     setMeta('meta[property="og:image:alt"]', 'content', imageAlt, () => {
       const element = document.createElement('meta')
       element.setAttribute('property', 'og:image:alt')
