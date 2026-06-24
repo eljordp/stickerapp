@@ -8,6 +8,7 @@ import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
 import eventHero from '@/assets/services/event-displays.jpg'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
+import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
 import weddingFloor1 from '@/assets/projects/wedding-vinyl-floor-1.jpeg'
 import weddingFloor2 from '@/assets/projects/wedding-vinyl-floor-2.jpeg'
@@ -73,6 +74,24 @@ const eventFaqs = [
   },
 ]
 
+const eventProof = [
+  {
+    title: 'Event booth setup',
+    service: 'Pop-up booth branding',
+    copy: 'A real booth setup showing the kind of branded presence customers need for markets, launches, and trade events.',
+  },
+  {
+    title: 'Feather flag display',
+    service: 'Custom feather flags',
+    copy: 'Printed flag work for outdoor visibility, directional signage, and event traffic from a distance.',
+  },
+  {
+    title: 'Wedding floor and display graphics',
+    service: 'Event display signage',
+    copy: 'Custom vinyl floor and display pieces that show the shop can handle temporary event graphics beyond basic banners.',
+  },
+]
+
 export default function EventCanopies() {
   const [activeMockup, setActiveMockup] = useState('canopy')
   const handleCategoryChange = useCallback((categoryName: string) => {
@@ -98,6 +117,13 @@ export default function EventCanopies() {
       />
       <section className="py-8 md:py-16">
         <div className="section-container">
+          <div id="shop" className="scroll-mt-24 mb-12">
+            <ProductOrder
+              categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']}
+              onCategoryChange={handleCategoryChange}
+            />
+          </div>
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
             <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Bay Area event branding</p>
             <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6">
@@ -125,6 +151,24 @@ export default function EventCanopies() {
             <div className="grid md:grid-cols-3 gap-4">
               {eventLocalAnswers.map((item) => (
                 <div key={item.title} className="rounded-xl border border-border bg-card p-5">
+                  <h3 className="font-bold mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="max-w-5xl mx-auto mb-8">
+            <div className="mb-5">
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real event proof</p>
+              <h2 className="text-2xl md:text-3xl font-black mb-3">Booth, flag, and floor projects that show the event-display lane is real.</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                These project examples support custom canopy, feather flag, table cover, backdrop, and event display searches without adding thin city pages.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {eventProof.map((item) => (
+                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
+                  <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">{item.service}</p>
                   <h3 className="font-bold mb-2">{item.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
                 </div>
@@ -166,12 +210,6 @@ export default function EventCanopies() {
             </div>
           </motion.div>
 
-          <div id="shop" className="scroll-mt-24">
-            <ProductOrder
-              categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']}
-              onCategoryChange={handleCategoryChange}
-            />
-          </div>
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">
@@ -226,6 +264,7 @@ export default function EventCanopies() {
             title="Events We've Shown Up For"
             subtitle="Trade shows, weddings, pop-ups — full booth and floor setups."
             projects={[
+              { src: eventBooth, alt: 'Sticker Smith event booth setup', caption: 'Event booth setup' },
               { src: featherFlags, alt: 'Feather flags setup', caption: 'Feather flags' },
               { src: weddingSignage, alt: 'Wedding display signage', caption: 'Wedding signage' },
               { src: weddingFloor1, alt: 'Wedding vinyl floor', caption: 'Custom vinyl floor' },

@@ -40,15 +40,15 @@ const CITY_SLUGS = [
 // and as a sanity check. Must match what App.tsx HeadManager sets.
 const ROUTE_TITLES = {
   '/': 'The Sticker Smith | Custom Stickers, Labels & Printing - Bay Area',
-  '/stickers': 'Bay Area Custom Stickers & Labels | The Sticker Smith',
-  '/die-cut-stickers': 'Die-Cut Stickers Bay Area | The Sticker Smith',
+  '/stickers': 'Custom Stickers Bay Area | Die-Cut, Labels & Fast Proofs',
+  '/die-cut-stickers': 'Die-Cut Stickers Bay Area | Waterproof Vinyl Stickers',
   '/sticker-sheets': 'Custom Sticker Sheets Bay Area | The Sticker Smith',
   '/roll-labels': 'Custom Roll Labels Hayward & Bay Area | The Sticker Smith',
   '/holographic-stickers': 'Holographic Stickers Bay Area | The Sticker Smith',
   '/custom-labels': 'Custom Labels Hayward & Bay Area | The Sticker Smith',
   '/services': 'Print & Branding Services | The Sticker Smith',
   '/services/vehicle-graphics': 'Vehicle Graphics Hayward & Bay Area | The Sticker Smith',
-  '/services/business-signage': 'Hayward Business Signs & Signage | The Sticker Smith',
+  '/services/business-signage': 'Business Signs Hayward | Storefront Signs & A-Frames',
   '/services/event-displays': 'Custom Canopies Hayward & Bay Area | The Sticker Smith',
   '/services/business-print': 'Custom Printing in Hayward | Business Cards, Flyers & Stationery | The Sticker Smith',
   '/services/window-film': 'Window Film, Tint & Graphics | The Sticker Smith',

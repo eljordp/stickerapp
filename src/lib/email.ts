@@ -4,9 +4,11 @@ export async function sendContactEmail(data: {
   name: string; email: string; phone?: string; service?: string; message: string
 }) {
   try {
-    await supabase.functions.invoke('send-contact-email', { body: data })
-  } catch {
-    // Email is non-blocking — form still saves to Supabase
+    const { error } = await supabase.functions.invoke('send-contact-email', { body: data })
+    if (error) throw error
+  } catch (error) {
+    console.error('Contact email failed:', error)
+    throw error
   }
 }
 

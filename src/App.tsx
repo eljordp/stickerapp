@@ -51,8 +51,8 @@ const pageMeta: Record<string, PageMeta> = {
     imageAlt: 'The Sticker Smith print work and custom stickers',
   },
   '/stickers': {
-    title: 'Bay Area Custom Stickers & Labels | The Sticker Smith',
-    description: 'Order Bay Area custom stickers, die-cut stickers, kiss-cut stickers, holographic stickers, sticker sheets, and roll labels with free proofs and Hayward pickup.',
+    title: 'Custom Stickers Bay Area | Die-Cut, Labels & Fast Proofs',
+    description: 'Order Bay Area custom stickers, die-cut vinyl, sticker sheets, holographic stickers, and roll labels from Hayward with free proofs and local pickup.',
   },
   '/services': {
     title: 'Print & Branding Services | The Sticker Smith',
@@ -63,8 +63,8 @@ const pageMeta: Record<string, PageMeta> = {
     description: 'Custom vehicle graphics in Hayward CA: wraps, fleet branding, decals, vinyl lettering, door graphics, and work truck graphics for Bay Area businesses.',
   },
   '/services/business-signage': {
-    title: 'Hayward Business Signs & Signage | The Sticker Smith',
-    description: 'Custom business signs and signage in Hayward and the Bay Area: storefront signs, wall graphics, A-frames, banners, window graphics, and branded installs.',
+    title: 'Business Signs Hayward | Storefront Signs & A-Frames',
+    description: 'Custom business signs in Hayward and the Bay Area: storefront signs, wall graphics, A-frames, banners, window graphics, and branded installs.',
   },
   '/services/event-displays': {
     title: 'Custom Canopies Hayward & Bay Area | The Sticker Smith',

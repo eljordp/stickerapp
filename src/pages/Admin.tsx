@@ -87,6 +87,17 @@ interface EmailSubscriber {
   created_at: string
 }
 
+interface ContactInquiry {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  service: string | null
+  message: string
+  source: string | null
+  created_at: string
+}
+
 interface SquareConnectionStatus {
   connected: boolean
   connection: {
@@ -611,6 +622,228 @@ function OrdersTab() {
                           <option value="completed">Completed</option>
                         </select>
                       </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Inquiries Tab ───────────────────────────────────────────────────────────
+
+function InquiriesTab() {
+  const [inquiries, setInquiries] = useState<ContactInquiry[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [search, setSearch] = useState('')
+  const [serviceFilter, setServiceFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
+
+  useEffect(() => { fetchInquiries() }, [])
+
+  const fetchInquiries = async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .select('id,name,email,phone,service,message,source,created_at')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setInquiries((data || []) as ContactInquiry[])
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown Supabase error'
+      setLoadError(`Could not load inquiries: ${message}`)
+      setInquiries([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyText = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      toast.success(`${label} copied`)
+    } catch {
+      toast.error(`Could not copy ${label.toLowerCase()}`)
+    }
+  }
+
+  const normalizedSearch = search.trim().toLowerCase()
+  const services = Array.from(new Set(inquiries.map(i => i.service).filter(Boolean) as string[])).sort()
+  const sources = Array.from(new Set(inquiries.map(i => i.source).filter(Boolean) as string[])).sort()
+  const filtered = inquiries.filter(inquiry => {
+    if (serviceFilter !== 'all' && inquiry.service !== serviceFilter) return false
+    if (sourceFilter !== 'all' && inquiry.source !== sourceFilter) return false
+    if (!normalizedSearch) return true
+    return [
+      inquiry.name,
+      inquiry.email,
+      inquiry.phone || '',
+      inquiry.service || '',
+      inquiry.source || '',
+      inquiry.message,
+    ].some(value => value.toLowerCase().includes(normalizedSearch))
+  })
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const recentCount = inquiries.filter(i => new Date(i.created_at).getTime() >= weekAgo).length
+  const uniqueEmails = new Set(inquiries.map(i => i.email.toLowerCase())).size
+  const quoteCount = inquiries.filter(i => (i.source || '').includes('quote') || (i.service || '').toLowerCase().includes('quote')).length
+
+  if (loading) return (
+    <div className="bg-card border border-border rounded-2xl p-12 text-center">
+      <Loader2 size={32} className="mx-auto text-primary animate-spin mb-4" />
+      <p className="text-muted-foreground">Loading inquiries...</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      {loadError && (
+        <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-yellow-400" />
+            <p>{loadError}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <StatCard icon={Send} label="Total Inquiries" value={inquiries.length} delay={0.1} />
+        <StatCard icon={Clock} label="Last 7 Days" value={recentCount} color="text-blue-400" delay={0.2} />
+        <StatCard icon={Users} label="Unique Emails" value={uniqueEmails} color="text-green-400" delay={0.3} />
+        <StatCard icon={Mail} label="Quote Leads" value={quoteCount} color="text-yellow-400" delay={0.4} />
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-4 md:p-5">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search name, email, phone, service, message..."
+              className="w-full pl-9 pr-3 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+          <select
+            value={serviceFilter}
+            onChange={e => setServiceFilter(e.target.value)}
+            className="px-3 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="all">All services</option>
+            {services.map(service => <option key={service} value={service}>{service}</option>)}
+          </select>
+          <select
+            value={sourceFilter}
+            onChange={e => setSourceFilter(e.target.value)}
+            className="px-3 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="all">All sources</option>
+            {sources.map(source => <option key={source} value={source}>{source}</option>)}
+          </select>
+          <button
+            type="button"
+            onClick={fetchInquiries}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary border border-border rounded-xl text-sm font-bold text-foreground hover:border-primary/40"
+          >
+            <RotateCcw size={15} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-card border border-border rounded-2xl p-12 text-center">
+          <Send size={48} className="mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">{inquiries.length === 0 ? 'No inquiries found.' : 'No inquiries match those filters.'}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((inquiry, i) => {
+            const isOpen = expanded === inquiry.id
+            const date = new Date(inquiry.created_at)
+            return (
+              <motion.div
+                key={inquiry.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                className="bg-card border border-border rounded-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setExpanded(isOpen ? null : inquiry.id)}
+                  className="w-full p-5 flex items-center justify-between gap-4 text-left hover:bg-muted/30 transition-colors"
+                  aria-expanded={isOpen}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="font-bold truncate">{inquiry.name}</p>
+                      {inquiry.service && (
+                        <span className="rounded-lg bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                          {inquiry.service}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{inquiry.email}{inquiry.phone ? ` / ${inquiry.phone}` : ''}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      {inquiry.source ? ` / ${inquiry.source}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="hidden sm:inline text-sm text-muted-foreground line-clamp-1 max-w-xs">{inquiry.message}</span>
+                    {isOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Contact</h4>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <a href={`mailto:${inquiry.email}`} className="text-sm text-primary hover:underline">{inquiry.email}</a>
+                          <button type="button" onClick={() => copyText(inquiry.email, 'Email')} className="text-muted-foreground hover:text-foreground" aria-label="Copy email">
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                        {inquiry.phone && (
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <a href={`tel:${inquiry.phone}`} className="text-sm text-primary hover:underline">{inquiry.phone}</a>
+                            <button type="button" onClick={() => copyText(inquiry.phone || '', 'Phone')} className="text-muted-foreground hover:text-foreground" aria-label="Copy phone">
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Lead Source</h4>
+                        <p className="text-sm">{inquiry.source || 'Unknown'}</p>
+                        <p className="text-sm text-muted-foreground">{inquiry.service || 'No service selected'}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Message</h4>
+                      <p className="whitespace-pre-wrap rounded-xl bg-muted/30 p-4 text-sm leading-relaxed">{inquiry.message}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+                      <a href={`mailto:${inquiry.email}?subject=${encodeURIComponent(`Re: Your Sticker Smith quote request`)}`}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:brightness-110">
+                        <Mail size={14} /> Reply
+                      </a>
+                      <button type="button" onClick={() => copyText(`${inquiry.name}\n${inquiry.email}\n${inquiry.phone || ''}\n${inquiry.service || ''}\n\n${inquiry.message}`, 'Inquiry')}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary border border-border rounded-lg text-xs font-bold text-foreground hover:border-primary/40">
+                        <Copy size={14} /> Copy Inquiry
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2408,6 +2641,7 @@ function WorkLogTab() {
 
 const mainTabs = [
   { id: 'orders', label: 'Orders', icon: Package },
+  { id: 'inquiries', label: 'Inquiries', icon: Send },
   { id: 'worklog', label: 'Work Log', icon: History },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
   { id: 'promos', label: 'Promos', icon: Tag },
@@ -2422,10 +2656,15 @@ const mainTabs = [
 
 type MainTab = (typeof mainTabs)[number]['id']
 
+function getInitialAdminTab(): MainTab {
+  const params = new URLSearchParams(window.location.search)
+  const tab = params.get('tab')
+  if (mainTabs.some(item => item.id === tab)) return tab as MainTab
+  return params.has('square') ? 'square' : 'orders'
+}
+
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState<MainTab>(() => (
-    new URLSearchParams(window.location.search).has('square') ? 'square' : 'orders'
-  ))
+  const [activeTab, setActiveTab] = useState<MainTab>(getInitialAdminTab)
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     (localStorage.getItem('tss-admin-theme') as 'dark' | 'light') || 'dark'
   )
@@ -2435,6 +2674,13 @@ function Dashboard() {
       localStorage.setItem('tss-admin-theme', next)
       return next
     })
+  }
+
+  const changeTab = (tab: MainTab) => {
+    setActiveTab(tab)
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', tab)
+    window.history.replaceState(null, '', url.toString())
   }
 
   const logout = async () => {
@@ -2464,7 +2710,7 @@ function Dashboard() {
           {mainTabs.map(tab => {
             const Icon = tab.icon
             return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} role="tab" aria-selected={activeTab === tab.id}
+              <button key={tab.id} onClick={() => changeTab(tab.id)} role="tab" aria-selected={activeTab === tab.id}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                   activeTab === tab.id ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
                 }`}>
@@ -2475,6 +2721,7 @@ function Dashboard() {
         </div>
 
         {activeTab === 'orders' && <OrdersTab />}
+        {activeTab === 'inquiries' && <InquiriesTab />}
         {activeTab === 'worklog' && <WorkLogTab />}
         {activeTab === 'pricing' && <PricingTab />}
         {activeTab === 'promos' && <PromoCodeManager />}

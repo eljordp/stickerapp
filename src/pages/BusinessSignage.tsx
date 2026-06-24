@@ -56,6 +56,24 @@ const signageFaqs = [
   },
 ]
 
+const signageProof = [
+  {
+    title: 'Atlas Pizza storefront signage',
+    service: 'Storefront sign production',
+    copy: 'Restaurant-facing signage built for clean street visibility, brand color, and a finished storefront presentation.',
+  },
+  {
+    title: 'Safeway install support',
+    service: 'Bay Area sign and graphics install',
+    copy: 'On-site install work for large-format business graphics where alignment, durability, and schedule discipline matter.',
+  },
+  {
+    title: 'Wedding and event signage',
+    service: 'Display signage and branded event graphics',
+    copy: 'Printed display signs and floor graphics for real events, useful proof for banners, backdrops, and temporary branded spaces.',
+  },
+]
+
 export default function BusinessSignage() {
   const [activeMockup, setActiveMockup] = useState('storefront')
   const handleCategoryChange = useCallback((categoryName: string) => {
@@ -77,11 +95,18 @@ export default function BusinessSignage() {
         image={signageHero}
         imageAlt="Storefront signage"
         icon={Store}
-        primaryCta={{ label: 'Get a Quote', href: '#quote' }}
-        secondaryCta={{ label: 'Recent Installs', href: '#portfolio' }}
+        primaryCta={{ label: 'Shop Signage', href: '#shop' }}
+        secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
       />
       <section className="py-8 md:py-16">
         <div className="section-container">
+          <div id="shop" className="scroll-mt-24 mb-12">
+            <ProductOrder
+              categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']}
+              onCategoryChange={handleCategoryChange}
+            />
+          </div>
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
             <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Local signage shop</p>
             <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6">
@@ -96,6 +121,24 @@ export default function BusinessSignage() {
                   <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
                 ))}
               </div>
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="max-w-5xl mx-auto mb-8">
+            <div className="mb-5">
+              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real project proof</p>
+              <h2 className="text-2xl md:text-3xl font-black mb-3">Storefront signs, installs, and event graphics we can point to.</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                These are real business signage and display projects from the shop, not placeholder category photos.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {signageProof.map((item) => (
+                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
+                  <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">{item.service}</p>
+                  <h3 className="font-bold mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
@@ -133,10 +176,6 @@ export default function BusinessSignage() {
             </div>
           </motion.div>
 
-          <ProductOrder
-            categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']}
-            onCategoryChange={handleCategoryChange}
-          />
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">

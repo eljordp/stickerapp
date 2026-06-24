@@ -31,9 +31,9 @@ export const stickerSupportPages: StickerSupportPageConfig[] = [
   {
     slug: 'die-cut-stickers',
     title: 'Die-Cut Stickers',
-    metaTitle: 'Die-Cut Stickers Bay Area | The Sticker Smith',
+    metaTitle: 'Die-Cut Stickers Bay Area | Waterproof Vinyl Stickers',
     metaDescription:
-      'Custom die-cut stickers printed in Hayward for Bay Area brands, artists, shops, and events. Waterproof vinyl, clean cut lines, free digital proof, and local pickup.',
+      'Order Bay Area die-cut stickers printed in Hayward on waterproof vinyl with clean contour cuts, free digital proofs, fast turnaround, and local pickup.',
     eyebrow: 'Custom Die-Cut Stickers',
     heroTitle: 'Die-cut stickers for Bay Area brands.',
     heroSubtitle:

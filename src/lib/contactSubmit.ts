@@ -94,7 +94,7 @@ export async function submitContactRequest(data: ContactRequest): Promise<Contac
     })
   }
 
-  sendContactEmail({
+  await sendContactEmail({
     name: payload.name,
     email: payload.email,
     phone: payload.phone || undefined,
