@@ -1,4 +1,5 @@
 import { gscConfig, getAccessToken, querySearchAnalytics, isoDate } from '../../server/gsc-api.js'
+import { requireAdmin, sendJson } from '../../server/square-api.js'
 
 // Merge queries that are the same words in a different order into one row
 // (e.g. "custom stickers bay area" + "bay area custom stickers"). Stats are
@@ -33,6 +34,16 @@ function groupByWordSet(rows) {
 // Returns top Search Console queries (last 28 days) with clicks, impressions,
 // CTR, and average position — grouped so different word orders count as one.
 export default async function handler(req, res) {
+  if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' })
+
+  try {
+    await requireAdmin(req)
+  } catch (error) {
+    const status = error.message === 'Missing admin session.' ? 401 : 403
+    res.setHeader('Cache-Control', 'no-store')
+    return sendJson(res, status, { error: error.message || 'Admin access required.' })
+  }
+
   const config = gscConfig()
   if (!config) {
     res.setHeader('Cache-Control', 'no-store')

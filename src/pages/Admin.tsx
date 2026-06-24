@@ -281,6 +281,24 @@ function artworkDownloadUrl(artwork: NonNullable<OrderItem['artwork']>) {
   return `/api/uploads/artwork-download?path=${encodeURIComponent(artwork.path)}&name=${encodeURIComponent(artwork.fileName)}`
 }
 
+async function adminApiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) throw new Error('Admin session expired')
+
+  const headers = new Headers(init.headers)
+  headers.set('Authorization', `Bearer ${session.access_token}`)
+  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+
+  return fetch(input, { ...init, headers })
+}
+
+async function openArtworkDownload(artwork: NonNullable<OrderItem['artwork']>) {
+  const response = await adminApiFetch(artworkDownloadUrl(artwork))
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || !data.url) throw new Error(data.error || 'Could not create artwork download link.')
+  window.open(data.url, '_blank', 'noopener,noreferrer')
+}
+
 function StatCard({ icon: Icon, label, value, color = 'text-primary', delay = 0 }: {
   icon: typeof Package; label: string; value: string | number; color?: string; delay?: number
 }) {
@@ -538,14 +556,17 @@ function OrdersTab() {
                                 <p className="text-xs text-muted-foreground">Add-ons: {item.addOns.map(a => `${a.name} (+$${a.price.toFixed(2)})`).join(', ')}</p>
                               )}
                               {item.artwork?.path && (
-                                <a
-                                  href={artworkDownloadUrl(item.artwork)}
-                                  target="_blank"
-                                  rel="noreferrer"
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void openArtworkDownload(item.artwork!).catch(error => {
+                                      toast.error(error instanceof Error ? error.message : 'Could not download artwork.')
+                                    })
+                                  }}
                                   className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
                                 >
                                   <ExternalLink size={12} /> Download artwork: {item.artwork.fileName}
-                                </a>
+                                </button>
                               )}
                             </div>
                             <span className="font-bold text-sm text-primary">${(item.price * item.quantity).toFixed(2)}</span>
@@ -1371,10 +1392,16 @@ function SeoTab() {
   // Live Google Search Console data (only returns rows once GSC env vars are set).
   useEffect(() => {
     let active = true
-    fetch('/api/seo/gsc')
-      .then(r => r.json())
+    adminApiFetch('/api/seo/gsc')
+      .then(async r => {
+        const data = await r.json().catch(() => ({}))
+        if (!r.ok) throw new Error(data.error || 'Could not load Search Console data')
+        return data
+      })
       .then(d => { if (active) setGsc(d as GscResult) })
-      .catch(() => { if (active) setGsc({ configured: false }) })
+      .catch(error => {
+        if (active) setGsc({ configured: true, error: error instanceof Error ? error.message : 'Could not load Search Console data' })
+      })
     return () => { active = false }
   }, [])
 
