@@ -213,6 +213,14 @@ export function trackLeadSubmission({
 
 export function trackClick(path: string, element: string, x: number, y: number) {
   trackEvent('tracked_click', { path, element, x, y })
+  logToSupabase('click_events', {
+    path,
+    element,
+    x_percent: x,
+    y_percent: y,
+    session_id: getSessionId(),
+    visitor_id: getVisitorId(),
+  })
 }
 
 export function trackCheckoutStarted({

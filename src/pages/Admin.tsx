@@ -140,7 +140,12 @@ interface AnalyticsSummary {
   topProducts: { name: string; views: number }[]
   topClicks: { element: string; count: number }[]
   funnel: { label: string; count: number; pct: number }[]
+  capped: boolean
 }
+
+const ADMIN_FALLBACK_REFRESH_INTERVAL_MS = 120000
+const ANALYTICS_PAGE_SIZE = 1000
+const ANALYTICS_MAX_ROWS = 10000
 
 // Customer-facing product/service pages → owner-friendly names.
 const PRODUCT_PAGE_NAMES: Record<string, string> = {
@@ -170,6 +175,11 @@ const CTA_KEYWORDS = ['start my project', 'get a quote', 'request a quote', 'quo
 function isCtaLabel(label: string) {
   const l = (label || '').toLowerCase()
   return CTA_KEYWORDS.some(k => l.includes(k)) || /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(l)
+}
+
+function formatRefreshTime(date: Date | null) {
+  if (!date) return 'not refreshed yet'
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })
 }
 
 // ─── Login Form ──────────────────────────────────────────────────────────────
@@ -640,15 +650,16 @@ function InquiriesTab() {
   const [inquiries, setInquiries] = useState<ContactInquiry[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [search, setSearch] = useState('')
   const [serviceFilter, setServiceFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState('all')
 
-  useEffect(() => { fetchInquiries() }, [])
-
-  const fetchInquiries = async () => {
-    setLoading(true)
+  const fetchInquiries = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true)
+    else setRefreshing(true)
     setLoadError('')
     try {
       const { data, error } = await supabase
@@ -658,14 +669,42 @@ function InquiriesTab() {
 
       if (error) throw error
       setInquiries((data || []) as ContactInquiry[])
+      setLastUpdated(new Date())
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown Supabase error'
       setLoadError(`Could not load inquiries: ${message}`)
-      setInquiries([])
+      if (showLoader) setInquiries([])
     } finally {
-      setLoading(false)
+      if (showLoader) setLoading(false)
+      setRefreshing(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void fetchInquiries()
+
+    const intervalId = window.setInterval(() => {
+      void fetchInquiries(false)
+    }, ADMIN_FALLBACK_REFRESH_INTERVAL_MS)
+
+    const channel = supabase
+      .channel('admin-inquiries-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_submissions' }, () => {
+        void fetchInquiries(false)
+      })
+      .subscribe()
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void fetchInquiries(false)
+    }
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+
+    return () => {
+      window.clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      void supabase.removeChannel(channel)
+    }
+  }, [fetchInquiries])
 
   const copyText = async (value: string, label: string) => {
     try {
@@ -706,6 +745,11 @@ function InquiriesTab() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span>Live Supabase inquiries / updated {formatRefreshTime(lastUpdated)}</span>
+        {refreshing && <span className="inline-flex items-center gap-1 text-primary"><Loader2 size={12} className="animate-spin" /> Refreshing</span>}
+      </div>
+
       {loadError && (
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100">
           <div className="flex items-start gap-3">
@@ -751,10 +795,11 @@ function InquiriesTab() {
           </select>
           <button
             type="button"
-            onClick={fetchInquiries}
+            onClick={() => { void fetchInquiries(false) }}
+            disabled={refreshing}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary border border-border rounded-xl text-sm font-bold text-foreground hover:border-primary/40"
           >
-            <RotateCcw size={15} /> Refresh
+            {refreshing ? <Loader2 size={15} className="animate-spin" /> : <RotateCcw size={15} />} Refresh
           </button>
         </div>
       </div>
@@ -1405,13 +1450,76 @@ function CartsTab() {
 
 // ─── Analytics Tab ───────────────────────────────────────────────────────────
 
+type AnalyticsTable = 'page_views' | 'click_events' | 'orders'
+
+type PageViewRow = {
+  path: string
+  visitor_id: string | null
+  created_at: string
+}
+
+type ClickEventRow = {
+  element: string | null
+  path: string | null
+  created_at: string
+}
+
+type OrderAnalyticsRow = {
+  total: number | string | null
+  payment_status: string | null
+  created_at: string
+}
+
+async function fetchLiveAnalyticsRows<T>(
+  table: AnalyticsTable,
+  columns: string,
+  since: string,
+  excludeInternalPaths = false,
+) {
+  const rows: T[] = []
+  let exactCount: number | null = null
+
+  for (let from = 0; from < ANALYTICS_MAX_ROWS; from += ANALYTICS_PAGE_SIZE) {
+    const to = Math.min(from + ANALYTICS_PAGE_SIZE - 1, ANALYTICS_MAX_ROWS - 1)
+    let query = supabase
+      .from(table)
+      .select(columns, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (since) query = query.gte('created_at', since)
+    if (excludeInternalPaths) {
+      query = query.not('path', 'like', '/admin%').not('path', 'like', '/account%')
+    }
+
+    const { data, error, count } = await query
+    if (error) throw error
+    if (exactCount === null) exactCount = count ?? null
+
+    const page = (data || []) as T[]
+    rows.push(...page)
+    if (page.length < ANALYTICS_PAGE_SIZE) break
+  }
+
+  return {
+    rows,
+    count: exactCount,
+    capped: exactCount !== null ? rows.length < exactCount : rows.length >= ANALYTICS_MAX_ROWS,
+  }
+}
+
 function AnalyticsTab() {
   const [data, setData] = useState<AnalyticsSummary | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [range, setRange] = useState<'today' | '7d' | '30d' | 'all'>('7d')
 
-  const fetchAnalytics = useCallback(async () => {
-    setLoading(true)
+  const fetchAnalytics = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true)
+    else setRefreshing(true)
+    setLoadError('')
     try {
       const now = new Date()
       let since = ''
@@ -1420,12 +1528,14 @@ function AnalyticsTab() {
       else if (range === '30d') since = new Date(now.getTime() - 30 * 86400000).toISOString()
 
       // Page views — drop internal/staff areas so owners see real customers only.
-      let pvQuery = supabase.from('page_views').select('path, visitor_id, created_at')
-      if (since) pvQuery = pvQuery.gte('created_at', since)
-      const { data: pvData } = await pvQuery
-      const views = (pvData || []).filter(v => !isInternalPath(v.path))
+      const {
+        rows: pageViewRows,
+        count: pageViewCount,
+        capped: pageViewsCapped,
+      } = await fetchLiveAnalyticsRows<PageViewRow>('page_views', 'path, visitor_id, created_at', since, true)
+      const views = pageViewRows.filter(v => !isInternalPath(v.path))
 
-      const pageViews = views.length
+      const pageViews = pageViewCount ?? views.length
       const visitors = new Set(views.map(v => v.visitor_id)).size
 
       // Most-viewed products/services
@@ -1438,10 +1548,11 @@ function AnalyticsTab() {
         .map(([path, count]) => ({ name: PRODUCT_PAGE_NAMES[path], views: count }))
 
       // Clicks — most-clicked buttons + buy-intent count
-      let clickQuery = supabase.from('click_events').select('element, path, created_at')
-      if (since) clickQuery = clickQuery.gte('created_at', since)
-      const { data: clickData } = await clickQuery
-      const clicks = (clickData || []).filter(c => !isInternalPath(c.path || ''))
+      const {
+        rows: clickRows,
+        capped: clicksCapped,
+      } = await fetchLiveAnalyticsRows<ClickEventRow>('click_events', 'element, path, created_at', since, true)
+      const clicks = clickRows.filter(c => !isInternalPath(c.path || ''))
 
       const clickCounts: Record<string, number> = {}
       let ctaClicks = 0
@@ -1457,15 +1568,17 @@ function AnalyticsTab() {
       // Leads — contact / quote form submissions
       let leadQuery = supabase.from('contact_submissions').select('id', { count: 'exact', head: true })
       if (since) leadQuery = leadQuery.gte('created_at', since)
-      const { count: leadCount } = await leadQuery
+      const { count: leadCount, error: leadError } = await leadQuery
+      if (leadError) throw leadError
       const leads = leadCount || 0
 
       // Orders + paid revenue
-      let orderQuery = supabase.from('orders').select('total, payment_status, created_at')
-      if (since) orderQuery = orderQuery.gte('created_at', since)
-      const { data: orderData } = await orderQuery
-      const ordersInRange = orderData || []
-      const orders = ordersInRange.length
+      const {
+        rows: ordersInRange,
+        count: orderCount,
+        capped: ordersCapped,
+      } = await fetchLiveAnalyticsRows<OrderAnalyticsRow>('orders', 'total, payment_status, created_at', since)
+      const orders = orderCount ?? ordersInRange.length
       const revenue = ordersInRange
         .filter(o => o.payment_status === 'captured')
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
@@ -1486,13 +1599,68 @@ function AnalyticsTab() {
       const top = funnelRaw[0].count || 1
       const funnel = funnelRaw.map(s => ({ ...s, pct: Math.round((s.count / top) * 100) }))
 
-      setData({ visitors, pageViews, leads, orders, revenue, ctaClicks, topProducts, topClicks, funnel })
-    } catch {
-      setData({ visitors: 0, pageViews: 0, leads: 0, orders: 0, revenue: 0, ctaClicks: 0, topProducts: [], topClicks: [], funnel: [] })
-    } finally { setLoading(false) }
+      setData({
+        visitors,
+        pageViews,
+        leads,
+        orders,
+        revenue,
+        ctaClicks,
+        topProducts,
+        topClicks,
+        funnel,
+        capped: pageViewsCapped || clicksCapped || ordersCapped,
+      })
+      setLastUpdated(new Date())
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown Supabase error'
+      setLoadError(`Could not load live analytics: ${message}`)
+      setData(current => current ?? {
+        visitors: 0,
+        pageViews: 0,
+        leads: 0,
+        orders: 0,
+        revenue: 0,
+        ctaClicks: 0,
+        topProducts: [],
+        topClicks: [],
+        funnel: [],
+        capped: false,
+      })
+    } finally {
+      if (showLoader) setLoading(false)
+      setRefreshing(false)
+    }
   }, [range])
 
-  useEffect(() => { fetchAnalytics() }, [fetchAnalytics])
+  useEffect(() => { void fetchAnalytics() }, [fetchAnalytics])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void fetchAnalytics(false)
+    }, ADMIN_FALLBACK_REFRESH_INTERVAL_MS)
+
+    const channel = supabase
+      .channel(`admin-analytics-live-${range}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_submissions' }, () => {
+        void fetchAnalytics(false)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        void fetchAnalytics(false)
+      })
+      .subscribe()
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void fetchAnalytics(false)
+    }
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+
+    return () => {
+      window.clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      void supabase.removeChannel(channel)
+    }
+  }, [fetchAnalytics, range])
 
   if (loading) return (
     <div className="bg-card border border-border rounded-2xl p-12 text-center">
@@ -1508,17 +1676,38 @@ function AnalyticsTab() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2"><BarChart3 size={20} className="text-primary" /> Business Snapshot</h2>
-          <p className="text-xs text-muted-foreground mt-1">Real customer activity — your own admin and account visits are not counted.</p>
+          <p className="text-xs text-muted-foreground mt-1">Live Supabase data / updated {formatRefreshTime(lastUpdated)}. Admin and account visits are not counted.</p>
         </div>
-        <div className="flex gap-1">
-          {(['today', '7d', '30d', 'all'] as const).map(r => (
-            <button key={r} onClick={() => setRange(r)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${range === r ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-              {r === 'today' ? 'Today' : r === 'all' ? 'All Time' : `Last ${r}`}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1">
+            {(['today', '7d', '30d', 'all'] as const).map(r => (
+              <button key={r} onClick={() => setRange(r)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${range === r ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                {r === 'today' ? 'Today' : r === 'all' ? 'All Time' : `Last ${r}`}
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={() => { void fetchAnalytics(false) }} disabled={refreshing}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-border text-sm font-medium text-foreground hover:border-primary/40 disabled:opacity-60">
+            {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />} Refresh
+          </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-yellow-400" />
+            <p>{loadError}</p>
+          </div>
+        </div>
+      )}
+
+      {data.capped && (
+        <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-100">
+          Analytics is reading the newest {ANALYTICS_MAX_ROWS.toLocaleString()} rows for this range. Shorten the range if you need exact visitor, funnel, product, or click breakdowns.
+        </div>
+      )}
 
       {/* Headline business numbers */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
