@@ -143,7 +143,7 @@ interface AnalyticsSummary {
   capped: boolean
 }
 
-const ADMIN_FALLBACK_REFRESH_INTERVAL_MS = 120000
+const ADMIN_BACKGROUND_REFRESH_INTERVAL_MS = 12 * 60 * 60 * 1000
 const ANALYTICS_PAGE_SIZE = 1000
 const ANALYTICS_MAX_ROWS = 10000
 
@@ -685,7 +685,7 @@ function InquiriesTab() {
 
     const intervalId = window.setInterval(() => {
       void fetchInquiries(false)
-    }, ADMIN_FALLBACK_REFRESH_INTERVAL_MS)
+    }, ADMIN_BACKGROUND_REFRESH_INTERVAL_MS)
 
     const channel = supabase
       .channel('admin-inquiries-live')
@@ -1638,7 +1638,7 @@ function AnalyticsTab() {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       void fetchAnalytics(false)
-    }, ADMIN_FALLBACK_REFRESH_INTERVAL_MS)
+    }, ADMIN_BACKGROUND_REFRESH_INTERVAL_MS)
 
     const channel = supabase
       .channel(`admin-analytics-live-${range}`)
