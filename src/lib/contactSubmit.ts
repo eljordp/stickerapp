@@ -28,11 +28,57 @@ export type SubscribeRequest = {
   tags?: string[]
 }
 
+const DUPLICATE_SUBMISSION_WINDOW_MS = 10 * 60 * 1000
+const recentSubmissions = new Set<string>()
+
 function splitName(name?: string) {
   const parts = (name || '').trim().split(/\s+/).filter(Boolean)
   return {
     firstName: parts[0] || null,
     lastName: parts.length > 1 ? parts.slice(1).join(' ') : null,
+  }
+}
+
+function normalizeFingerprintValue(value?: string | null) {
+  return (value || '').trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function contactFingerprint(payload: {
+  email: string
+  source: string
+  service: string | null
+  message: string
+}) {
+  return [
+    normalizeFingerprintValue(payload.email),
+    normalizeFingerprintValue(payload.source),
+    normalizeFingerprintValue(payload.service),
+    normalizeFingerprintValue(payload.message),
+  ].join('|')
+}
+
+function recentStorageKey(fingerprint: string) {
+  return `tss_contact_submission_${fingerprint}`
+}
+
+function wasRecentlySubmitted(fingerprint: string) {
+  if (recentSubmissions.has(fingerprint)) return true
+  if (typeof window === 'undefined') return false
+
+  try {
+    const submittedAt = Number(window.sessionStorage.getItem(recentStorageKey(fingerprint)) || 0)
+    return submittedAt > 0 && Date.now() - submittedAt < DUPLICATE_SUBMISSION_WINDOW_MS
+  } catch {
+    return false
+  }
+}
+
+function markRecentlySubmitted(fingerprint: string) {
+  if (typeof window === 'undefined') return
+  try {
+    window.sessionStorage.setItem(recentStorageKey(fingerprint), String(Date.now()))
+  } catch {
+    // Session storage is best-effort; the in-memory guard still catches double-clicks.
   }
 }
 
@@ -78,36 +124,49 @@ export async function submitContactRequest(data: ContactRequest): Promise<Contac
     source: data.source || 'contact',
   }
 
-  const { error } = await supabase.from('contact_submissions').insert(payload)
-  if (error) throw error
+  const fingerprint = contactFingerprint(payload)
+  if (wasRecentlySubmitted(fingerprint)) return { success: true, message: 'Duplicate submission ignored.' }
 
-  await upsertCustomer(data)
+  recentSubmissions.add(fingerprint)
+  try {
+    const { error } = await supabase.from('contact_submissions').insert(payload)
+    if (error) throw error
+    markRecentlySubmitted(fingerprint)
 
-  if (data.subscribe) {
-    await subscribeEmail({
-      email: payload.email,
-      name: payload.name,
-      phone: payload.phone || undefined,
+    await upsertCustomer(data)
+
+    if (data.subscribe) {
+      await subscribeEmail({
+        email: payload.email,
+        name: payload.name,
+        phone: payload.phone || undefined,
+        source: payload.source,
+        service: payload.service || undefined,
+        tags: data.tags || [payload.service || 'lead'].filter(Boolean),
+      })
+    }
+
+    try {
+      await sendContactEmail({
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone || undefined,
+        service: payload.service || undefined,
+        message: payload.message,
+      })
+    } catch (error) {
+      console.warn('Contact saved, but email delivery failed:', error)
+    }
+
+    trackLeadSubmission({
       source: payload.source,
-      service: payload.service || undefined,
-      tags: data.tags || [payload.service || 'lead'].filter(Boolean),
+      service: payload.service,
+      subscribed: !!data.subscribe,
+      tags: data.tags,
     })
+
+    return { success: true }
+  } finally {
+    recentSubmissions.delete(fingerprint)
   }
-
-  await sendContactEmail({
-    name: payload.name,
-    email: payload.email,
-    phone: payload.phone || undefined,
-    service: payload.service || undefined,
-    message: payload.message,
-  })
-
-  trackLeadSubmission({
-    source: payload.source,
-    service: payload.service,
-    subscribed: !!data.subscribe,
-    tags: data.tags,
-  })
-
-  return { success: true }
 }

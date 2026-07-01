@@ -182,6 +182,36 @@ function formatRefreshTime(date: Date | null) {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })
 }
 
+function normalizeInquiryValue(value?: string | null) {
+  return (value || '').trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function inquiryDuplicateKey(inquiry: ContactInquiry) {
+  return [
+    normalizeInquiryValue(inquiry.email),
+    normalizeInquiryValue(inquiry.source),
+    normalizeInquiryValue(inquiry.service),
+    normalizeInquiryValue(inquiry.message),
+  ].join('|')
+}
+
+function dedupeInquiries(inquiries: ContactInquiry[]) {
+  const seen = new Set<string>()
+  const unique: ContactInquiry[] = []
+
+  inquiries.forEach((inquiry) => {
+    const key = inquiryDuplicateKey(inquiry)
+    if (seen.has(key)) return
+    seen.add(key)
+    unique.push(inquiry)
+  })
+
+  return {
+    unique,
+    duplicateCount: inquiries.length - unique.length,
+  }
+}
+
 // ─── Login Form ──────────────────────────────────────────────────────────────
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
@@ -716,9 +746,10 @@ function InquiriesTab() {
   }
 
   const normalizedSearch = search.trim().toLowerCase()
-  const services = Array.from(new Set(inquiries.map(i => i.service).filter(Boolean) as string[])).sort()
-  const sources = Array.from(new Set(inquiries.map(i => i.source).filter(Boolean) as string[])).sort()
-  const filtered = inquiries.filter(inquiry => {
+  const { unique: uniqueInquiries, duplicateCount } = dedupeInquiries(inquiries)
+  const services = Array.from(new Set(uniqueInquiries.map(i => i.service).filter(Boolean) as string[])).sort()
+  const sources = Array.from(new Set(uniqueInquiries.map(i => i.source).filter(Boolean) as string[])).sort()
+  const filtered = uniqueInquiries.filter(inquiry => {
     if (serviceFilter !== 'all' && inquiry.service !== serviceFilter) return false
     if (sourceFilter !== 'all' && inquiry.source !== sourceFilter) return false
     if (!normalizedSearch) return true
@@ -732,9 +763,9 @@ function InquiriesTab() {
     ].some(value => value.toLowerCase().includes(normalizedSearch))
   })
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-  const recentCount = inquiries.filter(i => new Date(i.created_at).getTime() >= weekAgo).length
-  const uniqueEmails = new Set(inquiries.map(i => i.email.toLowerCase())).size
-  const quoteCount = inquiries.filter(i => (i.source || '').includes('quote') || (i.service || '').toLowerCase().includes('quote')).length
+  const recentCount = uniqueInquiries.filter(i => new Date(i.created_at).getTime() >= weekAgo).length
+  const uniqueEmails = new Set(uniqueInquiries.map(i => i.email.toLowerCase())).size
+  const quoteCount = uniqueInquiries.filter(i => (i.source || '').includes('quote') || (i.service || '').toLowerCase().includes('quote')).length
 
   if (loading) return (
     <div className="bg-card border border-border rounded-2xl p-12 text-center">
@@ -750,6 +781,12 @@ function InquiriesTab() {
         {refreshing && <span className="inline-flex items-center gap-1 text-primary"><Loader2 size={12} className="animate-spin" /> Refreshing</span>}
       </div>
 
+      {duplicateCount > 0 && (
+        <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-100">
+          Hiding {duplicateCount} duplicate {duplicateCount === 1 ? 'retry' : 'retries'} with the same email, source, service, and message.
+        </div>
+      )}
+
       {loadError && (
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-sm text-yellow-100">
           <div className="flex items-start gap-3">
@@ -760,7 +797,7 @@ function InquiriesTab() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <StatCard icon={Send} label="Total Inquiries" value={inquiries.length} delay={0.1} />
+        <StatCard icon={Send} label="Total Inquiries" value={uniqueInquiries.length} delay={0.1} />
         <StatCard icon={Clock} label="Last 7 Days" value={recentCount} color="text-blue-400" delay={0.2} />
         <StatCard icon={Users} label="Unique Emails" value={uniqueEmails} color="text-green-400" delay={0.3} />
         <StatCard icon={Mail} label="Quote Leads" value={quoteCount} color="text-yellow-400" delay={0.4} />
@@ -807,7 +844,7 @@ function InquiriesTab() {
       {filtered.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-12 text-center">
           <Send size={48} className="mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">{inquiries.length === 0 ? 'No inquiries found.' : 'No inquiries match those filters.'}</p>
+          <p className="text-muted-foreground">{uniqueInquiries.length === 0 ? 'No inquiries found.' : 'No inquiries match those filters.'}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1455,6 +1492,7 @@ type AnalyticsTable = 'page_views' | 'click_events' | 'orders'
 type PageViewRow = {
   path: string
   visitor_id: string | null
+  user_agent: string | null
   created_at: string
 }
 
@@ -1508,6 +1546,31 @@ async function fetchLiveAnalyticsRows<T>(
   }
 }
 
+function isBotUserAgent(userAgent: string | null | undefined) {
+  const ua = (userAgent || '').toLowerCase()
+  if (!ua) return false
+  return [
+    'bot',
+    'crawl',
+    'spider',
+    'slurp',
+    'preview',
+    'headless',
+    'lighthouse',
+    'pagespeed',
+    'curl',
+    'wget',
+    'python',
+    'uptime',
+    'monitor',
+    'facebookexternalhit',
+    'meta-externalagent',
+    'discordbot',
+    'telegrambot',
+    'whatsapp',
+  ].some(token => ua.includes(token))
+}
+
 function AnalyticsTab() {
   const [data, setData] = useState<AnalyticsSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1530,12 +1593,11 @@ function AnalyticsTab() {
       // Page views — drop internal/staff areas so owners see real customers only.
       const {
         rows: pageViewRows,
-        count: pageViewCount,
         capped: pageViewsCapped,
-      } = await fetchLiveAnalyticsRows<PageViewRow>('page_views', 'path, visitor_id, created_at', since, true)
-      const views = pageViewRows.filter(v => !isInternalPath(v.path))
+      } = await fetchLiveAnalyticsRows<PageViewRow>('page_views', 'path, visitor_id, user_agent, created_at', since, true)
+      const views = pageViewRows.filter(v => !isInternalPath(v.path) && !isBotUserAgent(v.user_agent))
 
-      const pageViews = pageViewCount ?? views.length
+      const pageViews = views.length
       const visitors = new Set(views.map(v => v.visitor_id)).size
 
       // Most-viewed products/services
@@ -1590,7 +1652,7 @@ function AnalyticsTab() {
       // uses /order-confirmation views (only reached after a successful order)
       // rather than the raw order count, which isn't visitor-linked.
       const funnelRaw = [
-        { label: 'Visited the site', count: visitors },
+        { label: 'Tracked browser IDs', count: visitors },
         { label: 'Viewed a product', count: visitorsWho(p => !!PRODUCT_PAGE_NAMES[p]) },
         { label: 'Reached the cart', count: visitorsWho(p => p === '/cart') },
         { label: 'Started checkout', count: visitorsWho(p => p === '/checkout') },
@@ -1676,9 +1738,13 @@ function AnalyticsTab() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2"><BarChart3 size={20} className="text-primary" /> Business Snapshot</h2>
-          <p className="text-xs text-muted-foreground mt-1">Live Supabase data / updated {formatRefreshTime(lastUpdated)}. Admin and account visits are not counted.</p>
+          <p className="text-xs text-muted-foreground mt-1">Traffic totals live in Vercel Analytics. This page shows Supabase business events / updated {formatRefreshTime(lastUpdated)}.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <a href="https://vercel.com/jordis-projects-94d2df39/tssprint/analytics" target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border text-sm font-medium text-foreground hover:border-primary/40">
+            <ExternalLink size={14} /> Vercel Analytics
+          </a>
           <div className="flex gap-1">
             {(['today', '7d', '30d', 'all'] as const).map(r => (
               <button key={r} onClick={() => setRange(r)}
@@ -1710,18 +1776,17 @@ function AnalyticsTab() {
       )}
 
       {/* Headline business numbers */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={DollarSign} label="Revenue (paid)" value={`$${data.revenue.toFixed(2)}`} color="text-green-400" delay={0.05} />
         <StatCard icon={ShoppingCart} label="Orders" value={data.orders} color="text-green-400" delay={0.1} />
         <StatCard icon={Send} label="Leads (quotes)" value={data.leads} color="text-yellow-400" delay={0.15} />
         <StatCard icon={Target} label="Buy-intent clicks" value={data.ctaClicks} color="text-orange-400" delay={0.2} />
-        <StatCard icon={Users} label="Visitors" value={data.visitors} color="text-blue-400" delay={0.25} />
       </div>
 
       {/* Conversion funnel */}
       <div className="bg-card border border-border rounded-2xl p-6">
         <h3 className="font-bold mb-1 flex items-center gap-2"><TrendingUp size={16} className="text-primary" /> Where customers go (and drop off)</h3>
-        <p className="text-xs text-muted-foreground mb-4">How visitors move from browsing toward buying. Big drops show where sales are leaking.</p>
+        <p className="text-xs text-muted-foreground mb-4">How tracked browsers move from browsing toward buying. Big drops show where sales are leaking.</p>
         {data.funnel[0]?.count === 0 ? <p className="text-sm text-muted-foreground">No visitor activity yet for this period.</p> : (
           <div className="space-y-3">
             {data.funnel.map((s, i) => {
