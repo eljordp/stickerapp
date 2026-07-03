@@ -3,6 +3,7 @@ import { CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import ServicePageIntro from '@/components/ServicePageIntro'
 import windowAutoTint from '@/assets/projects/window-auto-tint.jpg'
 import windowStorefront from '@/assets/projects/window-storefront-vinyl.jpg'
 import windowDecorative from '@/assets/projects/window-decorative-pattern.jpg'
@@ -40,6 +41,11 @@ export default function WindowFilm() {
     <>
       <section id="quote" className="pt-6 md:pt-10 pb-8 md:pb-16 scroll-mt-24">
         <div className="section-container">
+          <ServicePageIntro
+            eyebrow="Window Film"
+            title="Window Film, Tint & Glass Graphics"
+            description="Get a quote for frosted film, solar film, security film, storefront graphics, or automotive tint."
+          />
           <EstimateForm
             service="Window Film & Tint"
             title="Get a Window Film Estimate"

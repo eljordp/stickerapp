@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { getPricing, loadPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
+import ServicePageIntro from '@/components/ServicePageIntro'
 import mylarCandyshockGreen from '@/assets/projects/mylar-candyshock-green.jpg'
 import mylarCandyshockBlue from '@/assets/projects/mylar-candyshock-blue.jpg'
 import mylarAtomicshock from '@/assets/projects/mylar-atomicshock.jpg'
@@ -290,6 +291,11 @@ export default function MylarPackaging() {
     <>
       <section id="configure" className="pt-6 md:pt-10 pb-8 md:pb-16 scroll-mt-24">
         <div className="section-container max-w-5xl mx-auto">
+          <ServicePageIntro
+            eyebrow="Custom Mylar"
+            title="Custom Mylar Bags & Product Packaging"
+            description="Price pouch sizes, finishes, artwork uploads, and launch-run packaging before sending the job to proof."
+          />
           {/* Calculator Section */}
           <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             {/* LEFT: Controls */}

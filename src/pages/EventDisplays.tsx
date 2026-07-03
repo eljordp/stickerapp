@@ -5,6 +5,7 @@ import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import ServicePageIntro from '@/components/ServicePageIntro'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
 import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
@@ -38,21 +39,6 @@ const process = [
   { step: '4', title: 'Set Up & Shine', desc: 'Everything ships with frames, hardware, and carry bags. Easy setup — one person, under 5 minutes.' },
 ]
 
-const eventLocalAnswers = [
-  {
-    title: 'Custom canopies in Hayward CA',
-    copy: 'Order branded canopy tents for Hayward markets, pop-ups, festivals, school events, launch booths, and local business activations.',
-  },
-  {
-    title: 'Complete booth branding',
-    copy: 'Match the canopy with table covers, feather flags, retractable banners, backdrops, and vinyl signage for a finished setup.',
-  },
-  {
-    title: 'Built around your event date',
-    copy: 'Send the event date, booth size, artwork, and location so we can confirm proofing, production, and pickup or delivery timing.',
-  },
-]
-
 const eventFaqs = [
   {
     q: 'Where can I order custom canopies in Hayward CA?',
@@ -72,24 +58,6 @@ const eventFaqs = [
   },
 ]
 
-const eventProof = [
-  {
-    title: 'Event booth setup',
-    service: 'Pop-up booth branding',
-    copy: 'A real booth setup showing the kind of branded presence customers need for markets, launches, and trade events.',
-  },
-  {
-    title: 'Feather flag display',
-    service: 'Custom feather flags',
-    copy: 'Printed flag work for outdoor visibility, directional signage, and event traffic from a distance.',
-  },
-  {
-    title: 'Wedding floor and display graphics',
-    service: 'Event display signage',
-    copy: 'Custom vinyl floor and display pieces that show the shop can handle temporary event graphics beyond basic banners.',
-  },
-]
-
 export default function EventCanopies() {
   const [activeMockup, setActiveMockup] = useState('canopy')
   const handleCategoryChange = useCallback((categoryName: string) => {
@@ -105,6 +73,11 @@ export default function EventCanopies() {
     <>
       <section className="pt-6 md:pt-10 pb-8 md:pb-16">
         <div className="section-container">
+          <ServicePageIntro
+            eyebrow="Event Displays"
+            title="Custom Canopies, Banners & Booth Displays"
+            description="Order tents, table covers, flags, retractable banners, and event kits built around your event date."
+          />
           <div id="shop" className="scroll-mt-24 mb-12">
             <ProductOrder
               categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']}
@@ -126,41 +99,6 @@ export default function EventCanopies() {
                   <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
                 ))}
               </div>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="max-w-5xl mx-auto mb-8">
-            <div className="mb-5">
-              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Hayward Custom Canopies</p>
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Custom canopy tents, banners, and booth graphics for Bay Area events.</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                If you need custom canopies in Hayward CA, we can quote the tent, table cover, flags, banners, and backdrop together so the booth looks consistent on event day.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              {eventLocalAnswers.map((item) => (
-                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
-                  <h3 className="font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="max-w-5xl mx-auto mb-8">
-            <div className="mb-5">
-              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real event proof</p>
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Booth, flag, and floor projects that show the event-display lane is real.</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                These project examples support custom canopy, feather flag, table cover, backdrop, and event display searches without adding thin city pages.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              {eventProof.map((item) => (
-                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
-                  <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">{item.service}</p>
-                  <h3 className="font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
-                </div>
-              ))}
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">

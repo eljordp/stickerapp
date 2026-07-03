@@ -5,6 +5,7 @@ import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import StudioMockup from '@/components/StudioMockup'
+import ServicePageIntro from '@/components/ServicePageIntro'
 import bizCardsLuxury from '@/assets/projects/business-cards-luxury.jpg'
 import bizCardsFoil from '@/assets/projects/bp-cleopatra-discount-cards.jpg'
 import flyers from '@/assets/projects/flyers-full-color.jpg'
@@ -51,6 +52,11 @@ export default function BusinessPrint() {
     <>
       <section className="pt-6 md:pt-10 pb-8 md:pb-16">
         <div className="section-container">
+          <ServicePageIntro
+            eyebrow="Business Print"
+            title="Custom Printing in Hayward"
+            description="Order business cards, flyers, postcards, magnets, and premium print materials with proofing before production."
+          />
           <div id="shop" className="scroll-mt-24 mb-12">
             <ProductOrder
               categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']}

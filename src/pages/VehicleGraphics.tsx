@@ -3,6 +3,7 @@ import { CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import ServicePageIntro from '@/components/ServicePageIntro'
 import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
 import bhogalTruck from '@/assets/projects/bhogal-construction.jpeg'
 import procareFleet from '@/assets/projects/procare-fleet.jpeg'
@@ -71,6 +72,11 @@ export default function VehicleGraphics() {
     <>
       <section id="quote" className="pt-6 md:pt-10 pb-8 md:pb-16 scroll-mt-24">
         <div className="section-container">
+          <ServicePageIntro
+            eyebrow="Vehicle Graphics"
+            title="Vehicle Graphics in Hayward & the Bay Area"
+            description="Get pricing for wraps, lettering, decals, and fleet branding without reading a long sales page first."
+          />
           <EstimateForm
             service="Vehicle Graphics"
             title="Get a Vehicle Graphics Estimate"

@@ -3,9 +3,9 @@ import { motion } from 'framer-motion'
 import { CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
-import SqFtEstimator from '@/components/SqFtEstimator'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
+import ServicePageIntro from '@/components/ServicePageIntro'
 import atlasPizza from '@/assets/projects/atlas-pizza-signage.jpeg'
 import elevated925 from '@/assets/projects/elevated925-storefront.jpg'
 import plu2o from '@/assets/projects/plu2o-dispensary.jpg'
@@ -54,24 +54,6 @@ const signageFaqs = [
   },
 ]
 
-const signageProof = [
-  {
-    title: 'Atlas Pizza storefront signage',
-    service: 'Storefront sign production',
-    copy: 'Restaurant-facing signage built for clean street visibility, brand color, and a finished storefront presentation.',
-  },
-  {
-    title: 'Safeway install support',
-    service: 'Bay Area sign and graphics install',
-    copy: 'On-site install work for large-format business graphics where alignment, durability, and schedule discipline matter.',
-  },
-  {
-    title: 'Wedding and event signage',
-    service: 'Display signage and branded event graphics',
-    copy: 'Printed display signs and floor graphics for real events, useful proof for banners, backdrops, and temporary branded spaces.',
-  },
-]
-
 export default function BusinessSignage() {
   const [activeMockup, setActiveMockup] = useState('storefront')
   const handleCategoryChange = useCallback((categoryName: string) => {
@@ -88,6 +70,11 @@ export default function BusinessSignage() {
     <>
       <section className="pt-6 md:pt-10 pb-8 md:pb-16">
         <div className="section-container">
+          <ServicePageIntro
+            eyebrow="Business Signage"
+            title="Business Signs in Hayward"
+            description="Order storefront graphics, A-frame signs, retractable banners, and wall graphics with local install support when needed."
+          />
           <div id="shop" className="scroll-mt-24 mb-12">
             <ProductOrder
               categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']}
@@ -109,24 +96,6 @@ export default function BusinessSignage() {
                   <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
                 ))}
               </div>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="max-w-5xl mx-auto mb-8">
-            <div className="mb-5">
-              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real project proof</p>
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Storefront signs, installs, and event graphics we can point to.</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                These are real business signage and display projects from the shop, not placeholder category photos.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              {signageProof.map((item) => (
-                <div key={item.title} className="rounded-xl border border-border bg-card p-5">
-                  <p className="text-primary font-bold text-xs uppercase tracking-widest mb-2">{item.service}</p>
-                  <h3 className="font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
-                </div>
-              ))}
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
@@ -233,22 +202,6 @@ export default function BusinessSignage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-      <section className="py-10 md:py-14 border-t border-border/50">
-        <div className="section-container max-w-2xl">
-          <SqFtEstimator
-            service="Business Signage"
-            title="Signage Quick Estimate"
-            subtitle="Approximate your storefront or wall dimensions for a starting price."
-            tiers={[
-              { maxSqFt: 10, price: 150, label: 'Up to 10 sq ft — Vinyl Lettering Small' },
-              { maxSqFt: 25, price: 375, label: '10–25 sq ft — Printed Graphics Small' },
-              { maxSqFt: 50, price: 600, label: '25–50 sq ft — Printed Graphics Medium' },
-              { maxSqFt: 100, price: 1000, label: '50–100 sq ft — Printed Graphics Large' },
-              { maxSqFt: 150, price: 1400, label: '100–150 sq ft — Full Wall Install' },
-            ]}
-          />
         </div>
       </section>
       <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
