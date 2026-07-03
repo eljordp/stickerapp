@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -11,6 +10,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
+
+async function getSupabaseClient() {
+  return (await import('@/lib/supabase')).supabase
+}
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
@@ -24,22 +27,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check existing session
-    supabase.auth.getUser().then(({ data: { user: u } }) => {
-      setUser(u)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    let active = true
+    let unsubscribe: (() => void) | undefined
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    void getSupabaseClient()
+      .then((supabase) => {
+        if (!active) return
+        // Check existing session
+        void supabase.auth.getUser().then(({ data: { user: u } }) => {
+          if (!active) return
+          setUser(u)
+          setLoading(false)
+        }).catch(() => {
+          if (active) setLoading(false)
+        })
 
-    return () => subscription.unsubscribe()
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (active) setUser(session?.user ?? null)
+        })
+        unsubscribe = () => subscription.unsubscribe()
+      })
+      .catch(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+      unsubscribe?.()
+    }
   }, [])
 
   const signUp = async (email: string, password: string, name: string, phone?: string): Promise<{ error?: string }> => {
     try {
+      const supabase = await getSupabaseClient()
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -72,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
     try {
+      const supabase = await getSupabaseClient()
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) return { error: error.message }
       return {}
@@ -81,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    const supabase = await getSupabaseClient()
     await supabase.auth.signOut()
     setUser(null)
   }

@@ -1,22 +1,20 @@
 import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Store, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
-import PageHero from '@/components/PageHero'
+import { CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import SqFtEstimator from '@/components/SqFtEstimator'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
-import signageHero from '@/assets/services/business-signage.jpg'
 import atlasPizza from '@/assets/projects/atlas-pizza-signage.jpeg'
 import elevated925 from '@/assets/projects/elevated925-storefront.jpg'
 import plu2o from '@/assets/projects/plu2o-dispensary.jpg'
 import barbershop from '@/assets/projects/curated-barbershop.jpeg'
 import safewayInstall from '@/assets/projects/safeway-install.jpeg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
-import storefrontBlank from '@/assets/mockups/signage-storefront-blank.jpg'
-import wallInteriorBlank from '@/assets/mockups/signage-wall-interior-blank.jpg'
-import aFrameBlank from '@/assets/mockups/signage-a-frame-blank.jpg'
+import storefrontBlank from '@/assets/optimized/mockups/signage-storefront-blank-1100.webp'
+import wallInteriorBlank from '@/assets/optimized/mockups/signage-wall-interior-blank-1100.webp'
+import aFrameBlank from '@/assets/optimized/mockups/signage-a-frame-blank-1100.webp'
 
 const features = [
   'Storefront & Building Signs',
@@ -88,17 +86,7 @@ export default function BusinessSignage() {
 
   return (
     <>
-      <PageHero
-        eyebrow="Business Signage"
-        title="Business signs and signage for Hayward storefronts."
-        subtitle="Storefront signs, wall graphics, A-frames, banners, acrylic signs, and illuminated signage for Hayward and Bay Area businesses. Built to last 3-10 years and installed by our crew."
-        image={signageHero}
-        imageAlt="Storefront signage"
-        icon={Store}
-        primaryCta={{ label: 'Shop Signage', href: '#shop' }}
-        secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
-      />
-      <section className="py-8 md:py-16">
+      <section className="pt-6 md:pt-10 pb-8 md:pb-16">
         <div className="section-container">
           <div id="shop" className="scroll-mt-24 mb-12">
             <ProductOrder

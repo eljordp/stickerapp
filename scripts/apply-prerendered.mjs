@@ -10,13 +10,12 @@
 import { cp, stat, readFile, writeFile, readdir, mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { APP_SHELL_ROUTES, appShellHtmlForRoute } from './app-shell-meta.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const SRC = path.join(ROOT, 'prerendered')
 const DEST = path.join(ROOT, 'dist')
-const APP_SHELL_ROUTES = ['/cart', '/checkout', '/order-confirmation', '/account', '/admin']
-
 try {
   await stat(SRC)
 } catch {
@@ -145,14 +144,15 @@ async function walk(srcDir, destDir) {
 
 async function writeAppShellAliases(html) {
   for (const route of APP_SHELL_ROUTES) {
+    const routeHtml = appShellHtmlForRoute(html, route)
     const sub = route.replace(/^\//, '')
     const outDir = path.join(DEST, sub)
     await mkdir(outDir, { recursive: true })
-    await writeFile(path.join(outDir, 'index.html'), html, 'utf8')
+    await writeFile(path.join(outDir, 'index.html'), routeHtml, 'utf8')
 
     const aliasFile = path.join(DEST, `${sub}.html`)
     await mkdir(path.dirname(aliasFile), { recursive: true })
-    await writeFile(aliasFile, html, 'utf8')
+    await writeFile(aliasFile, routeHtml, 'utf8')
   }
 }
 

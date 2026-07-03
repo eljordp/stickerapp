@@ -13,12 +13,12 @@ const navLinks = [
     label: 'Services',
     href: '/services',
     submenu: [
-      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics', products: ['Hayward Vehicle Graphics', 'Full Vehicle Wraps', 'Partial Wraps & Accents', 'Fleet Branding', 'Door & Spot Graphics', 'Perforated Window Graphics', 'Vinyl Lettering & Decals'] },
-      { label: 'Business Signage', href: '/services/business-signage', products: ['Storefront & Building Signs', 'Wall Graphics & Murals', 'A-Frame Sidewalk Signs', 'Retractable Banners', 'Acrylic & Metal Signs', 'LED & Illuminated Signs'] },
-      { label: 'Event Displays', href: '/services/event-displays', products: ['Hayward Custom Canopies', 'Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
-      { label: 'Business Print', href: '/services/business-print', products: ['Business Cards', 'Flyers', 'Door Hangers', 'Postcards & Mailers', 'Vehicle Magnets'] },
-      { label: 'Window Film & Tint', href: '/services/window-film', products: ['Frosted Privacy Film', 'Solar & Heat Rejection', 'Security & Safety Film', 'Decorative Graphics', 'Custom Cut Logos'] },
-      { label: 'Mylar Packaging', href: '/mylar', products: ['Custom Mylar Bags Hayward', 'Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', '2oz Jar + Label'] },
+      { label: 'Vehicle Graphics', href: '/services/vehicle-graphics#quote', products: ['Hayward Vehicle Graphics', 'Full Vehicle Wraps', 'Partial Wraps & Accents', 'Fleet Branding', 'Door & Spot Graphics', 'Perforated Window Graphics', 'Vinyl Lettering & Decals'] },
+      { label: 'Business Signage', href: '/services/business-signage#shop', products: ['Storefront & Building Signs', 'Wall Graphics & Murals', 'A-Frame Sidewalk Signs', 'Retractable Banners', 'Acrylic & Metal Signs', 'LED & Illuminated Signs'] },
+      { label: 'Event Displays', href: '/services/event-displays#shop', products: ['Hayward Custom Canopies', 'Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
+      { label: 'Business Print', href: '/services/business-print#shop', products: ['Business Cards', 'Flyers', 'Door Hangers', 'Postcards & Mailers', 'Vehicle Magnets'] },
+      { label: 'Window Film & Tint', href: '/services/window-film#quote', products: ['Frosted Privacy Film', 'Solar & Heat Rejection', 'Security & Safety Film', 'Decorative Graphics', 'Custom Cut Logos'] },
+      { label: 'Mylar Packaging', href: '/mylar#configure', products: ['Custom Mylar Bags Hayward', 'Eighths (3"×5")', 'Quarters (4"×6")', 'Ounce Bags (5"×8")', 'Half Pound (10"×12")', 'Pound Bags (14"×16")', '2oz Jar + Label'] },
     ],
   },
   { label: 'Projects', href: '/projects' },
@@ -37,6 +37,9 @@ export default function Header() {
   const { items } = useCart()
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
   const [showDealPulse, setShowDealPulse] = useState(false)
+  const linkPath = (href: string) => href.split('#')[0]
+  const isActiveLink = (href: string) => location.pathname === linkPath(href)
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (cartCount === 0) {
@@ -87,7 +90,7 @@ export default function Header() {
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <div key={link.label} className="relative" onMouseEnter={() => { if (link.submenu) setOpenDropdown(link.label) }} onMouseLeave={() => { setOpenDropdown(null); setHoveredService(null) }}>
-                  <Link to={link.href} className={`nav-link flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-white/5 ${location.pathname === link.href ? 'active' : ''}`}>
+                  <Link to={link.href} className={`nav-link flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-white/5 ${isActiveLink(link.href) ? 'active' : ''}`}>
                     {link.label}
                     {link.submenu && <ChevronDown size={14} className="opacity-50" />}
                   </Link>
@@ -172,7 +175,7 @@ export default function Header() {
             <motion.nav initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="relative pt-20 px-6 flex flex-col gap-1 max-h-screen overflow-y-auto pb-32">
               {navLinks.map((link, index) => (
                 <motion.div key={link.label} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-                  <Link to={link.href} className={`block text-xl font-semibold py-3 border-b border-border/30 transition-colors ${location.pathname === link.href ? 'text-primary' : 'text-foreground hover:text-primary'}`}>{link.label}</Link>
+                  <Link to={link.href} className={`block text-xl font-semibold py-3 border-b border-border/30 transition-colors ${isActiveLink(link.href) ? 'text-primary' : 'text-foreground hover:text-primary'}`}>{link.label}</Link>
                   {link.submenu && (
                     <div className="pl-4 py-1">
                       {link.submenu.map((sub) => (

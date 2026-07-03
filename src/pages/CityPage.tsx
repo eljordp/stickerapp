@@ -5,12 +5,12 @@ import { cityBySlug, type CityConfig } from '@/lib/cities'
 
 const services = [
   { icon: Sticker, title: (city: string) => `${city} Custom Stickers`, description: 'Die-cut, kiss-cut, sheet, holographic, vinyl labels.', href: '/stickers' },
-  { icon: Car, title: (city: string) => `${city} Vehicle Graphics`, description: 'Wraps, fleet branding, door decals, and spot graphics.', href: '/services/vehicle-graphics' },
-  { icon: Building2, title: (city: string) => `${city} Business Signs`, description: 'Storefront signs, wall graphics, A-frames, banners, and window vinyl.', href: '/services/business-signage' },
-  { icon: Tent, title: (city: string) => `${city} Canopies & Banners`, description: 'Custom canopy tents, feather flags, banners, table covers, and retractables.', href: '/services/event-displays' },
-  { icon: Printer, title: (city: string) => `${city} Business Print`, description: 'Business cards, flyers, brochures, postcards, and marketing collateral.', href: '/services/business-print' },
-  { icon: Film, title: (city: string) => `${city} Window Film`, description: 'Privacy, frosted, security, solar, and decorative window graphics.', href: '/services/window-film' },
-  { icon: Package, title: (city: string) => `${city} Mylar Packaging`, description: 'Custom branded mylar bags, labels, and product packaging.', href: '/mylar' },
+  { icon: Car, title: (city: string) => `${city} Vehicle Graphics`, description: 'Wraps, fleet branding, door decals, and spot graphics.', href: '/services/vehicle-graphics#quote' },
+  { icon: Building2, title: (city: string) => `${city} Business Signs`, description: 'Storefront signs, wall graphics, A-frames, banners, and window vinyl.', href: '/services/business-signage#shop' },
+  { icon: Tent, title: (city: string) => `${city} Canopies & Banners`, description: 'Custom canopy tents, feather flags, banners, table covers, and retractables.', href: '/services/event-displays#shop' },
+  { icon: Printer, title: (city: string) => `${city} Business Print`, description: 'Business cards, flyers, brochures, postcards, and marketing collateral.', href: '/services/business-print#shop' },
+  { icon: Film, title: (city: string) => `${city} Window Film`, description: 'Privacy, frosted, security, solar, and decorative window graphics.', href: '/services/window-film#quote' },
+  { icon: Package, title: (city: string) => `${city} Mylar Packaging`, description: 'Custom branded mylar bags, labels, and product packaging.', href: '/mylar#configure' },
 ]
 
 function CityPageInner({ city }: { city: CityConfig }) {

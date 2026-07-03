@@ -16,6 +16,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer'
+import { APP_SHELL_ROUTES, appShellHtmlForRoute } from './app-shell-meta.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -23,8 +24,6 @@ const DIST = path.join(ROOT, 'dist')
 // Mirror of the prerender output that is committed to git so Vercel
 // (which can't run puppeteer in its build env) can copy it into dist/.
 const PRERENDERED = path.join(ROOT, 'prerendered')
-const APP_SHELL_ROUTES = ['/cart', '/checkout', '/order-confirmation', '/account', '/admin']
-
 const CITY_SLUGS = [
   'hayward',
   'oakland',
@@ -191,15 +190,16 @@ async function main() {
     }
 
     for (const route of APP_SHELL_ROUTES) {
+      const html = appShellHtmlForRoute(appShellHtml, route)
       const sub = route.replace(/^\//, '')
       for (const base of [DIST, PRERENDERED]) {
         const outDir = path.join(base, sub)
         await mkdir(outDir, { recursive: true })
-        await writeFile(path.join(outDir, 'index.html'), appShellHtml, 'utf8')
+        await writeFile(path.join(outDir, 'index.html'), html, 'utf8')
 
         const aliasFile = path.join(base, `${sub}.html`)
         await mkdir(path.dirname(aliasFile), { recursive: true })
-        await writeFile(aliasFile, appShellHtml, 'utf8')
+        await writeFile(aliasFile, html, 'utf8')
       }
       console.log(`[prerender] wrote app shell ${route}`)
     }

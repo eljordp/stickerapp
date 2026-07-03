@@ -15,12 +15,12 @@ const footerLinks = {
     { label: 'Hayward Custom Labels', href: '/custom-labels' },
   ],
   services: [
-    { label: 'Hayward Vehicle Graphics', href: '/services/vehicle-graphics' },
-    { label: 'Hayward Custom Canopies', href: '/services/event-displays' },
-    { label: 'Business Print Materials', href: '/services/business-print' },
-    { label: 'Hayward Business Signs', href: '/services/business-signage' },
-    { label: 'Window Film & Graphics', href: '/services/window-film' },
-    { label: 'Custom Mylar Bags', href: '/mylar' },
+    { label: 'Hayward Vehicle Graphics', href: '/services/vehicle-graphics#quote' },
+    { label: 'Hayward Custom Canopies', href: '/services/event-displays#shop' },
+    { label: 'Business Print Materials', href: '/services/business-print#shop' },
+    { label: 'Hayward Business Signs', href: '/services/business-signage#shop' },
+    { label: 'Window Film & Graphics', href: '/services/window-film#quote' },
+    { label: 'Custom Mylar Bags', href: '/mylar#configure' },
   ],
   support: [
     { label: 'Get a Quote', href: '/contact' },

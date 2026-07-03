@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { supabase } from '@/lib/supabase'
 import { validatePromoCode, applyPromoCode, type PromoResult, AUTO_DISCOUNT_CODE, AUTO_APPLIED_KEY } from '@/lib/promoCodes'
 
 interface CartItem {
@@ -53,6 +52,10 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+async function getSupabaseClient() {
+  return (await import('@/lib/supabase')).supabase
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('tss-cart')
@@ -78,6 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Email is captured separately (modal or checkout) and added to the row if/when available.
   const syncSession = useCallback(async (currentItems: CartItem[], email: string | null) => {
     if (currentItems.length === 0) return
+    const supabase = await getSupabaseClient()
 
     const sessionId = localStorage.getItem('tss-cart-session-id')
     const totalPrice = currentItems.reduce((sum, i) => {
@@ -146,6 +150,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const lookupSavedCart = useCallback(async (email: string): Promise<SavedCartLookup | null> => {
     const trimmed = email.trim()
     if (!trimmed) return null
+    const supabase = await getSupabaseClient()
     const { data, error } = await supabase.rpc('get_saved_cart', { p_email: trimmed })
     if (error) {
       console.error('[cart restore] lookup failed:', error)
@@ -171,6 +176,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const markConverted = async () => {
     const sessionId = localStorage.getItem('tss-cart-session-id')
     if (!sessionId) return
+    const supabase = await getSupabaseClient()
     const { error } = await supabase.from('cart_sessions').update({ converted: true }).eq('id', sessionId)
     if (error) console.error('[cart_sessions] mark converted failed:', error)
     localStorage.removeItem('tss-cart-session-id')

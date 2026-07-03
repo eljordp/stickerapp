@@ -1,12 +1,10 @@
 import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Printer, CheckCircle, Clock, Shield, Layers, Zap } from 'lucide-react'
-import PageHero from '@/components/PageHero'
+import { CheckCircle, Clock, Shield, Layers, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import StudioMockup from '@/components/StudioMockup'
-import businessPrintHero from '@/assets/services/business-print.jpg'
 import bizCardsLuxury from '@/assets/projects/business-cards-luxury.jpg'
 import bizCardsFoil from '@/assets/projects/bp-cleopatra-discount-cards.jpg'
 import flyers from '@/assets/projects/flyers-full-color.jpg'
@@ -51,18 +49,15 @@ export default function BusinessPrint() {
 
   return (
     <>
-      <PageHero
-        eyebrow="Custom Printing"
-        title="Custom printing for Hayward and the Bay Area."
-        subtitle="A local custom printing company for business cards, flyers, postcards, stationery, and marketing essentials. Premium stocks, real finishes, free digital proof before we print."
-        image={businessPrintHero}
-        imageAlt="Premium business cards and print collateral"
-        icon={Printer}
-        primaryCta={{ label: 'Order Now', href: '#shop' }}
-        secondaryCta={{ label: 'Bulk / Custom Quote', href: '#quote' }}
-      />
-      <section className="py-8 md:py-16">
+      <section className="pt-6 md:pt-10 pb-8 md:pb-16">
         <div className="section-container">
+          <div id="shop" className="scroll-mt-24 mb-12">
+            <ProductOrder
+              categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']}
+              onCategoryChange={handleCategoryChange}
+            />
+          </div>
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
             <h2 className="text-2xl font-black mb-6">What We Offer</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -97,13 +92,6 @@ export default function BusinessPrint() {
               ))}
             </div>
           </motion.div>
-
-          <div id="shop" className="scroll-mt-24">
-            <ProductOrder
-              categoryNames={['Business Cards', 'Flyers & Door Hangers', 'Postcards', 'Vehicle Magnets']}
-              onCategoryChange={handleCategoryChange}
-            />
-          </div>
         </div>
       </section>
       <section className="py-12 md:py-20 border-t border-border/50">

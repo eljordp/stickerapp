@@ -3,20 +3,20 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Car, Building2, Tent, Printer, Film, Package, Star, Clock, FileCheck, MapPin, Shield, Zap, CheckCircle, Heart } from 'lucide-react'
 import aboutCraft from '@/assets/pages/about-craft.jpg'
 import aboutShop from '@/assets/pages/about-shop-real.jpg'
-import svcVehicle from '@/assets/services/vehicle-graphics.jpg'
-import svcSignage from '@/assets/services/business-signage.jpg'
-import svcEvent from '@/assets/services/event-displays.jpg'
-import svcPrint from '@/assets/services/business-print.jpg'
-import svcFilm from '@/assets/services/window-film.jpg'
-import svcMylar from '@/assets/services/mylar-packaging.jpg'
+import svcVehicle from '@/assets/optimized/services/vehicle-graphics-800.webp'
+import svcSignage from '@/assets/optimized/services/business-signage-800.webp'
+import svcEvent from '@/assets/optimized/services/event-displays-800.webp'
+import svcPrint from '@/assets/optimized/services/business-print-800.webp'
+import svcFilm from '@/assets/optimized/services/window-film-800.webp'
+import svcMylar from '@/assets/optimized/services/mylar-packaging-800.webp'
 
 const services = [
-  { icon: Car, title: 'Vehicle Graphics', description: 'Full and partial wraps, fleet branding, door and spot graphics.', image: svcVehicle, href: '/services/vehicle-graphics' },
-  { icon: Building2, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, retractable banners.', image: svcSignage, href: '/services/business-signage' },
-  { icon: Tent, title: 'Event Displays', description: 'Custom tents, feather flags, table covers, retractable banners.', image: svcEvent, href: '/services/event-displays' },
-  { icon: Printer, title: 'Business Print', description: 'Business cards, flyers, brochures, and marketing collateral.', image: svcPrint, href: '/services/business-print' },
-  { icon: Film, title: 'Window Film', description: 'Frosted film, solar film, security film, decorative graphics.', image: svcFilm, href: '/services/window-film' },
-  { icon: Package, title: 'Custom Packaging', description: 'Branded mylar bags, labels, stickers, and product packaging.', image: svcMylar, href: '/mylar' },
+  { icon: Car, title: 'Vehicle Graphics', description: 'Full and partial wraps, fleet branding, door and spot graphics.', image: svcVehicle, href: '/services/vehicle-graphics#quote' },
+  { icon: Building2, title: 'Business Signage', description: 'Storefront signs, wall graphics, A-frames, retractable banners.', image: svcSignage, href: '/services/business-signage#shop' },
+  { icon: Tent, title: 'Event Displays', description: 'Custom tents, feather flags, table covers, retractable banners.', image: svcEvent, href: '/services/event-displays#shop' },
+  { icon: Printer, title: 'Business Print', description: 'Business cards, flyers, brochures, and marketing collateral.', image: svcPrint, href: '/services/business-print#shop' },
+  { icon: Film, title: 'Window Film', description: 'Frosted film, solar film, security film, decorative graphics.', image: svcFilm, href: '/services/window-film#quote' },
+  { icon: Package, title: 'Custom Packaging', description: 'Branded mylar bags, labels, stickers, and product packaging.', image: svcMylar, href: '/mylar#configure' },
 ]
 
 const stats = [

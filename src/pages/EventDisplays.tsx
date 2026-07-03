@@ -1,12 +1,10 @@
 import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Tent, CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
-import PageHero from '@/components/PageHero'
+import { CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
-import eventHero from '@/assets/services/event-displays.jpg'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
 import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
@@ -105,17 +103,7 @@ export default function EventCanopies() {
 
   return (
     <>
-      <PageHero
-        eyebrow="Event Displays"
-        title="Custom canopy tents, banners, and event displays in the Bay Area."
-        subtitle="Custom printed canopy tents, table covers, feather flags, backdrops, and banners for Hayward and Bay Area pop-ups, trade shows, markets, and launches."
-        image={eventHero}
-        imageAlt="Custom event canopy and feather flags"
-        icon={Tent}
-        primaryCta={{ label: 'Order Now', href: '#shop' }}
-        secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
-      />
-      <section className="py-8 md:py-16">
+      <section className="pt-6 md:pt-10 pb-8 md:pb-16">
         <div className="section-container">
           <div id="shop" className="scroll-mt-24 mb-12">
             <ProductOrder

@@ -1,5 +1,4 @@
 import { track } from '@vercel/analytics'
-import { supabase } from './supabase'
 
 type AnalyticsValue = string | number | boolean | null | undefined
 type AnalyticsProperties = Record<string, AnalyticsValue>
@@ -63,9 +62,14 @@ function getSessionId(): string {
 // Fire-and-forget insert. Must NEVER block or throw into a UI action.
 function logToSupabase(table: 'page_views' | 'click_events' | 'nav_events', row: Record<string, unknown>) {
   if (typeof window === 'undefined' || shouldSuppressAnalytics()) return
-  void supabase.from(table).insert(row).then(({ error }) => {
-    if (error && import.meta.env.DEV) console.warn(`[analytics] ${table} insert failed:`, error.message)
-  })
+  void import('./supabase')
+    .then(({ supabase }) => supabase.from(table).insert(row))
+    .then(({ error }) => {
+      if (error && import.meta.env.DEV) console.warn(`[analytics] ${table} insert failed:`, error.message)
+    })
+    .catch((error) => {
+      if (import.meta.env.DEV) console.warn(`[analytics] ${table} insert failed:`, error)
+    })
 }
 
 // Track time-on-page + navigation funnel between route changes.

@@ -49,6 +49,12 @@ import bpCleopatraCards from '@/assets/projects/bp-cleopatra-discount-cards.jpg'
 import bpCleopatraFlyer from '@/assets/projects/bp-cleopatra-tattoo-flyer.jpg'
 import bpCleopatraPoster from '@/assets/projects/bp-cleopatra-poster.jpg'
 import bpEmpireAuto from '@/assets/projects/bp-empire-automotive-flyer.jpg'
+import homeBrothersCarwash from '@/assets/optimized/projects/ig-brothers-carwash-fleet-800.webp'
+import homeAtlasPizza from '@/assets/optimized/projects/atlas-pizza-signage-800.webp'
+import homeTasteDeezStiiizy from '@/assets/optimized/projects/ig-tastedeeztreatz-stiiizy-800.webp'
+import homeMylarAtomicshock from '@/assets/optimized/projects/mylar-atomicshock-800.webp'
+import homeElevatedSnack from '@/assets/optimized/projects/ig-elevated925-mystery-snack-pack-800.webp'
+import homeCleopatraCards from '@/assets/optimized/projects/bp-cleopatra-discount-cards-800.webp'
 
 export type ProjectCategory =
   | 'Vehicle Graphics'
@@ -612,24 +618,24 @@ export function getProject(slug: string) {
 
 // Homepage gallery — curated subset (mix of categories)
 export const homepageGallerySlugs = [
-  'tesla-custom-wrap',
   'brothers-carwash-fleet',
   'atlas-pizza-storefront',
-  'shockco-atomicshock',
   'tastedeeztreatz-stiiizy',
-  'bhogal-construction-truck-wrap',
+  'shockco-atomicshock',
   'elevated925-mystery-snack-pack',
-  'lake-life-storage-sign',
-  'triple-a-cannabis',
-  'fremontgear-stickers',
-  'cultural-dance-floor-1',
-  'elevated925-backwoods',
-  'tastedeeztreatz-tresleches',
-  'shockco-candyshock-blue',
-  'fuegofamilyfarms-circle',
-  'procare-fleet-branding',
+  'cleopatra-ink-discount-cards',
 ]
+
+const homepageGalleryImages: Partial<Record<string, string>> = {
+  'brothers-carwash-fleet': homeBrothersCarwash,
+  'atlas-pizza-storefront': homeAtlasPizza,
+  'tastedeeztreatz-stiiizy': homeTasteDeezStiiizy,
+  'shockco-atomicshock': homeMylarAtomicshock,
+  'elevated925-mystery-snack-pack': homeElevatedSnack,
+  'cleopatra-ink-discount-cards': homeCleopatraCards,
+}
 
 export const homepageGallery = homepageGallerySlugs
   .map((slug) => projects.find((p) => p.slug === slug))
+  .map((project) => project && { ...project, image: homepageGalleryImages[project.slug] ?? project.image })
   .filter((p): p is Project => Boolean(p))

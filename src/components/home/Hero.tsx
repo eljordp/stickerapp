@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Clock, MapPin, Shield } from 'lucide-react'
@@ -8,8 +9,28 @@ import heroPrinter from '@/assets/hero-printer.jpg'
 const HERO_VIDEO = '/videos/flight-risk-holographic.mp4'
 const HERO_POSTER = '/videos/flight-risk-holographic.jpg'
 
+function isPrerenderSnapshot() {
+  return Boolean((window as unknown as { __prerender?: boolean }).__prerender)
+}
 
 export default function Hero() {
+  const [playVideo, setPlayVideo] = useState(false)
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 768px)')
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setPlayVideo(!isPrerenderSnapshot() && desktop.matches && !reducedMotion.matches)
+
+    update()
+    desktop.addEventListener('change', update)
+    reducedMotion.addEventListener('change', update)
+
+    return () => {
+      desktop.removeEventListener('change', update)
+      reducedMotion.removeEventListener('change', update)
+    }
+  }, [])
+
   return (
     <section className="relative overflow-hidden py-5 sm:py-10 lg:min-h-[78vh] lg:flex lg:items-center lg:py-12">
       {/* Subtle background gradient */}
@@ -30,19 +51,29 @@ export default function Hero() {
           >
             <div className="relative w-full aspect-square max-w-[230px] sm:max-w-sm lg:max-w-md mx-auto">
               <div className="relative aspect-square rounded-lg overflow-hidden shadow-2xl border border-white/10 ring-1 ring-primary/10">
-                <video
-                  src={HERO_VIDEO}
-                  poster={HERO_POSTER}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  aria-label="Holographic stickers fresh off the printer"
-                  className="absolute inset-0 w-full h-full object-cover"
-                >
-                  <img src={heroPrinter} alt="Large-format printer mid-job" className="w-full h-full object-cover" />
-                </video>
+                {playVideo ? (
+                  <video
+                    src={HERO_VIDEO}
+                    poster={HERO_POSTER}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    aria-label="Holographic stickers fresh off the printer"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  >
+                    <img src={heroPrinter} alt="Large-format printer mid-job" className="w-full h-full object-cover" />
+                  </video>
+                ) : (
+                  <img
+                    src={HERO_POSTER}
+                    alt="Holographic stickers fresh off the printer"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                )}
                 {/* Subtle cyan rim glow */}
                 <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-primary/10 via-transparent to-transparent" />
               </div>
@@ -57,18 +88,18 @@ export default function Hero() {
               <FirstOrderChip />
             </div>
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="text-[2rem] leading-[1.08] sm:text-5xl md:text-6xl lg:text-7xl font-black mb-3 md:mb-6 tracking-tight">
-              <span className="text-gradient">Bay Area's</span>{' '}
+              <span className="text-gradient">Custom Stickers</span>{' '}
               <br />
-              Full-Service Print & Branding Studio
+              Labels & Roll Labels
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="text-base md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-5 md:mb-8">
-              Custom stickers, labels, packaging, signage, and vehicle graphics.
+              Order die-cut stickers, sticker sheets, and product labels with a fast digital proof. Need signs, wraps, or packaging? Send a quote request.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="flex flex-col sm:flex-row gap-3 mb-5 sm:mb-8 max-w-sm mx-auto lg:mx-0 lg:max-w-none">
-              <Link to="/stickers" className="btn-primary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Make Stickers<ArrowRight size={20} /></Link>
-              <Link to="/contact" className="btn-secondary hidden sm:inline-flex text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Get a Quote</Link>
+              <Link to="/stickers" className="btn-primary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Order Stickers<ArrowRight size={20} /></Link>
+              <Link to="/contact" className="btn-secondary text-base md:text-lg px-8 md:px-10 py-3.5 md:py-4">Get a Quote</Link>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }} className="flex flex-wrap justify-center lg:justify-start gap-2 md:gap-3">

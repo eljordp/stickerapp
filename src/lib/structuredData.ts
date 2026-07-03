@@ -171,7 +171,7 @@ const serviceProofByPath: Record<string, string[]> = {
   '/services/business-signage': ['atlas-pizza-storefront', 'elevated-925-storefront', 'lake-life-storage-sign'],
   '/services/event-displays': ['event-booth', 'feather-flags', 'wedding-display-signage'],
   '/services/business-print': ['cleopatra-ink-discount-cards', 'cleopatra-ink-tattoo-flyer', 'empire-automotive-flyer'],
-  '/mylar': ['shockco-candyshock-green', 'shockco-atomicshock', 'elevated925-mystery-snack-pack'],
+  '/mylar': ['shockco-candyshock-green', 'shockco-candyshock-blue', 'shockco-atomicshock', 'triple-a-cannabis', 'elevated925-mystery-snack-pack'],
 }
 
 function projectWorkSchema(slug: string) {

@@ -1,10 +1,8 @@
 import { motion } from 'framer-motion'
-import { Film, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
-import PageHero from '@/components/PageHero'
+import { CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
-import windowHero from '@/assets/services/window-film.jpg'
 import windowAutoTint from '@/assets/projects/window-auto-tint.jpg'
 import windowStorefront from '@/assets/projects/window-storefront-vinyl.jpg'
 import windowDecorative from '@/assets/projects/window-decorative-pattern.jpg'
@@ -40,17 +38,33 @@ const process = [
 export default function WindowFilm() {
   return (
     <>
-      <PageHero
-        eyebrow="Window Film & Tint"
-        title="Frosted, solar, security, decorative."
-        subtitle="Privacy and brand on every pane of glass — auto, retail, and commercial. Premium 3M, LLumar, and SunTek with pro install."
-        image={windowHero}
-        imageAlt="Frosted window film install"
-        icon={Film}
-        primaryCta={{ label: 'Get a Quote', href: '#quote' }}
-        secondaryCta={{ label: 'See Recent Jobs', href: '#portfolio' }}
-      />
-      <section className="py-8 md:py-16">
+      <section id="quote" className="pt-6 md:pt-10 pb-8 md:pb-16 scroll-mt-24">
+        <div className="section-container">
+          <EstimateForm
+            service="Window Film & Tint"
+            title="Get a Window Film Estimate"
+            subtitle="Frosted, solar, security, or auto tint — send the scope and we will price it."
+            fields={[
+              {
+                name: 'filmType',
+                label: 'Film type',
+                type: 'select',
+                required: true,
+                options: ['Frosted / Decorative', 'Solar / UV Protection', 'Security Film', 'Automotive Window Tint', 'Custom Logo Cutout', 'Not sure yet'],
+              },
+              {
+                name: 'propertyType',
+                label: 'Residential or commercial?',
+                type: 'select',
+                options: ['Residential', 'Commercial / Office', 'Retail / Storefront', 'Automotive'],
+              },
+              { name: 'windowCount', label: 'How many windows (approx)?', type: 'text', placeholder: 'e.g. 6 windows · or ~80 sq ft' },
+              { name: 'location', label: 'Install location / city', type: 'text', placeholder: 'Oakland, CA' },
+            ]}
+          />
+        </div>
+      </section>
+      <section className="py-8 md:py-16 border-t border-border/50">
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
             <h2 className="text-2xl font-black mb-6">What We Offer</h2>
@@ -122,32 +136,6 @@ export default function WindowFilm() {
               { src: windowDecorative, alt: 'Decorative pattern', caption: 'Decorative pattern' },
               { src: windowInstall, alt: 'Squeegee install', caption: 'Pro install' },
               { src: windowSecurity, alt: 'Security film', caption: 'Security film' },
-            ]}
-          />
-        </div>
-      </section>
-      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
-        <div className="section-container">
-          <EstimateForm
-            service="Window Film & Tint"
-            title="Get a Window Film Estimate"
-            subtitle="Frosted, solar, security, or auto tint — tell us the scope and we'll send a tailored estimate in 24 hours."
-            fields={[
-              {
-                name: 'filmType',
-                label: 'Film type',
-                type: 'select',
-                required: true,
-                options: ['Frosted / Decorative', 'Solar / UV Protection', 'Security Film', 'Automotive Window Tint', 'Custom Logo Cutout', 'Not sure yet'],
-              },
-              {
-                name: 'propertyType',
-                label: 'Residential or commercial?',
-                type: 'select',
-                options: ['Residential', 'Commercial / Office', 'Retail / Storefront', 'Automotive'],
-              },
-              { name: 'windowCount', label: 'How many windows (approx)?', type: 'text', placeholder: 'e.g. 6 windows · or ~80 sq ft' },
-              { name: 'location', label: 'Install location / city', type: 'text', placeholder: 'Oakland, CA' },
             ]}
           />
         </div>

@@ -4,17 +4,13 @@ import { Upload, X, Package, Sparkles, Box, ShoppingCart, Check } from 'lucide-r
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
 import { getPricing, loadPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
-import PageHero from '@/components/PageHero'
 import EstimateForm from '@/components/EstimateForm'
-import StudioMockup from '@/components/StudioMockup'
-import mylarHero from '@/assets/services/mylar-packaging.jpg'
 import PortfolioStrip from '@/components/PortfolioStrip'
-import mylarBlack from '@/assets/projects/mylar-black-pouches.jpg'
-import mylarGold from '@/assets/projects/mylar-candyshock-blue.jpg'
-import mylarCannabis from '@/assets/projects/mylar-cannabis-style.jpg'
-import mylarFood from '@/assets/projects/mylar-atomicshock.jpg'
-import mylarDetail from '@/assets/projects/mylar-pouch-detail.jpg'
-import mylarProduction from '@/assets/projects/mylar-production-line.jpg'
+import mylarCandyshockGreen from '@/assets/projects/mylar-candyshock-green.jpg'
+import mylarCandyshockBlue from '@/assets/projects/mylar-candyshock-blue.jpg'
+import mylarAtomicshock from '@/assets/projects/mylar-atomicshock.jpg'
+import mylarTripleA from '@/assets/projects/mylar-tripleA-design.jpg'
+import mylarElevatedSnack from '@/assets/projects/ig-elevated925-mystery-snack-pack.jpg'
 
 type MockupType = 'pouch' | 'foil' | 'jar'
 
@@ -96,36 +92,6 @@ const mockupScales: Record<string, number> = {
   'Pound Bags (14"×16")': 1.15,
   '2oz Jar + Custom Label': 0.7,
 }
-
-const mylarHighlights = [
-  {
-    title: 'Custom mylar bags',
-    copy: 'Eighth, quarter, ounce, half-pound, and pound-size pouch runs with matte, gloss, black, white, and holographic options.',
-  },
-  {
-    title: 'Jar labels and product labels',
-    copy: '2oz jar labels, product label systems, and packaging stickers for retail shelves, delivery menus, and launch drops.',
-  },
-  {
-    title: 'Bay Area proof and pickup',
-    copy: 'Digital proof before production, bulk quoting, and local pickup from Hayward for East Bay and Bay Area brands.',
-  },
-]
-
-const mylarLocalAnswers = [
-  {
-    title: 'Custom mylar bags in Hayward CA',
-    copy: 'We print custom mylar bags, pouch packaging, and product packaging from Hayward for local brands that need proofed artwork and pickup options.',
-  },
-  {
-    title: 'Bay Area packaging runs',
-    copy: 'Use mylar bags for food, retail, cannabis, CBD, coffee, snacks, wellness products, and limited product drops across the Bay Area.',
-  },
-  {
-    title: 'Labels or full packaging',
-    copy: 'If full printed bags are more than you need, we can print jar labels, pouch labels, box labels, and packaging stickers instead.',
-  },
-]
 
 const mylarFaqs = [
   {
@@ -322,117 +288,8 @@ export default function MylarPackaging() {
 
   return (
     <>
-      <PageHero
-        eyebrow="Hayward Mylar Packaging"
-        title="Custom mylar bags and jar labels for Bay Area brands."
-        subtitle="Print eighth, quarter, ounce, half-pound, and pound-size mylar bags, plus 2oz jar labels and product packaging. Upload artwork, get a digital proof, and pick up locally in Hayward."
-        image={mylarHero}
-        imageAlt="Custom mylar bags and product labels"
-        icon={Package}
-        primaryCta={{ label: 'Configure Bag', href: '#configure' }}
-        secondaryCta={{ label: 'Custom Quote', href: '#quote' }}
-      />
-
-      <section className="py-12 md:py-16 border-b border-border/50">
-        <div className="section-container max-w-6xl">
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.35fr] items-start">
-            <div>
-              <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Custom Packaging</p>
-              <h2 className="text-3xl md:text-4xl font-black mb-4">Mylar bags, pouch packaging, and labels made locally.</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                The Sticker Smith prints custom mylar packaging for Bay Area product brands that need bags, jar labels, retail labels, and packaging stickers that look finished before the first run goes out.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {mylarHighlights.map((item) => (
-                <div key={item.title} className="bg-card/70 border border-border rounded-xl p-5 h-full">
-                  <h3 className="font-bold text-base mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-12 md:py-16 border-b border-border/50">
-        <div className="section-container max-w-6xl">
-          <div className="mb-8 max-w-3xl">
-            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Local Mylar Printing</p>
-            <h2 className="text-3xl md:text-4xl font-black mb-4">Custom mylar bags in Hayward for Bay Area product brands.</h2>
-            <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-              If you are comparing custom mylar bag printers near Hayward, The Sticker Smith can help with artwork proofing, bag sizing, labels, and local pickup once the job is approved.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {mylarLocalAnswers.map((item) => (
-              <div key={item.title} className="bg-card/70 border border-border rounded-xl p-5">
-                <h3 className="font-bold text-base mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.copy}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="configure" className="py-8 md:py-16 scroll-mt-24">
+      <section id="configure" className="pt-6 md:pt-10 pb-8 md:pb-16 scroll-mt-24">
         <div className="section-container max-w-5xl mx-auto">
-          {/* Upload + Mockup Preview */}
-          <div className="grid gap-6 lg:grid-cols-2 mb-10">
-            {/* Upload Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className={`flex flex-col justify-center rounded-2xl border bg-card p-6 md:p-8 text-center transition-colors ${isDragging ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                  <Upload className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-base font-medium text-foreground">Drag & drop your artwork</p>
-                  <p className="mt-1 text-sm text-muted-foreground">PNG, JPG, SVG, PDF, AI, EPS, PSD, TIFF, HEIC, and WebP accepted for proof.</p>
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                    <span>Upload file</span>
-                    <input type="file" accept="image/*,.pdf,.ai,.eps,.svg,.psd,.tif,.tiff,.heic,.webp" className="hidden" onChange={handleFileChange} />
-                  </label>
-                  {uploadedFile && (
-                    <button onClick={clearArtworkFile} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors">
-                      <X className="h-3.5 w-3.5" /> Clear
-                    </button>
-                  )}
-                </div>
-                {uploadedFile && <p className="text-xs text-muted-foreground">Selected: <span className="font-medium text-foreground">{uploadedFile.name}</span></p>}
-                {artworkStatus === 'uploading' && <p className="text-xs text-primary">Uploading artwork for proof...</p>}
-                {artworkStatus === 'uploaded' && <p className="text-xs text-green-400">Artwork attached to this order.</p>}
-                {artworkStatus === 'error' && <p className="text-xs text-red-400">{artworkError}</p>}
-              </div>
-            </motion.div>
-
-            {/* Mockup Preview */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex justify-center gap-1 mb-4">
-                {mockupTabs.map(tab => (
-                  <button key={tab.id} onClick={() => setActiveMockup(tab.id)} className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-colors ${activeMockup === tab.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}`}>
-                    <tab.icon className="h-3.5 w-3.5" /> {tab.label}
-                  </button>
-                ))}
-              </div>
-              <div className="rounded-xl bg-muted/50 border border-border">
-                {activeMockup === 'pouch' && <PouchMockup previewUrl={previewUrl} pouchColor={pouchColor} finish={finish} scale={scale} />}
-                {activeMockup === 'foil' && <FoilMockup previewUrl={previewUrl} scale={scale} />}
-                {activeMockup === 'jar' && <JarMockup previewUrl={previewUrl} />}
-              </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                {previewUrl ? 'Your design preview' : uploadedFile ? 'File selected. Image and SVG files can preview live' : 'Upload artwork to see it mocked up'} — {item?.size ?? 'Select a size'}
-              </p>
-            </motion.div>
-          </div>
-
           {/* Calculator Section */}
           <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             {/* LEFT: Controls */}
@@ -576,51 +433,61 @@ export default function MylarPackaging() {
               </div>
             </motion.div>
           </div>
-        </div>
-      </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
-        <div className="section-container">
-          <StudioMockup
-            service="Mylar"
-            title="See your art on the bag"
-            subtitle="Upload your design — preview it as a stand-up pouch or jar wrap label."
-            scenes={[
-              { key: 'eighth', label: 'Eighth Pouch', shape: 'mylar-pouch' },
-              { key: 'quarter', label: 'Quarter Pouch', shape: 'mylar-pouch' },
-              { key: 'jar', label: '2oz Jar', shape: 'mylar-jar' },
-            ]}
-          />
-        </div>
-      </section>
-      <section className="py-12 md:py-20 border-t border-border/50">
-        <div className="section-container">
-          <PortfolioStrip
-            title="Custom Mylar We've Printed"
-            subtitle="Matte, foil, holographic — food, cannabis, retail."
-            projects={[
-              { src: mylarBlack, alt: 'Matte black mylar pouches', caption: 'Matte black trio' },
-              { src: mylarGold, alt: 'Candy Shock custom mylar bag design', caption: 'Candy Shock' },
-              { src: mylarCannabis, alt: 'Cannabis-style mylar bags', caption: 'Premium cannabis packaging' },
-              { src: mylarFood, alt: 'Atomic Shock custom mylar bag design', caption: 'Atomic Shock' },
-              { src: mylarDetail, alt: 'Mylar pouch detail shot', caption: 'Zipper + seal detail' },
-              { src: mylarProduction, alt: 'Mylar production line', caption: 'Production run' },
-            ]}
-          />
-        </div>
-      </section>
-      <section className="py-12 md:py-16 border-t border-border/50">
-        <div className="section-container max-w-4xl">
-          <div className="mb-8 text-center">
-            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Mylar FAQ</p>
-            <h2 className="text-3xl md:text-4xl font-black">Custom mylar bag questions</h2>
-          </div>
-          <div className="grid gap-4">
-            {mylarFaqs.map((faq) => (
-              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
-                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
-                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+
+          {/* Upload + Mockup Preview */}
+          <div className="grid gap-6 lg:grid-cols-2 mt-10">
+            {/* Upload Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className={`flex flex-col justify-center rounded-2xl border bg-card p-6 md:p-8 text-center transition-colors ${isDragging ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-base font-medium text-foreground">Upload artwork for proof</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Optional now. PNG, JPG, SVG, PDF, AI, EPS, PSD, TIFF, HEIC, and WebP accepted.</p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                    <span>Upload file</span>
+                    <input type="file" accept="image/*,.pdf,.ai,.eps,.svg,.psd,.tif,.tiff,.heic,.webp" className="hidden" onChange={handleFileChange} />
+                  </label>
+                  {uploadedFile && (
+                    <button onClick={clearArtworkFile} className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground hover:bg-muted transition-colors">
+                      <X className="h-3.5 w-3.5" /> Clear
+                    </button>
+                  )}
+                </div>
+                {uploadedFile && <p className="text-xs text-muted-foreground">Selected: <span className="font-medium text-foreground">{uploadedFile.name}</span></p>}
+                {artworkStatus === 'uploading' && <p className="text-xs text-primary">Uploading artwork for proof...</p>}
+                {artworkStatus === 'uploaded' && <p className="text-xs text-green-400">Artwork attached to this order.</p>}
+                {artworkStatus === 'error' && <p className="text-xs text-red-400">{artworkError}</p>}
               </div>
-            ))}
+            </motion.div>
+
+            {/* Mockup Preview */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex justify-center gap-1 mb-4">
+                {mockupTabs.map(tab => (
+                  <button key={tab.id} onClick={() => setActiveMockup(tab.id)} className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium transition-colors ${activeMockup === tab.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}`}>
+                    <tab.icon className="h-3.5 w-3.5" /> {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="rounded-xl bg-muted/50 border border-border">
+                {activeMockup === 'pouch' && <PouchMockup previewUrl={previewUrl} pouchColor={pouchColor} finish={finish} scale={scale} />}
+                {activeMockup === 'foil' && <FoilMockup previewUrl={previewUrl} scale={scale} />}
+                {activeMockup === 'jar' && <JarMockup previewUrl={previewUrl} />}
+              </div>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                {previewUrl ? 'Your design preview' : uploadedFile ? 'File selected. Image and SVG files can preview live' : 'Upload artwork to see it mocked up'} — {item?.size ?? 'Select a size'}
+              </p>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -629,7 +496,7 @@ export default function MylarPackaging() {
           <EstimateForm
             service="Mylar Packaging"
             title="Custom Mylar Quote"
-            subtitle="Bulk, custom sizes, or complex artwork? Tell us the product and quantity and we'll send a tailored estimate in 24 hours."
+            subtitle="Bulk, custom sizes, or complex artwork? Send the bag size and quantity."
             fields={[
               {
                 name: 'productType',
@@ -654,6 +521,37 @@ export default function MylarPackaging() {
               },
             ]}
           />
+        </div>
+      </section>
+      <section className="py-12 md:py-20 border-t border-border/50">
+        <div className="section-container">
+          <PortfolioStrip
+            title="Custom Mylar We've Printed"
+            subtitle="Real pouch projects, launch runs, and large-format packaging."
+            projects={[
+              { src: mylarCandyshockGreen, alt: 'Candy Shock green custom mylar pouch', caption: 'Candy Shock — Green' },
+              { src: mylarCandyshockBlue, alt: 'Candy Shock blue custom mylar pouch', caption: 'Candy Shock — Blue' },
+              { src: mylarAtomicshock, alt: 'Atomic Shock custom mylar pouch', caption: 'Atomic Shock' },
+              { src: mylarTripleA, alt: 'Triple A cannabis flower mylar packaging', caption: 'Triple A — Cannabis Flower' },
+              { src: mylarElevatedSnack, alt: 'Elevated 925 mystery exotic snack pack mylar packaging', caption: 'Elevated 925 — Snack Pack' },
+            ]}
+          />
+        </div>
+      </section>
+      <section className="py-12 md:py-16 border-t border-border/50">
+        <div className="section-container max-w-4xl">
+          <div className="mb-8 text-center">
+            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Mylar FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-black">Custom mylar bag questions</h2>
+          </div>
+          <div className="grid gap-4">
+            {mylarFaqs.map((faq) => (
+              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
+                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </>

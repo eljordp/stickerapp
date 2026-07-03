@@ -1,10 +1,8 @@
 import { motion } from 'framer-motion'
-import { Car, CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
-import PageHero from '@/components/PageHero'
+import { CheckCircle, Clock, Shield, Wrench, Zap } from 'lucide-react'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
-import vehicleHero from '@/assets/services/vehicle-graphics.jpg'
 import albertsonsVan from '@/assets/projects/albertsons-van.jpeg'
 import bhogalTruck from '@/assets/projects/bhogal-construction.jpeg'
 import procareFleet from '@/assets/projects/procare-fleet.jpeg'
@@ -71,17 +69,33 @@ const vehicleFaqs = [
 export default function VehicleGraphics() {
   return (
     <>
-      <PageHero
-        eyebrow="Vehicle Graphics"
-        title="Vehicle graphics, wraps, and fleet decals in Hayward."
-        subtitle="Full wraps, partial wraps, door logos, vinyl lettering, and fleet rollouts for Hayward and Bay Area businesses. Premium 3M & Avery vinyl with professional install."
-        image={vehicleHero}
-        imageAlt="Vehicle wrap install"
-        icon={Car}
-        primaryCta={{ label: 'Get a Custom Quote', href: '#quote' }}
-        secondaryCta={{ label: 'See Our Work', href: '#portfolio' }}
-      />
-      <section className="py-8 md:py-16">
+      <section id="quote" className="pt-6 md:pt-10 pb-8 md:pb-16 scroll-mt-24">
+        <div className="section-container">
+          <EstimateForm
+            service="Vehicle Graphics"
+            title="Get a Vehicle Graphics Estimate"
+            subtitle="Send the vehicle and wrap type. We will price the real job, not make you read a sales page first."
+            fields={[
+              { name: 'vehicle', label: 'Vehicle (year, make, model)', type: 'text', required: true, placeholder: '2023 Ford Transit 250' },
+              {
+                name: 'wrapType',
+                label: 'Wrap type',
+                type: 'select',
+                required: true,
+                options: ['Full Wrap', 'Partial Wrap (half, quarter)', 'Decals / Lettering / Door Graphics', 'Fleet (multiple vehicles)', 'Not sure yet'],
+              },
+              {
+                name: 'timeline',
+                label: 'Timeline',
+                type: 'select',
+                options: ['ASAP / Within 2 weeks', '2–4 weeks', '1–2 months', 'Flexible'],
+              },
+              { name: 'inspiration', label: 'Reference links (Dropbox, Google Drive, Instagram)', type: 'text', placeholder: 'Paste a link' },
+            ]}
+          />
+        </div>
+      </section>
+      <section className="py-8 md:py-16 border-t border-border/50">
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
             <div className="mb-5">
@@ -236,32 +250,6 @@ export default function VehicleGraphics() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
-        <div className="section-container">
-          <EstimateForm
-            service="Vehicle Graphics"
-            title="Get a Custom Vehicle Wrap Estimate"
-            subtitle="Every vehicle is different. Tell us the details and we'll send a tailored estimate with turnaround in 24 hours."
-            fields={[
-              { name: 'vehicle', label: 'Vehicle (year, make, model)', type: 'text', required: true, placeholder: '2023 Ford Transit 250' },
-              {
-                name: 'wrapType',
-                label: 'Wrap type',
-                type: 'select',
-                required: true,
-                options: ['Full Wrap', 'Partial Wrap (half, quarter)', 'Decals / Lettering / Door Graphics', 'Fleet (multiple vehicles)', 'Not sure yet'],
-              },
-              {
-                name: 'timeline',
-                label: 'Timeline',
-                type: 'select',
-                options: ['ASAP / Within 2 weeks', '2–4 weeks', '1–2 months', 'Flexible'],
-              },
-              { name: 'inspiration', label: 'Reference links (Dropbox, Google Drive, Instagram)', type: 'text', placeholder: 'Paste a link' },
-            ]}
-          />
         </div>
       </section>
     </>

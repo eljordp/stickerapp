@@ -1,39 +1,39 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import Layout from '@/components/layout/Layout'
-import PrinterIntro from '@/components/PrinterIntro'
 import { trackPageView, setupClickTracking } from '@/lib/analytics'
 import { captureReferralCode } from '@/lib/referrals'
-import Home from '@/pages/Home'
-import Order from '@/pages/Order'
-import Services from '@/pages/Services'
-import VehicleGraphics from '@/pages/VehicleGraphics'
-import BusinessSignage from '@/pages/BusinessSignage'
-import EventDisplays from '@/pages/EventDisplays'
-import BusinessPrint from '@/pages/BusinessPrint'
-import WindowFilm from '@/pages/WindowFilm'
-import MylarPackaging from '@/pages/MylarPackaging'
-import Cart from '@/pages/Cart'
-import Checkout from '@/pages/Checkout'
-import OrderConfirmation from '@/pages/OrderConfirmation'
-import Contact from '@/pages/Contact'
-import About from '@/pages/About'
-import Projects from '@/pages/Projects'
-import CaseStudyDetail from '@/pages/CaseStudyDetail'
-import Referral from '@/pages/Referral'
-import Account from '@/pages/Account'
-import Admin from '@/pages/Admin'
-import NotFound from '@/pages/NotFound'
-import CityPage from '@/pages/CityPage'
 import { cityBySlug } from '@/lib/cities'
 import { getStructuredData, SITE_URL } from '@/lib/structuredData'
-import StickerSupportPage from '@/pages/StickerSupportPage'
 import { stickerSupportPageBySlug } from '@/lib/stickerSupportPages'
 
-const DEFAULT_DESCRIPTION = 'Premium custom stickers, labels, decals, signage, vehicle graphics & packaging in the Bay Area. Fast turnaround, proof-based printing, and local pickup available.'
+const Home = lazy(() => import('@/pages/Home'))
+const Order = lazy(() => import('@/pages/Order'))
+const Services = lazy(() => import('@/pages/Services'))
+const VehicleGraphics = lazy(() => import('@/pages/VehicleGraphics'))
+const BusinessSignage = lazy(() => import('@/pages/BusinessSignage'))
+const EventDisplays = lazy(() => import('@/pages/EventDisplays'))
+const BusinessPrint = lazy(() => import('@/pages/BusinessPrint'))
+const WindowFilm = lazy(() => import('@/pages/WindowFilm'))
+const MylarPackaging = lazy(() => import('@/pages/MylarPackaging'))
+const Cart = lazy(() => import('@/pages/Cart'))
+const Checkout = lazy(() => import('@/pages/Checkout'))
+const OrderConfirmation = lazy(() => import('@/pages/OrderConfirmation'))
+const Contact = lazy(() => import('@/pages/Contact'))
+const About = lazy(() => import('@/pages/About'))
+const Projects = lazy(() => import('@/pages/Projects'))
+const CaseStudyDetail = lazy(() => import('@/pages/CaseStudyDetail'))
+const Referral = lazy(() => import('@/pages/Referral'))
+const Account = lazy(() => import('@/pages/Account'))
+const Admin = lazy(() => import('@/pages/Admin'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
+const CityPage = lazy(() => import('@/pages/CityPage'))
+const StickerSupportPage = lazy(() => import('@/pages/StickerSupportPage'))
+const PrinterIntro = lazy(() => import('@/components/PrinterIntro'))
+
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`
 
 type PageMeta = {
@@ -41,12 +41,16 @@ type PageMeta = {
   description: string
   image?: string
   imageAlt?: string
+  robots?: string
 }
+
+const INDEX_ROBOTS = 'index,follow,max-image-preview:large'
+const NOINDEX_ROBOTS = 'noindex,nofollow,noarchive'
 
 const pageMeta: Record<string, PageMeta> = {
   '/': {
     title: 'The Sticker Smith | Custom Stickers, Labels & Printing - Bay Area',
-    description: DEFAULT_DESCRIPTION,
+    description: 'Order custom stickers, die-cut vinyl, sticker sheets, roll labels, and product labels from a Bay Area print shop with fast proofs and local pickup.',
     image: DEFAULT_OG_IMAGE,
     imageAlt: 'The Sticker Smith print work and custom stickers',
   },
@@ -85,14 +89,17 @@ const pageMeta: Record<string, PageMeta> = {
   '/cart': {
     title: 'Cart | The Sticker Smith',
     description: 'Review your custom sticker and print order, apply discounts, save a quote, or continue to checkout.',
+    robots: NOINDEX_ROBOTS,
   },
   '/checkout': {
     title: 'Checkout | The Sticker Smith',
     description: 'Complete your Sticker Smith order with proof-based production, shipping, or Bay Area pickup.',
+    robots: NOINDEX_ROBOTS,
   },
   '/order-confirmation': {
     title: 'Order Confirmation | The Sticker Smith',
     description: 'Your Sticker Smith order has been received. Watch for your digital proof and next steps.',
+    robots: NOINDEX_ROBOTS,
   },
   '/contact': {
     title: 'Contact & Free Quote | The Sticker Smith',
@@ -117,10 +124,12 @@ const pageMeta: Record<string, PageMeta> = {
   '/account': {
     title: 'Account | The Sticker Smith',
     description: 'Manage your Sticker Smith account, referral code, profile, and order details.',
+    robots: NOINDEX_ROBOTS,
   },
   '/admin': {
     title: 'Admin | The Sticker Smith',
     description: 'The Sticker Smith admin dashboard.',
+    robots: NOINDEX_ROBOTS,
   },
 }
 
@@ -148,6 +157,7 @@ function getPageMeta(pathname: string): PageMeta {
   return pageMeta[pathname] ?? {
     title: 'Page Not Found | The Sticker Smith',
     description: 'This Sticker Smith page could not be found. Browse custom stickers, print services, projects, or contact the studio.',
+    robots: NOINDEX_ROBOTS,
   }
 }
 
@@ -172,6 +182,10 @@ function setStructuredData(pathname: string) {
   script.text = JSON.stringify(getStructuredData(pathname))
 }
 
+function clearStructuredData() {
+  document.getElementById('structured-data')?.remove()
+}
+
 function HeadManager() {
   const { pathname } = useLocation()
 
@@ -181,6 +195,7 @@ function HeadManager() {
     const canonicalUrl = `${SITE_URL}${canonicalPath}`
     const image = meta.image ?? DEFAULT_OG_IMAGE
     const imageAlt = meta.imageAlt ?? 'The Sticker Smith — custom stickers, labels, decals and vehicle graphics, Bay Area'
+    const robots = meta.robots ?? INDEX_ROBOTS
 
     document.title = meta.title
     setMeta('meta[name="description"]', 'content', meta.description, () => {
@@ -188,7 +203,7 @@ function HeadManager() {
       element.setAttribute('name', 'description')
       return element
     })
-    setMeta('meta[name="robots"]', 'content', 'index,follow,max-image-preview:large', () => {
+    setMeta('meta[name="robots"]', 'content', robots, () => {
       const element = document.createElement('meta')
       element.setAttribute('name', 'robots')
       return element
@@ -233,7 +248,8 @@ function HeadManager() {
       document.head.appendChild(canonical)
     }
     canonical.href = canonicalUrl
-    setStructuredData(pathname)
+    if (robots.startsWith('noindex')) clearStructuredData()
+    else setStructuredData(pathname)
   }, [pathname])
 
   return null
@@ -251,47 +267,92 @@ function AnalyticsTracker() {
   return null
 }
 
+function ScrollManager() {
+  const { pathname, hash } = useLocation()
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      if (!hash) {
+        window.scrollTo({ top: 0, behavior: 'auto' })
+        return
+      }
+
+      const target = document.getElementById(decodeURIComponent(hash.slice(1)))
+      if (target) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' })
+      }
+    })
+  }, [pathname, hash])
+
+  return null
+}
+
+function DesktopPrinterIntro() {
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const isPrerender = Boolean((window as unknown as { __prerender?: boolean }).__prerender)
+    const update = () => setShow(!isPrerender && desktop.matches)
+
+    update()
+    desktop.addEventListener('change', update)
+
+    return () => desktop.removeEventListener('change', update)
+  }, [])
+
+  if (!show) return null
+  return (
+    <Suspense fallback={null}>
+      <PrinterIntro />
+    </Suspense>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <PrinterIntro />
+      <DesktopPrinterIntro />
       <Analytics />
       <HeadManager />
       <AnalyticsTracker />
+      <ScrollManager />
       <AuthProvider>
         <CartProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/stickers" element={<Order />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/services/vehicle-graphics" element={<VehicleGraphics />} />
-              <Route path="/services/business-signage" element={<BusinessSignage />} />
-              <Route path="/services/event-displays" element={<EventDisplays />} />
-              <Route path="/services/business-print" element={<BusinessPrint />} />
-              <Route path="/services/window-film" element={<WindowFilm />} />
-              <Route path="/mylar" element={<MylarPackaging />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-confirmation" element={<OrderConfirmation />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/quote" element={<Contact />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/case-studies" element={<Navigate to="/projects" replace />} />
-              <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
-              <Route path="/referral" element={<Referral />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/admin" element={<Admin />} />
-              {Object.keys(stickerSupportPageBySlug).map((slug) => (
-                <Route key={slug} path={`/${slug}`} element={<StickerSupportPage slug={slug} />} />
-              ))}
-              {Object.keys(cityBySlug).map((slug) => (
-                <Route key={slug} path={`/${slug}`} element={<CityPage slug={slug} />} />
-              ))}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
+          <Suspense fallback={<div className="min-h-[45vh]" aria-hidden />}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/stickers" element={<Order />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/services/vehicle-graphics" element={<VehicleGraphics />} />
+                <Route path="/services/business-signage" element={<BusinessSignage />} />
+                <Route path="/services/event-displays" element={<EventDisplays />} />
+                <Route path="/services/business-print" element={<BusinessPrint />} />
+                <Route path="/services/window-film" element={<WindowFilm />} />
+                <Route path="/mylar" element={<MylarPackaging />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/quote" element={<Contact />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/case-studies" element={<Navigate to="/projects" replace />} />
+                <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
+                <Route path="/referral" element={<Referral />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/admin" element={<Admin />} />
+                {Object.keys(stickerSupportPageBySlug).map((slug) => (
+                  <Route key={slug} path={`/${slug}`} element={<StickerSupportPage slug={slug} />} />
+                ))}
+                {Object.keys(cityBySlug).map((slug) => (
+                  <Route key={slug} path={`/${slug}`} element={<CityPage slug={slug} />} />
+                ))}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
