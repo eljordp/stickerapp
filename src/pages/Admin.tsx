@@ -7,7 +7,7 @@ import {
   Copy, ExternalLink, Mail, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Share2, Gift,
   CreditCard, Unplug, Send, AlertCircle, MapPin,
   TrendingUp, Target, Search, Globe, History,
-  Sun, Moon,
+  Sun, Moon, Shield,
 } from 'lucide-react'
 import { getPricing, loadPricing, savePricing, defaultPricing, type PricingConfig } from '@/lib/pricing'
 import { supabase } from '@/lib/supabase'
@@ -143,6 +143,25 @@ interface AnalyticsSummary {
   capped: boolean
 }
 
+interface AdminAuditEvent {
+  id: string
+  user_id: string | null
+  email: string | null
+  event_type: string
+  outcome: string
+  ip_address: string | null
+  country: string | null
+  region: string | null
+  city: string | null
+  user_agent: string | null
+  path: string | null
+  metadata: {
+    is_new_ip_for_user?: boolean
+    vercel_id?: string | null
+  } | null
+  created_at: string
+}
+
 const ADMIN_BACKGROUND_REFRESH_INTERVAL_MS = 12 * 60 * 60 * 1000
 const ANALYTICS_PAGE_SIZE = 1000
 const ANALYTICS_MAX_ROWS = 10000
@@ -240,6 +259,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
         return
       }
 
+      void recordAdminLogin()
       toast.success('Logged in successfully')
       onLogin()
     } catch (err) {
@@ -341,6 +361,18 @@ async function adminApiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
 
   return fetch(input, { ...init, headers })
+}
+
+async function recordAdminLogin() {
+  try {
+    const response = await adminApiFetch('/api/admin/audit-login', { method: 'POST' })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      console.warn('Admin login audit was not recorded:', data.error || response.statusText)
+    }
+  } catch (error) {
+    console.warn('Admin login audit was not recorded:', error)
+  }
 }
 
 async function openArtworkDownload(artwork: NonNullable<OrderItem['artwork']>) {
@@ -2892,6 +2924,145 @@ function WorkLogTab() {
   )
 }
 
+// ─── Security Tab ─────────────────────────────────────────────────────────────
+
+function auditLocation(event: AdminAuditEvent) {
+  return [event.city, event.region, event.country].filter(Boolean).join(', ') || 'Unknown location'
+}
+
+function auditBrowser(userAgent: string | null) {
+  if (!userAgent) return 'Unknown browser'
+  if (userAgent.includes('Edg/')) return 'Microsoft Edge'
+  if (userAgent.includes('Chrome/')) return 'Chrome'
+  if (userAgent.includes('Safari/') && !userAgent.includes('Chrome/')) return 'Safari'
+  if (userAgent.includes('Firefox/')) return 'Firefox'
+  return userAgent.slice(0, 80)
+}
+
+function SecurityTab() {
+  const [events, setEvents] = useState<AdminAuditEvent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const fetchEvents = useCallback(async () => {
+    setError('')
+    const { data, error } = await supabase
+      .from('admin_audit_events')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (error) throw error
+    setEvents((data || []) as AdminAuditEvent[])
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchEvents()
+        .catch((err) => setError(err instanceof Error ? err.message : 'Could not load admin audit log.'))
+        .finally(() => setLoading(false))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [fetchEvents])
+
+  const uniqueAdmins = new Set(events.map(e => e.email || e.user_id).filter(Boolean)).size
+  const uniqueIps = new Set(events.map(e => e.ip_address).filter(Boolean)).size
+  const newIpEvents = events.filter(e => e.metadata?.is_new_ip_for_user).length
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-black mb-1">Admin Security</h2>
+          <p className="text-sm text-muted-foreground">
+            Successful admin logins recorded server-side with IP, location headers, browser, and admin email.
+          </p>
+        </div>
+        <button onClick={() => {
+          setLoading(true)
+          fetchEvents()
+            .catch((err) => setError(err instanceof Error ? err.message : 'Could not load admin audit log.'))
+            .finally(() => setLoading(false))
+        }} className="btn-secondary w-fit">
+          <RotateCcw size={16} /> Refresh
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={Shield} label="Login Events" value={events.length} delay={0.1} />
+        <StatCard icon={Users} label="Admin Accounts" value={uniqueAdmins} color="text-blue-400" delay={0.15} />
+        <StatCard icon={Globe} label="Unique IPs" value={uniqueIps} color="text-amber-400" delay={0.2} />
+        <StatCard icon={AlertCircle} label="New IP Flags" value={newIpEvents} color={newIpEvents ? 'text-yellow-400' : 'text-green-400'} delay={0.25} />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h3 className="font-bold mb-2">Reliability Rules</h3>
+        <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
+          <p><span className="font-semibold text-foreground">No shared admin login.</span> One email per person is the only way to know who logged in.</p>
+          <p><span className="font-semibold text-foreground">Treat new IP as a signal.</span> Phones, shops, VPNs, and home internet can change IPs.</p>
+          <p><span className="font-semibold text-foreground">Review weird patterns.</span> Unknown country, odd hour, or repeated new IPs should trigger a password reset.</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5 text-sm text-yellow-100">
+          Could not load audit log. The Supabase migration may not be applied yet: {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="rounded-2xl border border-border bg-card p-12 text-center">
+          <Loader2 size={28} className="mx-auto animate-spin text-primary" />
+        </div>
+      ) : events.length === 0 && !error ? (
+        <div className="rounded-2xl border border-border bg-card p-12 text-center">
+          <Shield size={42} className="mx-auto mb-3 text-muted-foreground" />
+          <p className="font-semibold">No admin login events recorded yet.</p>
+          <p className="mt-1 text-sm text-muted-foreground">New successful logins will show here after the database migration is applied.</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+          <table className="w-full">
+            <thead className="border-b border-border bg-muted/40">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase text-muted-foreground">Time</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase text-muted-foreground">Admin</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase text-muted-foreground">IP / Location</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase text-muted-foreground">Browser</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {events.map(event => (
+                <tr key={event.id}>
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
+                    {new Date(event.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    <p className="font-semibold">{event.email || 'Unknown admin'}</p>
+                    <p className="text-xs text-muted-foreground">{event.event_type.replace(/_/g, ' ')}</p>
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs">{event.ip_address || 'Unknown IP'}</span>
+                      {event.metadata?.is_new_ip_for_user && (
+                        <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-0.5 text-[10px] font-bold uppercase text-yellow-300">
+                          New IP
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{auditLocation(event)}</p>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-muted-foreground">{auditBrowser(event.user_agent)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
 const mainTabs = [
@@ -2902,6 +3073,7 @@ const mainTabs = [
   { id: 'promos', label: 'Promos', icon: Tag },
   { id: 'carts', label: 'Carts', icon: ShoppingCart },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'security', label: 'Security', icon: Shield },
   { id: 'seo', label: 'SEO', icon: Search },
   { id: 'crm', label: 'CRM', icon: Users },
   { id: 'subscribers', label: 'Email List', icon: Mail },
@@ -2982,6 +3154,7 @@ function Dashboard() {
         {activeTab === 'promos' && <PromoCodeManager />}
         {activeTab === 'carts' && <CartsTab />}
         {activeTab === 'analytics' && <AnalyticsTab />}
+        {activeTab === 'security' && <SecurityTab />}
         {activeTab === 'seo' && <SeoTab />}
         {activeTab === 'crm' && <CRMTab />}
         {activeTab === 'subscribers' && <SubscribersTab />}

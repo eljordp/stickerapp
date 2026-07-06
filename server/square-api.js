@@ -93,7 +93,7 @@ function parseJson(text) {
   }
 }
 
-async function supabaseFetch(path, options = {}) {
+export async function supabaseFetch(path, options = {}) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('Supabase server environment is not configured.')
   }
