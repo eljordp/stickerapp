@@ -10,7 +10,11 @@
 //   node scripts/fetch-dataforseo-rankings.mjs --execute    # 26 paid checks
 //
 // Output is compatible with scripts/save-rankings.mjs.
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const QUERY = 'bay area stickers'
 const TARGET = 'tssprint.com*'
@@ -44,8 +48,20 @@ if (!execute) {
   process.exit(0)
 }
 
-const login = process.env.DATAFORSEO_LOGIN
-const password = process.env.DATAFORSEO_PASSWORD
+function credential(name) {
+  if (process.env[name]) return process.env[name]
+  try {
+    const line = readFileSync(path.join(ROOT, '.env.local'), 'utf8')
+      .split('\n')
+      .find(candidate => candidate.startsWith(`${name}=`))
+    return line?.slice(name.length + 1).trim().replace(/^["']|["']$/g, '') || null
+  } catch {
+    return null
+  }
+}
+
+const login = credential('DATAFORSEO_LOGIN')
+const password = credential('DATAFORSEO_PASSWORD')
 if (!login || !password) {
   console.error('[dataforseo-rankings] missing DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD; no calls made')
   process.exit(1)
