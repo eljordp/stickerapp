@@ -8,6 +8,7 @@
 // Usage:
 //   node scripts/fetch-dataforseo-rankings.mjs              # plan only, no API calls
 //   node scripts/fetch-dataforseo-rankings.mjs --execute    # 26 paid checks
+//   node scripts/fetch-dataforseo-rankings.mjs --expanded-sticker-set --execute
 //
 // Output is compatible with scripts/save-rankings.mjs.
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -16,9 +17,8 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-const QUERY = 'bay area stickers'
+const PRIMARY_QUERY = 'bay area stickers'
 const TARGET = 'tssprint.com*'
-const OUTPUT = '/tmp/tss-rankings.json'
 const DEPTH = 20
 
 const CITIES = [
@@ -38,12 +38,29 @@ const CITIES = [
 ]
 const DEVICES = ['desktop', 'mobile']
 
-const checks = CITIES.flatMap(city => DEVICES.map(device => ({ city, device })))
+const EXPANDED_CITIES = ['Hayward', 'Oakland', 'San Francisco']
+const EXPANDED_QUERIES = [
+  'bay area custom stickers',
+  'custom stickers bay area',
+  'sticker printing bay area',
+  'custom labels bay area',
+  'die cut stickers bay area',
+]
+const HAYWARD_QUERIES = ['custom stickers hayward', 'sticker printing hayward']
+
+const expandedMode = process.argv.includes('--expanded-sticker-set')
+const OUTPUT = expandedMode ? '/tmp/tss-rankings-expanded.json' : '/tmp/tss-rankings.json'
+const checks = expandedMode
+  ? [
+      ...EXPANDED_QUERIES.flatMap(query => EXPANDED_CITIES.flatMap(city => DEVICES.map(device => ({ query, city, device })))),
+      ...HAYWARD_QUERIES.flatMap(query => DEVICES.map(device => ({ query, city: 'Hayward', device }))),
+    ]
+  : CITIES.flatMap(city => DEVICES.map(device => ({ query: PRIMARY_QUERY, city, device })))
 const execute = process.argv.includes('--execute')
 
 if (!execute) {
   console.log(`[dataforseo-rankings] PLAN ONLY — ${checks.length} paid checks would run`)
-  console.log(JSON.stringify({ query: QUERY, target: TARGET, depth: DEPTH, checks }, null, 2))
+  console.log(JSON.stringify({ target: TARGET, depth: DEPTH, checks }, null, 2))
   console.log('[dataforseo-rankings] Add --execute only after credentials and spend are approved.')
   process.exit(0)
 }
@@ -69,7 +86,7 @@ if (!login || !password) {
 
 const authorization = `Basic ${Buffer.from(`${login}:${password}`).toString('base64')}`
 
-async function fetchCheck({ city, device }) {
+async function fetchCheck({ query, city, device }) {
   const locationName = `${city},California,United States`
   const response = await fetch('https://api.dataforseo.com/v3/serp/google/organic/live/advanced', {
     method: 'POST',
@@ -78,7 +95,7 @@ async function fetchCheck({ city, device }) {
       'content-type': 'application/json',
     },
     body: JSON.stringify([{
-      keyword: QUERY,
+      keyword: query,
       location_name: locationName,
       language_code: 'en',
       device,
@@ -104,13 +121,14 @@ async function fetchCheck({ city, device }) {
   if (/no search results/i.test(task.status_message || '')) {
     return {
       row: {
-        query: QUERY,
+        query,
         city,
         device,
         rank: null,
         ranking_url: null,
         local_pack: false,
         serp_feature: 'none',
+        source: 'serp_exact',
         notes: `[verified] DataForSEO Google organic live/advanced; location=${locationName}; device=${device}; depth=${DEPTH}; TSS not found in top ${DEPTH}; checked=${new Date().toISOString()}`,
       },
       cost: Number(task.cost || 0),
@@ -129,7 +147,7 @@ async function fetchCheck({ city, device }) {
 
   return {
     row: {
-      query: QUERY,
+      query,
       city,
       device,
       rank,
@@ -149,7 +167,7 @@ for (const check of checks) {
   const { row, cost } = await fetchCheck(check)
   rows.push(row)
   totalCost += cost
-  console.log(`[dataforseo-rankings] ${row.city}/${row.device}: ${row.rank == null ? 'not top 20' : `#${row.rank}`}`)
+  console.log(`[dataforseo-rankings] ${row.query} — ${row.city}/${row.device}: ${row.rank == null ? 'not top 20' : `#${row.rank}`}`)
 }
 
 writeFileSync(OUTPUT, `${JSON.stringify(rows, null, 2)}\n`)
