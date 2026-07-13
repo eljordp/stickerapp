@@ -1,6 +1,6 @@
 import { sendContactEmail } from './email'
 import { supabase } from './supabase'
-import { trackLeadSubmission } from './analytics'
+import { getAnalyticsIdentity, trackLeadSubmission } from './analytics'
 
 export type ContactRequest = {
   name: string
@@ -115,6 +115,7 @@ async function upsertCustomer(data: ContactRequest) {
 }
 
 export async function submitContactRequest(data: ContactRequest): Promise<ContactSubmitResult> {
+  const identity = getAnalyticsIdentity()
   const payload = {
     name: data.name.trim(),
     email: data.email.trim().toLowerCase(),
@@ -122,6 +123,8 @@ export async function submitContactRequest(data: ContactRequest): Promise<Contac
     service: data.service || null,
     message: data.message.trim(),
     source: data.source || 'contact',
+    visitor_id: identity.visitorId,
+    session_id: identity.sessionId,
   }
 
   const fingerprint = contactFingerprint(payload)

@@ -134,12 +134,33 @@ const tagConfig: Record<CustomerTag, { label: string; color: string; bg: string 
   customer: { label: 'Customer', color: 'text-muted-foreground', bg: 'bg-muted/50 border-border' },
 }
 
+interface AbandonedCartContact {
+  name: string | null
+  email: string | null
+  phone: string | null
+  source: string | null
+  exact: boolean
+}
+
+interface AbandonedCartRow {
+  visitorId: string
+  firstSeen: string
+  lastSeen: string
+  device: string
+  referrer: string | null
+  stage: string
+  adds: number
+  pages: string[]
+  contacts: AbandonedCartContact[]
+}
+
 interface AnalyticsSummary {
   visitors: number; pageViews: number
   leads: number; orders: number; revenue: number; ctaClicks: number
   topProducts: { name: string; views: number }[]
   topClicks: { element: string; count: number }[]
   funnel: { label: string; count: number; pct: number }[]
+  abandonedCarts: AbandonedCartRow[]
   capped: boolean
 }
 
@@ -1525,13 +1546,114 @@ type PageViewRow = {
   path: string
   visitor_id: string | null
   user_agent: string | null
+  referrer: string | null
   created_at: string
 }
 
 type ClickEventRow = {
   element: string | null
   path: string | null
+  visitor_id: string | null
   created_at: string
+}
+
+type LeadContactRow = {
+  name: string | null
+  email: string | null
+  phone: string | null
+  source: string | null
+  visitor_id: string | null
+  created_at: string
+}
+
+const CART_ADD_LABELS = ['Added to Cart!', 'Add to Cart']
+const CONTACT_MATCH_WINDOW_MS = 20 * 60 * 1000
+
+function deviceFromUserAgent(userAgent: string | null | undefined) {
+  const ua = userAgent || ''
+  if (ua.includes('iPhone') || ua.includes('iPad')) return 'iPhone'
+  if (ua.includes('Android')) return 'Android'
+  return 'Desktop'
+}
+
+function referrerHost(referrer: string | null | undefined) {
+  if (!referrer) return null
+  try {
+    const host = new URL(referrer).hostname.replace(/^www\./, '')
+    return host.includes('tssprint') ? null : host
+  } catch {
+    return null
+  }
+}
+
+// Shoppers who added to cart / reached checkout but never hit /order-confirmation,
+// joined with any contact info they left (exact visitor match, or a form sent
+// within 20 minutes of their activity).
+function buildAbandonedCarts(
+  views: PageViewRow[],
+  clicks: ClickEventRow[],
+  leadRows: LeadContactRow[],
+): AbandonedCartRow[] {
+  type Acc = { views: PageViewRow[]; clicks: ClickEventRow[] }
+  const byVisitor = new Map<string, Acc>()
+  for (const v of views) {
+    if (!v.visitor_id) continue
+    const acc = byVisitor.get(v.visitor_id) || { views: [], clicks: [] }
+    acc.views.push(v)
+    byVisitor.set(v.visitor_id, acc)
+  }
+  for (const c of clicks) {
+    if (!c.visitor_id) continue
+    const acc = byVisitor.get(c.visitor_id) || { views: [], clicks: [] }
+    acc.clicks.push(c)
+    byVisitor.set(c.visitor_id, acc)
+  }
+
+  const rows: AbandonedCartRow[] = []
+  for (const [visitorId, acc] of byVisitor) {
+    const paths = acc.views.map(v => v.path)
+    const els = acc.clicks.map(c => c.element || '')
+    const adds = els.filter(e => CART_ADD_LABELS.includes(e)).length
+    const hitCart = paths.includes('/cart')
+    const hitCheckout = paths.includes('/checkout')
+    const proceed = els.includes('Proceed to Checkout')
+    if (!adds && !hitCart && !hitCheckout && !proceed) continue
+    if (paths.includes('/order-confirmation')) continue
+
+    const times = [...acc.views, ...acc.clicks].map(r => new Date(r.created_at).getTime())
+    const contacts: AbandonedCartContact[] = []
+    const seen = new Set<string>()
+    for (const lead of leadRows) {
+      if (lead.visitor_id && lead.visitor_id !== visitorId) continue
+      const exact = lead.visitor_id === visitorId
+      const leadTime = new Date(lead.created_at).getTime()
+      const near = times.some(t => Math.abs(t - leadTime) < CONTACT_MATCH_WINDOW_MS)
+      if (!exact && !near) continue
+      const key = `${lead.email}|${lead.source}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      contacts.push({ name: lead.name, email: lead.email, phone: lead.phone, source: lead.source, exact })
+    }
+
+    const stage = hitCheckout ? 'Reached checkout'
+      : proceed ? 'Clicked checkout'
+      : hitCart ? 'Viewed cart'
+      : 'Added to cart'
+    const pages = [...new Set(paths.filter(p => PRODUCT_PAGE_NAMES[p]).map(p => PRODUCT_PAGE_NAMES[p]))]
+
+    rows.push({
+      visitorId,
+      firstSeen: new Date(Math.min(...times)).toISOString(),
+      lastSeen: new Date(Math.max(...times)).toISOString(),
+      device: deviceFromUserAgent(acc.views[0]?.user_agent),
+      referrer: acc.views.map(v => referrerHost(v.referrer)).find(Boolean) || null,
+      stage,
+      adds,
+      pages,
+      contacts,
+    })
+  }
+  return rows.sort((a, b) => b.lastSeen.localeCompare(a.lastSeen))
 }
 
 type OrderAnalyticsRow = {
@@ -1626,7 +1748,7 @@ function AnalyticsTab() {
       const {
         rows: pageViewRows,
         capped: pageViewsCapped,
-      } = await fetchLiveAnalyticsRows<PageViewRow>('page_views', 'path, visitor_id, user_agent, created_at', since, true)
+      } = await fetchLiveAnalyticsRows<PageViewRow>('page_views', 'path, visitor_id, user_agent, referrer, created_at', since, true)
       const views = pageViewRows.filter(v => !isInternalPath(v.path) && !isBotUserAgent(v.user_agent))
 
       const pageViews = views.length
@@ -1645,7 +1767,7 @@ function AnalyticsTab() {
       const {
         rows: clickRows,
         capped: clicksCapped,
-      } = await fetchLiveAnalyticsRows<ClickEventRow>('click_events', 'element, path, created_at', since, true)
+      } = await fetchLiveAnalyticsRows<ClickEventRow>('click_events', 'element, path, visitor_id, created_at', since, true)
       const clicks = clickRows.filter(c => !isInternalPath(c.path || ''))
 
       const clickCounts: Record<string, number> = {}
@@ -1659,12 +1781,18 @@ function AnalyticsTab() {
         .sort((a, b) => b[1] - a[1]).slice(0, 8)
         .map(([element, count]) => ({ element, count }))
 
-      // Leads — contact / quote form submissions
-      let leadQuery = supabase.from('contact_submissions').select('id', { count: 'exact', head: true })
+      // Leads — contact / quote form submissions (rows also feed the abandoned-cart match)
+      let leadQuery = supabase
+        .from('contact_submissions')
+        .select('name, email, phone, source, visitor_id, created_at', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .limit(ANALYTICS_PAGE_SIZE)
       if (since) leadQuery = leadQuery.gte('created_at', since)
-      const { count: leadCount, error: leadError } = await leadQuery
+      const { data: leadRows, count: leadCount, error: leadError } = await leadQuery
       if (leadError) throw leadError
       const leads = leadCount || 0
+
+      const abandonedCarts = buildAbandonedCarts(views, clicks, (leadRows || []) as LeadContactRow[])
 
       // Orders + paid revenue
       const {
@@ -1703,6 +1831,7 @@ function AnalyticsTab() {
         topProducts,
         topClicks,
         funnel,
+        abandonedCarts,
         capped: pageViewsCapped || clicksCapped || ordersCapped,
       })
       setLastUpdated(new Date())
@@ -1719,6 +1848,7 @@ function AnalyticsTab() {
         topProducts: [],
         topClicks: [],
         funnel: [],
+        abandonedCarts: [],
         capped: false,
       })
     } finally {
@@ -1839,6 +1969,42 @@ function AnalyticsTab() {
                 </div>
               )
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Abandoned carts */}
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><ShoppingCart size={16} className="text-primary" /> Abandoned carts</h3>
+        <p className="text-xs text-muted-foreground mb-4">Shoppers who added items or reached checkout but never finished the order. If they left contact info on a form, it shows here — reach out and offer to finish the order for them.</p>
+        {data.abandonedCarts.length === 0 ? <p className="text-sm text-muted-foreground">No abandoned carts in this period. Nice.</p> : (
+          <div className="space-y-3">
+            {data.abandonedCarts.map(cart => (
+              <div key={cart.visitorId} className="rounded-xl border border-border bg-background/40 p-4">
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${cart.stage === 'Reached checkout' || cart.stage === 'Clicked checkout' ? 'bg-red-400/15 text-red-300' : 'bg-yellow-400/15 text-yellow-300'}`}>{cart.stage}</span>
+                    <span className="text-muted-foreground text-xs">{cart.device}{cart.referrer ? ` · from ${cart.referrer}` : ''}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(cart.firstSeen).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {cart.lastSeen.slice(0, 10) !== cart.firstSeen.slice(0, 10) && ` – ${new Date(cart.lastSeen).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                  </span>
+                </div>
+                {cart.pages.length > 0 && <p className="text-xs text-muted-foreground mb-2">Looked at: {cart.pages.join(', ')}</p>}
+                {cart.contacts.length > 0 ? cart.contacts.map((c, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm flex-wrap">
+                    <Mail size={13} className="text-green-400 shrink-0" />
+                    <span className="font-medium">{c.name || 'No name'}</span>
+                    {c.email && <a href={`mailto:${c.email}`} className="text-primary hover:underline">{c.email}</a>}
+                    {c.phone && <a href={`tel:${c.phone}`} className="text-primary hover:underline">{c.phone}</a>}
+                    <span className="text-xs text-muted-foreground">via {c.source || 'form'}{c.exact ? '' : ' · submitted around the same time'}</span>
+                  </div>
+                )) : (
+                  <p className="text-xs text-muted-foreground">No contact info left — anonymous shopper.</p>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

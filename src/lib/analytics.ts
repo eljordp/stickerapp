@@ -59,6 +59,12 @@ function getSessionId(): string {
   }
 }
 
+// Lets lead submissions carry the same identity as page_views/click_events,
+// so the admin can link a contact form back to that shopper's cart activity.
+export function getAnalyticsIdentity() {
+  return { visitorId: getVisitorId(), sessionId: getSessionId() }
+}
+
 // Fire-and-forget insert. Must NEVER block or throw into a UI action.
 function logToSupabase(table: 'page_views' | 'click_events' | 'nav_events', row: Record<string, unknown>) {
   if (typeof window === 'undefined' || shouldSuppressAnalytics()) return
@@ -254,6 +260,34 @@ export function trackCheckoutStarted({
     value,
     coupon: promoCode || undefined,
     items: gaItems,
+  })
+}
+
+export function trackAddToCart({
+  item,
+  value,
+  category,
+  source,
+}: {
+  item: AnalyticsCartItem
+  value: number
+  category?: string
+  source?: string
+}) {
+  const [gaItem] = toGa4Items([item])
+  trackEvent('add_to_cart_click', {
+    source: source || 'product_order',
+    product_name: item.name,
+    product_size: item.size,
+    product_option: item.option,
+    category: category || item.shape || item.material || 'print-product',
+    value,
+    currency: 'USD',
+  })
+  sendGa4Event('add_to_cart', {
+    currency: 'USD',
+    value,
+    items: [gaItem],
   })
 }
 
