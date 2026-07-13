@@ -1926,6 +1926,21 @@ function SeoTab() {
 
   const keyOf = (r: SeoRanking) => `${r.query}|||${r.city || ''}|||${r.device}`
 
+  // A numeric proxy observation is not a verified rank. Fail closed so an
+  // unlocalized/manual search can never inflate the Top 3 / Top 10 cards.
+  const isVerifiedRanking = (r: SeoRanking) => {
+    const notes = (r.notes || '').toLowerCase()
+    const disqualifying = [
+      'proxy',
+      'not independently',
+      'not verified',
+      'unverified',
+      'mirrored for admin',
+    ]
+    if (disqualifying.some(term => notes.includes(term))) return false
+    return notes.includes('verified')
+  }
+
   // rows are newest-first: first non-baseline row per key = current; first baseline row = comparison.
   const latest = new Map<string, SeoRanking>()
   const baseline = new Map<string, SeoRanking>()
@@ -1940,9 +1955,9 @@ function SeoTab() {
     .map(k => latest.get(k) || baseline.get(k)!)
     .sort((a, b) => rankSort(a.rank) - rankSort(b.rank) || a.query.localeCompare(b.query))
 
-  const top3 = current.filter(r => r.rank != null && r.rank <= 3).length
-  const top10 = current.filter(r => r.rank != null && r.rank <= 10).length
-  const notRanking = current.filter(r => r.rank == null).length
+  const top3 = current.filter(r => isVerifiedRanking(r) && r.rank != null && r.rank <= 3).length
+  const top10 = current.filter(r => isVerifiedRanking(r) && r.rank != null && r.rank <= 10).length
+  const unverified = current.filter(r => !isVerifiedRanking(r)).length
   const lastChecked = rows.find(r => r.source !== 'baseline')?.checked_at || rows[0]?.checked_at || null
 
   // change vs baseline: positive = moved up, NEW = newly ranking, DROP = fell out
@@ -1977,9 +1992,9 @@ function SeoTab() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Search} label="Tracked searches" value={current.length} delay={0.05} />
-        <StatCard icon={Target} label="Ranking top 3" value={top3} color="text-green-400" delay={0.1} />
-        <StatCard icon={TrendingUp} label="Ranking top 10" value={top10} color="text-blue-400" delay={0.15} />
-        <StatCard icon={AlertCircle} label="Not ranking yet" value={notRanking} color="text-orange-400" delay={0.2} />
+        <StatCard icon={Target} label="Verified top 3" value={top3} color="text-green-400" delay={0.1} />
+        <StatCard icon={TrendingUp} label="Verified top 10" value={top10} color="text-blue-400" delay={0.15} />
+        <StatCard icon={AlertCircle} label="Unverified" value={unverified} color="text-orange-400" delay={0.2} />
       </div>
 
       {current.length === 0 ? (
@@ -1995,6 +2010,7 @@ function SeoTab() {
                 <tr className="border-b border-border">
                   <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Search term</th>
                   <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Area</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Device</th>
                   <th className="text-right px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Rank</th>
                   <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Change</th>
                   <th className="text-left px-4 py-3 text-xs font-bold uppercase text-muted-foreground">Local pack</th>
@@ -2003,6 +2019,7 @@ function SeoTab() {
               <tbody>
                 {current.map(r => {
                   const change = changeFor(r)
+                  const verified = isVerifiedRanking(r)
                   return (
                     <tr key={r.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors align-top">
                       <td className="px-4 py-3">
@@ -2010,13 +2027,17 @@ function SeoTab() {
                         {r.notes && <div className="text-xs text-muted-foreground mt-0.5 max-w-md">{r.notes}</div>}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{r.city || 'General'}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap capitalize">{r.device || 'Unknown'}</td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
-                        {r.rank == null
+                        {!verified
+                          ? <span className="text-orange-400 font-medium">Unverified{r.rank != null ? ` (#${r.rank} observed)` : ''}</span>
+                          : r.rank == null
                           ? <span className="text-muted-foreground">Not top 20</span>
                           : <span className={`font-bold ${r.rank <= 3 ? 'text-green-400' : r.rank <= 10 ? 'text-blue-400' : 'text-foreground'}`}>#{r.rank}</span>}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-xs font-medium">
-                        {!change ? <span className="text-muted-foreground">—</span>
+                        {!verified ? <span className="text-muted-foreground">—</span>
+                          : !change ? <span className="text-muted-foreground">—</span>
                           : change.kind === 'up' ? <span className="text-green-400">▲ {change.val}</span>
                           : change.kind === 'down' ? <span className="text-red-400">▼ {change.val}</span>
                           : change.kind === 'new' ? <span className="text-green-400">NEW</span>
