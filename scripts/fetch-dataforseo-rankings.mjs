@@ -94,7 +94,30 @@ async function fetchCheck({ city, device }) {
   }
 
   const task = body.tasks?.[0]
-  if (!task || task.status_code !== 20000) {
+  if (!task) {
+    throw new Error(`${city}/${device}: task missing from API response`)
+  }
+
+  // DataForSEO returns "No Search Results" when a target-filtered domain is
+  // absent from the requested depth. That is a valid verified null rank, not
+  // a provider failure.
+  if (/no search results/i.test(task.status_message || '')) {
+    return {
+      row: {
+        query: QUERY,
+        city,
+        device,
+        rank: null,
+        ranking_url: null,
+        local_pack: false,
+        serp_feature: 'none',
+        notes: `[verified] DataForSEO Google organic live/advanced; location=${locationName}; device=${device}; depth=${DEPTH}; TSS not found in top ${DEPTH}; checked=${new Date().toISOString()}`,
+      },
+      cost: Number(task.cost || 0),
+    }
+  }
+
+  if (task.status_code !== 20000) {
     throw new Error(`${city}/${device}: ${task?.status_message || 'task failed'}`)
   }
 
@@ -113,6 +136,7 @@ async function fetchCheck({ city, device }) {
       ranking_url: organic?.url || null,
       local_pack: false,
       serp_feature: rank == null ? 'none' : 'organic',
+      source: 'serp_exact',
       notes: `[verified] DataForSEO Google organic live/advanced; location=${locationName}; device=${device}; depth=${DEPTH}; checked=${result?.datetime || new Date().toISOString()}`,
     },
     cost: Number(task.cost || 0),
