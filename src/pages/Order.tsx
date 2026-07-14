@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText } from 'lucide-react'
+import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText, ArrowRight } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
 import { getPricing, loadPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
@@ -90,12 +90,12 @@ const stickerFormats = [
 ] as const
 
 const localStickerTypes = [
-  'Die-cut vinyl stickers',
-  'Kiss-cut stickers',
-  'Sticker sheets',
-  'Roll labels',
-  'Holographic stickers',
-  'Clear decals',
+  { label: 'Die-cut vinyl stickers', href: '/die-cut-stickers' },
+  { label: 'Kiss-cut stickers', href: '/stickers#configure' },
+  { label: 'Sticker sheets', href: '/sticker-sheets' },
+  { label: 'Roll labels', href: '/roll-labels' },
+  { label: 'Holographic stickers', href: '/holographic-stickers' },
+  { label: 'Custom product labels', href: '/custom-labels' },
 ]
 
 const stickerFaqs = [
@@ -120,7 +120,7 @@ const stickerProofSlugs = [
   'fuegofamilyfarms-circle',
   'floodline-sticker',
   'brothersbroadleaf-halloween',
-  'elevated925-mystery-snack-pack',
+  'calibullconnect-bulldog',
 ]
 const stickerProofProjects = stickerProofSlugs
   .map((slug) => projects.find((project) => project.slug === slug))
@@ -817,13 +817,20 @@ export default function Order() {
               className="grid sm:grid-cols-2 gap-3"
             >
               {localStickerTypes.map((type) => (
-                <div key={type} className="bg-card/70 border border-border rounded-xl p-4">
+                <Link
+                  key={type.label}
+                  to={type.href}
+                  className="group bg-card/70 border border-border rounded-xl p-4 hover:border-primary/40 transition-colors"
+                >
                   <StickerIcon className="w-5 h-5 text-primary mb-3" />
-                  <h3 className="font-bold text-sm">{type}</h3>
+                  <h3 className="font-bold text-sm group-hover:text-primary transition-colors">{type.label}</h3>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                     Proofed, printed, and finished for local pickup or shipping.
                   </p>
-                </div>
+                  <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+                    Explore options <ArrowRight size={12} />
+                  </span>
+                </Link>
               ))}
             </motion.div>
           </div>
@@ -834,9 +841,9 @@ export default function Order() {
         <div className="section-container max-w-6xl">
           <div className="mb-8 max-w-3xl">
             <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real Sticker Work</p>
-            <h2 className="text-3xl md:text-4xl font-black">Proof from Bay Area sticker and packaging projects.</h2>
+            <h2 className="text-3xl md:text-4xl font-black">Proof from real Bay Area sticker projects.</h2>
             <p className="text-muted-foreground mt-3 leading-relaxed">
-              From local brand drops to product packaging, these are real Sticker Smith projects: printed stickers, die-cut artwork, circular labels, and custom mylar packaging that uses sticker-style branding on retail bags.
+              These are real Sticker Smith projects for local brands: printed die-cut artwork, illustrated vinyl stickers, circular runs, and fast-turnaround brand drops.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -859,7 +866,10 @@ export default function Order() {
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link to="/projects" className="btn-secondary text-sm">See More Sticker Projects</Link>
-            <Link to="/mylar" className="text-sm font-bold text-primary hover:underline">Custom mylar packaging</Link>
+            <Link to="/die-cut-stickers" className="text-sm font-bold text-primary hover:underline">Die-cut stickers</Link>
+            <Link to="/sticker-sheets" className="text-sm font-bold text-primary hover:underline">Sticker sheets</Link>
+            <Link to="/roll-labels" className="text-sm font-bold text-primary hover:underline">Roll labels</Link>
+            <Link to="/holographic-stickers" className="text-sm font-bold text-primary hover:underline">Holographic stickers</Link>
           </div>
         </div>
       </section>
