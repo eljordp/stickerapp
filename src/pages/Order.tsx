@@ -4,19 +4,13 @@ import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
+import { trackAddToCart } from '@/lib/analytics'
 import { getPricing, loadPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
 import { cities } from '@/lib/cities'
 import { projects } from '@/lib/projects'
 import PageHero from '@/components/PageHero'
-import PortfolioStrip from '@/components/PortfolioStrip'
 import StudioMockup from '@/components/StudioMockup'
 import stickerHeroImg from '@/assets/projects/stickers-die-cut-stack.jpg'
-import stkDieCut from '@/assets/projects/stickers-die-cut-stack.jpg'
-import stkHolo from '@/assets/projects/stickers-holographic.jpg'
-import stkLaptop from '@/assets/projects/stickers-on-laptop.jpg'
-import stkSheet from '@/assets/projects/stickers-sheet.jpg'
-import stkRoll from '@/assets/projects/stickers-roll.jpg'
-import stkMatte from '@/assets/projects/stickers-matte-detail.jpg'
 
 const stickerSpecs = [
   { icon: Droplets, label: 'Material', value: 'Premium 3M & Avery cast vinyl' },
@@ -89,13 +83,13 @@ const stickerFormats = [
   { value: 'roll', label: 'Rolls', cartLabel: 'Roll labels', icon: ScrollText },
 ] as const
 
-const localStickerTypes = [
-  'Die-cut vinyl stickers',
-  'Kiss-cut stickers',
-  'Sticker sheets',
-  'Roll labels',
-  'Holographic stickers',
-  'Clear decals',
+const stickerFormatLinks = [
+  { label: 'Die-cut vinyl stickers', href: '/die-cut-stickers', detail: 'Custom contour cuts for logos, art, and brand drops.' },
+  { label: 'Sticker sheets', href: '/sticker-sheets', detail: 'Multiple kiss-cut designs on one branded sheet.' },
+  { label: 'Roll labels', href: '/roll-labels', detail: 'Packaging labels for bottles, jars, bags, and product runs.' },
+  { label: 'Holographic stickers', href: '/holographic-stickers', detail: 'Rainbow-shift vinyl for merch, packaging, and events.' },
+  { label: 'Custom product labels', href: '/custom-labels', detail: 'Labels sized and proofed for retail packaging.' },
+  { label: 'Clear decals', href: '/stickers?material=Clear#configure', detail: 'Transparent vinyl with a clean printed finish.' },
 ]
 
 const stickerFaqs = [
@@ -367,7 +361,7 @@ export default function Order() {
     const addOns: { name: string; price: number }[] = []
     if (rushAddon) addOns.push({ name: ADDON_RUSH.label, price: ADDON_RUSH.price })
     if (designAddon) addOns.push({ name: ADDON_DESIGN.label, price: ADDON_DESIGN.price })
-    addItem({
+    const cartItem = {
       id: `sticker-${Date.now()}`,
       name: cartProductName,
       size,
@@ -379,6 +373,13 @@ export default function Order() {
       dimensions: size,
       addOns: addOns.length > 0 ? addOns : undefined,
       artwork: artworkUpload || undefined,
+    }
+    addItem(cartItem)
+    trackAddToCart({
+      item: cartItem,
+      value: totalPrice,
+      category: 'Custom Stickers',
+      source: 'sticker_configurator',
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -816,21 +817,24 @@ export default function Order() {
               viewport={{ once: true }}
               className="grid sm:grid-cols-2 gap-3"
             >
-              {localStickerTypes.map((type) => (
-                <div key={type} className="bg-card/70 border border-border rounded-xl p-4">
+              {stickerFormatLinks.map((type) => (
+                <Link key={type.label} to={type.href} className="group bg-card/70 border border-border rounded-xl p-4 hover:border-primary/40 transition-colors">
                   <StickerIcon className="w-5 h-5 text-primary mb-3" />
-                  <h3 className="font-bold text-sm">{type}</h3>
+                  <h3 className="font-bold text-sm group-hover:text-primary transition-colors">{type.label}</h3>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                    Proofed, printed, and finished for local pickup or shipping.
+                    {type.detail}
                   </p>
-                </div>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                    See details <span aria-hidden>→</span>
+                  </span>
+                </Link>
               ))}
             </motion.div>
           </div>
         </div>
       </section>
 
-      <section className="py-12 md:py-16 border-t border-border/50 bg-card">
+      <section id="portfolio" className="py-12 md:py-16 border-t border-border/50 bg-card scroll-mt-24">
         <div className="section-container max-w-6xl">
           <div className="mb-8 max-w-3xl">
             <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Real Sticker Work</p>
@@ -881,13 +885,12 @@ export default function Order() {
         </div>
       </section>
 
-      {/* In-context mockup */}
-      <section className="py-12 md:py-20 border-t border-border/50">
+      <section className="py-12 md:py-16 border-t border-border/50">
         <div className="section-container">
           <StudioMockup
             service="Sticker"
-            title="See your sticker, finished."
-            subtitle="Upload your design — preview it as a die-cut, kiss-cut square, or circle sticker."
+            title="Preview the sticker shape before you order."
+            subtitle="Upload artwork to see it as a die-cut, circle, square, or rectangle sticker."
             scenes={[
               { key: 'die-cut', label: 'Die-Cut', shape: 'sticker-die-cut' },
               { key: 'circle', label: 'Circle', shape: 'sticker-circle' },
@@ -898,23 +901,6 @@ export default function Order() {
         </div>
       </section>
 
-      {/* Portfolio */}
-      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
-        <div className="section-container">
-          <PortfolioStrip
-            title="Sticker Work"
-            subtitle="Die-cut, holographic, sheets, rolls — we've printed them all."
-            projects={[
-              { src: stkDieCut, alt: 'Die-cut sticker stack', caption: 'Die-cut vinyl' },
-              { src: stkHolo, alt: 'Holographic stickers', caption: 'Holographic' },
-              { src: stkLaptop, alt: 'Stickers on laptop', caption: 'In the wild' },
-              { src: stkSheet, alt: 'Sticker sheet', caption: 'Kiss-cut sheets' },
-              { src: stkRoll, alt: 'Sticker roll', caption: 'Rolls for retail' },
-              { src: stkMatte, alt: 'Matte sticker detail', caption: 'Matte detail' },
-            ]}
-          />
-        </div>
-      </section>
     </>
   )
 }

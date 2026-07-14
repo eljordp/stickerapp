@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
-import { motion } from 'framer-motion'
-import { CheckCircle, Clock, Shield, Package, Zap } from 'lucide-react'
+import { Clock, Shield, Package, Zap } from 'lucide-react'
 import ProductOrder from '@/components/ProductOrder'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
 import ArtworkMockup from '@/components/ArtworkMockup'
 import ServicePageIntro from '@/components/ServicePageIntro'
+import { ServiceActionBand, ServiceDetailsBand, ServiceFaqSection } from '@/components/ServiceSections'
 import featherFlags from '@/assets/projects/feather-flags.jpg'
 import eventBooth from '@/assets/projects/event-booth-sticker-smith.jpeg'
 import weddingSignage from '@/assets/projects/wedding-display-signage-1.jpeg'
@@ -33,10 +33,10 @@ const specs = [
 ]
 
 const process = [
-  { step: '1', title: 'Choose Your Setup', desc: 'Pick your canopy size, table cover dimensions, or banner specs. Bundle them into an event kit for savings.' },
-  { step: '2', title: 'Upload Artwork', desc: 'Send us your logo, graphics, and brand colors. We\'ll create a full mockup of your event setup.' },
-  { step: '3', title: 'Approve & Produce', desc: 'Review your digital proof. Once approved, we print using dye-sublimation for vibrant, fade-resistant graphics.' },
-  { step: '4', title: 'Set Up & Shine', desc: 'Everything ships with frames, hardware, and carry bags. Easy setup — one person, under 5 minutes.' },
+  { title: 'Choose Setup', desc: 'Pick the tent, table cover, banner, flag, backdrop, or booth kit.' },
+  { title: 'Check Date', desc: 'Tell us the event date so hardware and production timing are realistic.' },
+  { title: 'Proof', desc: 'Approve the mockup before production starts.' },
+  { title: 'Ship or Pickup', desc: 'Displays ship with hardware when included, or can be picked up locally.' },
 ]
 
 const eventFaqs = [
@@ -75,75 +75,77 @@ export default function EventCanopies() {
         <div className="section-container">
           <ServicePageIntro
             eyebrow="Event Displays"
-            title="Custom Canopies, Banners & Booth Displays"
-            description="Order tents, table covers, flags, retractable banners, and event kits built around your event date."
+            title="Shop event displays, then lock the date."
+            description="Order tents, table covers, flags, banners, and booth kits online. Use the quote form when the event date, bundle, or hardware availability needs a real check."
           />
           <div id="shop" className="scroll-mt-24 mb-12">
             <ProductOrder
               categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']}
               onCategoryChange={handleCategoryChange}
+              heading="Shop Event Displays"
             />
           </div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mb-8">
-            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Bay Area event branding</p>
-            <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black mb-3">Printed canopies, banners, and booth materials for markets, trade shows, and pop-ups.</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  The Sticker Smith prints event displays in Hayward for Bay Area businesses that need custom canopy tents, vinyl banners, table throws, flags, and backdrops that look polished in person and in photos.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {['Custom canopy tents', 'Printed table covers', 'Feather flags', 'Retractable banners', 'Step-and-repeat backdrops', 'Full booth kits'].map((item) => (
-                  <div key={item} className="rounded-lg border border-border bg-card p-3 font-semibold">{item}</div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-8">
-            <h2 className="text-2xl font-black mb-6">What We Offer</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {features.map((feature) => (
-                <div key={feature} className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-foreground">{feature}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {specs.map(s => (
-              <div key={s.label} className="bg-card border border-border rounded-xl p-4 text-center">
-                <s.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</p>
-                <p className="text-sm font-semibold">{s.value}</p>
-              </div>
-            ))}
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="max-w-5xl mx-auto bg-card border border-border rounded-2xl p-8 md:p-10 mb-12">
-            <h2 className="text-2xl font-black mb-6">How It Works</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {process.map(p => (
-                <div key={p.step}>
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black mb-3">{p.step}</div>
-                  <h3 className="font-bold mb-1">{p.title}</h3>
-                  <p className="text-sm text-muted-foreground">{p.desc}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
+          <ServiceActionBand
+            eyebrow="Event deadline?"
+            title="If there is a date attached, get the quote path involved early."
+            subtitle="Use the quote path when the event date, bundle, venue, hardware, or delivery timing matters. We will check the schedule before production starts."
+            items={['Proof approval happens before production', 'Hardware availability can affect timing', 'Full booth kits should be quoted together']}
+            primary={{ label: 'Check Event Date & Quote', href: '#quote' }}
+            secondary={{ label: 'See Event Work', href: '#portfolio' }}
+          />
         </div>
       </section>
+      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
+        <div className="section-container">
+          <PortfolioStrip
+            title="Events We've Shown Up For"
+            subtitle="Trade shows, weddings, pop-ups — full booth and floor setups."
+            projects={[
+              { src: eventBooth, alt: 'Sticker Smith event booth setup', caption: 'Event booth setup' },
+              { src: featherFlags, alt: 'Feather flags setup', caption: 'Feather flags' },
+              { src: weddingSignage, alt: 'Wedding display signage', caption: 'Wedding signage' },
+              { src: weddingFloor1, alt: 'Wedding vinyl floor', caption: 'Custom vinyl floor' },
+              { src: weddingFloor2, alt: 'Wedding vinyl floor second', caption: 'Wedding floor graphic' },
+              { src: culturalFloor, alt: 'Cultural event dance floor', caption: 'Cultural event' },
+            ]}
+          />
+        </div>
+      </section>
+      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
+        <div className="section-container">
+          <EstimateForm
+            service="Event Displays"
+            title="Get an Event Display Estimate"
+            subtitle="Trade show, pop-up, conference — give us the event date and scope, we'll make sure it arrives on time."
+            fields={[
+              {
+                name: 'displayType',
+                label: 'What do you need?',
+                type: 'select',
+                required: true,
+                options: ['Canopy Tent', 'Backdrop / Step & Repeat', 'Retractable Banner', 'Table Cover', 'Feather Flag', 'Full Booth Setup', 'Not sure yet'],
+              },
+              { name: 'eventDate', label: 'Event date', type: 'text', required: true, placeholder: 'MM/DD/YYYY' },
+              { name: 'quantity', label: 'How many of each?', type: 'text', placeholder: 'e.g. 1 tent + 2 flags + 1 table cover' },
+              { name: 'eventLocation', label: 'Event location', type: 'text', placeholder: 'Moscone Center, SF' },
+            ]}
+          />
+        </div>
+      </section>
+      <ServiceDetailsBand
+        eyebrow="Display Details"
+        title="The event display options in one place."
+        intro="The Sticker Smith prints event displays in Hayward for Bay Area markets, trade shows, pop-ups, schools, conferences, and branded booths."
+        features={features}
+        specs={specs}
+        process={process}
+      />
       <section className="py-12 md:py-20 border-t border-border/50">
         <div className="section-container">
           <ArtworkMockup
             service="Event Display"
             title="Preview your event setup"
-            subtitle="Upload your brand — see it on a canopy, flag, or backdrop before the event."
+            subtitle="Upload your brand and see it on a canopy, flag, or backdrop."
             activeKey={activeMockup}
             onActiveKeyChange={setActiveMockup}
             scenes={[
@@ -184,59 +186,11 @@ export default function EventCanopies() {
           />
         </div>
       </section>
-      <section id="portfolio" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
-        <div className="section-container">
-          <PortfolioStrip
-            title="Events We've Shown Up For"
-            subtitle="Trade shows, weddings, pop-ups — full booth and floor setups."
-            projects={[
-              { src: eventBooth, alt: 'Sticker Smith event booth setup', caption: 'Event booth setup' },
-              { src: featherFlags, alt: 'Feather flags setup', caption: 'Feather flags' },
-              { src: weddingSignage, alt: 'Wedding display signage', caption: 'Wedding signage' },
-              { src: weddingFloor1, alt: 'Wedding vinyl floor', caption: 'Custom vinyl floor' },
-              { src: weddingFloor2, alt: 'Wedding vinyl floor second', caption: 'Wedding floor graphic' },
-              { src: culturalFloor, alt: 'Cultural event dance floor', caption: 'Cultural event' },
-            ]}
-          />
-        </div>
-      </section>
-      <section className="py-12 md:py-16 border-t border-border/50">
-        <div className="section-container max-w-4xl">
-          <div className="mb-8 text-center">
-            <p className="text-primary font-bold text-xs uppercase tracking-widest mb-3">Event Display FAQ</p>
-            <h2 className="text-3xl md:text-4xl font-black">Custom event branding questions</h2>
-          </div>
-          <div className="grid gap-4">
-            {eventFaqs.map((faq) => (
-              <div key={faq.q} className="bg-card/70 border border-border rounded-xl p-5">
-                <h3 className="font-bold text-base md:text-lg mb-2">{faq.q}</h3>
-                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      <section id="quote" className="py-12 md:py-20 border-t border-border/50 scroll-mt-24">
-        <div className="section-container">
-          <EstimateForm
-            service="Event Displays"
-            title="Get an Event Display Estimate"
-            subtitle="Trade show, pop-up, conference — give us the event date and scope, we'll make sure it arrives on time."
-            fields={[
-              {
-                name: 'displayType',
-                label: 'What do you need?',
-                type: 'select',
-                required: true,
-                options: ['Canopy Tent', 'Backdrop / Step & Repeat', 'Retractable Banner', 'Table Cover', 'Feather Flag', 'Full Booth Setup', 'Not sure yet'],
-              },
-              { name: 'eventDate', label: 'Event date', type: 'text', required: true, placeholder: 'MM/DD/YYYY' },
-              { name: 'quantity', label: 'How many of each?', type: 'text', placeholder: 'e.g. 1 tent + 2 flags + 1 table cover' },
-              { name: 'eventLocation', label: 'Event location', type: 'text', placeholder: 'Moscone Center, SF' },
-            ]}
-          />
-        </div>
-      </section>
+      <ServiceFaqSection
+        eyebrow="Event Display FAQ"
+        title="Custom event branding questions"
+        faqs={eventFaqs}
+      />
     </>
   )
 }

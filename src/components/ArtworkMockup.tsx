@@ -166,7 +166,7 @@ export default function ArtworkMockup({
               <img
                 src={scene.base}
                 alt={scene.label}
-                loading="eager"
+                loading="lazy"
                 decoding="async"
                 onLoad={() => setLoadedScenes(prev => new Set(prev).add(scene.key))}
                 onError={() => setFailedScenes(prev => new Set(prev).add(scene.key))}

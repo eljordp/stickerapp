@@ -14,6 +14,8 @@ const services = [
 ]
 
 function CityPageInner({ city }: { city: CityConfig }) {
+  const isHayward = city.slug === 'hayward'
+
   return (
     <>
       {/* Hero */}
@@ -31,16 +33,44 @@ function CityPageInner({ city }: { city: CityConfig }) {
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 tracking-tight leading-[1.05] text-white">
-              Custom stickers, signage & print in {city.name}.
+              {isHayward ? 'Custom stickers and printing in Hayward, CA.' : `Custom stickers, signage & print in ${city.name}.`}
             </h1>
             <p className="text-base md:text-lg text-neutral-300 max-w-2xl mb-7">{city.intro}</p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/contact" className="btn-primary">Get a {city.name} Quote <ArrowRight size={16} /></Link>
-              <Link to="/stickers" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-white/20 text-white hover:bg-white/5 hover:border-white/40 transition-colors text-sm font-semibold">Order Stickers</Link>
+              {isHayward ? (
+                <Link to="/stickers" className="btn-primary">Order Hayward Stickers <ArrowRight size={16} /></Link>
+              ) : (
+                <Link to="/contact" className="btn-primary">Get a {city.name} Quote <ArrowRight size={16} /></Link>
+              )}
+              <Link to={isHayward ? '/contact' : '/stickers'} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-white/20 text-white hover:bg-white/5 hover:border-white/40 transition-colors text-sm font-semibold">
+                {isHayward ? 'Get a Custom Quote' : 'Order Stickers'}
+              </Link>
             </div>
           </motion.div>
         </div>
       </section>
+
+      {isHayward && (
+        <section className="border-b border-border/50 py-12 md:py-16">
+          <div className="section-container max-w-5xl">
+            <div className="grid gap-6 rounded-2xl border border-border bg-card p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8">
+              <div>
+                <p className="text-primary font-bold text-xs uppercase tracking-widest">Hayward sticker printing</p>
+                <h2 className="mt-3 text-3xl font-black md:text-4xl">Custom stickers printed and picked up locally.</h2>
+                <p className="mt-4 max-w-3xl leading-relaxed text-muted-foreground">
+                  Order die-cut stickers, sticker sheets, product labels, and waterproof vinyl with a digital proof before production. Pickup is available at 23673 Connecticut St in Hayward.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-4 text-sm font-bold">
+                  <Link to="/stickers" className="text-primary hover:underline">Order custom stickers</Link>
+                  <Link to="/die-cut-stickers" className="text-primary hover:underline">Compare die-cut stickers</Link>
+                  <Link to="/custom-labels" className="text-primary hover:underline">Shop custom labels</Link>
+                </div>
+              </div>
+              <Link to="/stickers#configure" className="btn-primary whitespace-nowrap">Start Sticker Order <ArrowRight size={16} /></Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Why us here */}
       <section className="py-12 md:py-20">

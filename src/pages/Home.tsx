@@ -86,6 +86,47 @@ function MobileQuoteBridge() {
   )
 }
 
+function LocalStickerDiscovery() {
+  const links = [
+    { label: 'Custom stickers in Hayward', href: '/hayward' },
+    { label: 'Bay Area custom stickers', href: '/stickers' },
+    { label: 'Custom product labels', href: '/custom-labels' },
+    { label: 'Die-cut stickers', href: '/die-cut-stickers' },
+  ]
+
+  return (
+    <section className="border-t border-border/50 bg-card/35 py-9">
+      <div className="section-container max-w-5xl">
+        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <p className="text-primary font-bold text-xs uppercase tracking-widest">Printed in Hayward</p>
+            <h2 className="mt-3 text-2xl font-black leading-tight md:text-3xl">
+              Custom stickers and labels for Bay Area businesses, brands, and events.
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground md:text-base">
+              Approve a digital proof before production, then pick up from our Hayward print shop or have the finished order shipped.
+            </p>
+          </div>
+          <Link to="/stickers" className="btn-primary w-full justify-center md:w-auto">
+            Order Custom Stickers <ArrowRight size={18} />
+          </Link>
+        </div>
+        <nav aria-label="Local sticker and label pages" className="mt-6 flex flex-wrap gap-2">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className="rounded-full border border-border bg-background px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
   const showDesktopSections = useDesktopHomeSections()
 
@@ -107,6 +148,7 @@ export default function Home() {
         <MobileTrustStrip />
         <ProductCategories />
         <HowItWorks />
+        <LocalStickerDiscovery />
         <MobileQuoteBridge />
         {showDesktopSections && (
           <Suspense fallback={null}>

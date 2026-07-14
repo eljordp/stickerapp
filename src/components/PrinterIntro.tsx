@@ -7,7 +7,7 @@ const DURATION = 3.8
 const HEAD_TRAVEL_S = DURATION - 0.72
 const HEAD_EASE: [number, number, number, number] = [0.22, 0.08, 0.78, 0.94]
 const STATUS_MESSAGES = ['CALIBRATING', 'LOADING INK', 'PRINTING', 'CURING']
-const INTRO_SEEN_KEY = 'tss-printer-intro-seen-v1'
+const INTRO_SEEN_KEY = 'tss-printer-intro-seen-session-v1'
 const HIGH_INTENT_PATHS = new Set(['/cart', '/checkout', '/order-confirmation', '/account', '/admin', '/contact', '/quote'])
 const INK_COLORS = ['#22d3ee', '#ec4899', '#facc15']
 
@@ -36,7 +36,7 @@ const isPrerender = () => {
 const hasSeenIntro = () => {
   if (typeof window === 'undefined') return false
   try {
-    return window.localStorage.getItem(INTRO_SEEN_KEY) === 'true'
+    return window.sessionStorage.getItem(INTRO_SEEN_KEY) === 'true'
   } catch {
     return false
   }
@@ -45,7 +45,7 @@ const hasSeenIntro = () => {
 const markIntroSeen = () => {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(INTRO_SEEN_KEY, 'true')
+    window.sessionStorage.setItem(INTRO_SEEN_KEY, 'true')
   } catch { /* ignore unavailable storage */ }
 }
 

@@ -5,8 +5,8 @@
 // Usage:
 //   node scripts/save-rankings.mjs <path-to-json>   (or pipe JSON via stdin)
 //
-// JSON shape — an array of:
-//   { query, city?, device?, rank?, ranking_url?, local_pack?, serp_feature?, notes? }
+// JSON shape — an array of verified exact-SERP observations:
+//   { query, city?, device?, rank?, ranking_url?, local_pack?, serp_feature?, source?, notes }
 //   rank: integer position, or null/omitted = "not ranking" (not in top 20).
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -40,8 +40,9 @@ function readRows() {
   const data = JSON.parse(raw)
   if (!Array.isArray(data)) throw new Error('Expected a JSON array of ranking rows')
   const checkedAt = new Date().toISOString()
-  return data
-    .map((r) => ({
+  const rows = data
+    .map((r, index) => ({
+      inputIndex: index,
       query: String(r.query || '').trim(),
       city: r.city ?? null,
       device: r.device || 'desktop',
@@ -49,11 +50,28 @@ function readRows() {
       ranking_url: r.ranking_url ?? null,
       local_pack: !!r.local_pack,
       serp_feature: r.serp_feature ?? null,
-      source: 'monitor',
+      source: r.source || 'serp_exact',
       notes: r.notes ?? null,
       checked_at: checkedAt,
     }))
     .filter((r) => r.query)
+
+  for (const row of rows) {
+    if (!['desktop', 'mobile'].includes(row.device)) {
+      throw new Error(`Row ${row.inputIndex + 1}: device must be desktop or mobile`)
+    }
+    if (row.rank != null && (!Number.isInteger(row.rank) || row.rank < 1 || row.rank > 20)) {
+      throw new Error(`Row ${row.inputIndex + 1}: rank must be an integer from 1 to 20 or null`)
+    }
+    if (row.source === 'serp_exact' && !/^\[verified\]/i.test(String(row.notes || ''))) {
+      throw new Error(`Row ${row.inputIndex + 1}: exact SERP rows require notes beginning with [verified]`)
+    }
+    if (/proxy|mirrored|placeholder|not independently verified/i.test(String(row.notes || ''))) {
+      throw new Error(`Row ${row.inputIndex + 1}: proxy, mirrored, or placeholder observations cannot be stored as ranks`)
+    }
+  }
+
+  return rows.map(({ inputIndex: _inputIndex, ...row }) => row)
 }
 
 const { url, key } = loadCreds()
@@ -86,4 +104,4 @@ if (error) {
   console.error('[save-rankings] insert failed:', error.message)
   process.exit(1)
 }
-console.log(`[save-rankings] inserted ${rows.length} rows (source=monitor, checked_at=${rows[0].checked_at})`)
+console.log(`[save-rankings] inserted ${rows.length} rows (source=${rows[0].source}, checked_at=${rows[0].checked_at})`)

@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
+import { FileCheck2, ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import { trackAddToCart } from '@/lib/analytics'
 import { getPricing, loadPricing, type ProductCategory, type ProductTier } from '@/lib/pricing'
 
 interface Props {
   categoryNames: string[]
   onCategoryChange?: (categoryName: string) => void
+  heading?: string
+  quoteHref?: string
 }
 
 /** Group items by their prefix before " – " */
@@ -55,7 +58,12 @@ function createCartItemId(categoryName: string, size: string) {
   return `${categoryName}-${size}-${Date.now()}`
 }
 
-export default function ProductOrder({ categoryNames, onCategoryChange }: Props) {
+export default function ProductOrder({
+  categoryNames,
+  onCategoryChange,
+  heading = 'Shop Products',
+  quoteHref = '#quote',
+}: Props) {
   const { addItem } = useCart()
   const [pricing, setPricing] = useState(() => getPricing())
 
@@ -127,7 +135,7 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
       .filter(a => selectedAddOns.has(a.name))
       .map(a => ({ name: a.name, price: +(a.value * (isPerUnit ? effectiveQty : 1)).toFixed(2) }))
 
-    addItem({
+    const cartItem = {
       id: createCartItemId(category.name, item.size),
       name: `${item.size}`,
       size: item.size,
@@ -135,6 +143,13 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
       price: cartBasePrice,
       quantity: 1,
       addOns: addOns.length > 0 ? addOns : undefined,
+    }
+    addItem(cartItem)
+    trackAddToCart({
+      item: cartItem,
+      value: totalPrice,
+      category: category.name,
+      source: 'product_order',
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -161,7 +176,7 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
       transition={{ delay: 0.2 }}
       className="max-w-5xl mx-auto"
     >
-      <h2 className="text-2xl md:text-3xl font-black mb-6 text-center">Shop Products</h2>
+      <h2 className="text-2xl md:text-3xl font-black mb-6 text-center">{heading}</h2>
 
       {/* Category tabs */}
       {categories.length > 1 && (
@@ -392,6 +407,20 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
                 <>Add to Cart — ${totalPrice.toFixed(2)} <ShoppingCart size={18} /></>
               )}
             </button>
+            <div className="mt-4 grid gap-2 rounded-xl border border-border bg-background/55 p-4 text-xs text-muted-foreground">
+              {['Free digital proof before production', 'Upload artwork now or send it after checkout', 'Final print starts only after approval'].map((line) => (
+                <div key={line} className="flex items-start gap-2">
+                  <FileCheck2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+            <a
+              href={quoteHref}
+              className="mt-3 block rounded-xl border border-primary/25 bg-primary/5 p-3 text-center text-xs font-bold uppercase tracking-wider text-primary transition-colors hover:bg-primary/10"
+            >
+              Need custom sizing, install, or bulk pricing? Request a quote
+            </a>
           </div>
         </div>
       </div>

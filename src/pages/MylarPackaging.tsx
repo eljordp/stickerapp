@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Upload, X, Package, Sparkles, Box, ShoppingCart, Check } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
+import { trackAddToCart } from '@/lib/analytics'
 import { getPricing, loadPricing, type ProductCategory, type AddOn } from '@/lib/pricing'
 import EstimateForm from '@/components/EstimateForm'
 import PortfolioStrip from '@/components/PortfolioStrip'
@@ -265,7 +266,7 @@ export default function MylarPackaging() {
       .filter(a => selectedAddOns.has(a.name))
       .map(a => ({ name: a.name, price: +(a.value * quantity).toFixed(2) }))
     const cartBasePrice = +(unitPrice * quantity).toFixed(2)
-    addItem({
+    const cartItem = {
       id: createMylarCartItemId(item.size),
       name: `Custom ${item.size}`,
       size: item.size,
@@ -274,6 +275,13 @@ export default function MylarPackaging() {
       quantity: 1,
       addOns: cartAddOns.length > 0 ? cartAddOns : undefined,
       artwork: artworkUpload || undefined,
+    }
+    addItem(cartItem)
+    trackAddToCart({
+      item: cartItem,
+      value: totalPrice,
+      category: 'Mylar Packaging',
+      source: 'mylar_calculator',
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -431,10 +439,13 @@ export default function MylarPackaging() {
 
               {/* Help CTA */}
               <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-5 text-center">
-                <p className="font-medium text-foreground mb-2">Need custom artwork help?</p>
-                <p className="text-sm text-muted-foreground mb-4">Send your logo, strain list, and any compliance notes.</p>
-                <a href="/contact" className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                  Fill out project form
+                <p className="font-medium text-foreground mb-2">Bulk run, labels, or artwork help?</p>
+                <p className="text-sm text-muted-foreground mb-4">Send bag size, quantity, logo, product details, and any compliance notes. Final compliance is still customer responsibility.</p>
+                <a href="#quote" className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                  Request mylar quote
+                </a>
+                <a href="/custom-labels" className="mt-3 block text-xs font-bold uppercase tracking-wider text-primary hover:underline">
+                  Need labels instead of full bags?
                 </a>
               </div>
             </motion.div>

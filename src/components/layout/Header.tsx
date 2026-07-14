@@ -13,6 +13,7 @@ const navLinks = [
     label: 'Services',
     href: '/services',
     submenu: [
+      { label: 'Stickers & Labels', href: '/stickers#configure', products: ['Die-Cut Stickers', 'Sticker Sheets', 'Roll Labels', 'Holographic Stickers', 'Product Labels', 'Waterproof Vinyl Stickers'] },
       { label: 'Vehicle Graphics', href: '/services/vehicle-graphics#quote', products: ['Hayward Vehicle Graphics', 'Full Vehicle Wraps', 'Partial Wraps & Accents', 'Fleet Branding', 'Door & Spot Graphics', 'Perforated Window Graphics', 'Vinyl Lettering & Decals'] },
       { label: 'Business Signage', href: '/services/business-signage#shop', products: ['Storefront & Building Signs', 'Wall Graphics & Murals', 'A-Frame Sidewalk Signs', 'Retractable Banners', 'Acrylic & Metal Signs', 'LED & Illuminated Signs'] },
       { label: 'Event Displays', href: '/services/event-displays#shop', products: ['Hayward Custom Canopies', 'Custom Canopy Tents', 'Backdrop Displays', 'Table Covers & Throws', 'Feather & Teardrop Flags', 'Retractable Banner Stands'] },
