@@ -23,6 +23,7 @@ type AnalyticsCartItem = {
 declare global {
   interface Window {
     __tssClickTracking?: boolean
+    __tssGa4Configured?: boolean
     dataLayer?: unknown[]
     gtag?: (...args: unknown[]) => void
   }
@@ -127,9 +128,15 @@ function initGa4() {
     script.async = true
     script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA4_MEASUREMENT_ID)}`
     document.head.appendChild(script)
+  }
 
+  // Prerendering can serialize the script element into the HTML without
+  // preserving the dataLayer or gtag configuration that created it. Configure
+  // GA4 independently of script insertion so hydrated pages still send events.
+  if (!window.__tssGa4Configured) {
     window.gtag('js', new Date())
     window.gtag('config', GA4_MEASUREMENT_ID, { send_page_view: false })
+    window.__tssGa4Configured = true
   }
 }
 
