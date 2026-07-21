@@ -112,6 +112,9 @@ function normalizeItem(item) {
     material: truncate(item?.material, 80) || undefined,
     shape: truncate(item?.shape, 80) || undefined,
     dimensions: truncate(item?.dimensions, 80) || undefined,
+    artworkIntent: ['uploaded', 'send_later', 'design_help'].includes(item?.artworkIntent)
+      ? item.artworkIntent
+      : undefined,
     price,
     quantity,
     addOns,
@@ -154,6 +157,7 @@ function promoDiscountFor(code, subtotal, requestedDiscount) {
 }
 
 function normalizeCustomer(customerInfo = {}) {
+  const deliveryMethod = customerInfo.deliveryMethod === 'pickup' ? 'pickup' : 'shipping'
   const firstName = truncate(customerInfo.firstName, 80)
   const lastName = truncate(customerInfo.lastName, 80)
   const email = truncate(customerInfo.email, 160).toLowerCase()
@@ -163,11 +167,38 @@ function normalizeCustomer(customerInfo = {}) {
   const state = truncate(customerInfo.state, 20).toUpperCase()
   const zip = truncate(customerInfo.zip, 20)
 
-  if (!firstName || !lastName || !email || !phone || !address || !city || !state || !zip) {
-    throw new Error('Customer and shipping details are required before payment.')
+  if (!firstName || !lastName || !email) {
+    throw new Error('Customer name and email are required before payment.')
+  }
+  if (deliveryMethod === 'shipping' && (!address || !city || !state || !zip)) {
+    throw new Error('A complete shipping address is required for delivery.')
   }
 
-  return { firstName, lastName, email, phone, address, city, state, zip }
+  return { deliveryMethod, firstName, lastName, email, phone, address, city, state, zip }
+}
+
+function normalizeTouch(touch = {}) {
+  return {
+    capturedAt: truncate(touch?.capturedAt, 40) || null,
+    landingPage: truncate(touch?.landingPage, 500) || null,
+    referrer: truncate(touch?.referrer, 1000) || null,
+    source: truncate(touch?.source, 120) || 'direct',
+    medium: truncate(touch?.medium, 120) || '(none)',
+    campaign: truncate(touch?.campaign, 200) || null,
+    content: truncate(touch?.content, 200) || null,
+    term: truncate(touch?.term, 200) || null,
+    gclid: truncate(touch?.gclid, 300) || null,
+    msclkid: truncate(touch?.msclkid, 300) || null,
+    fbclid: truncate(touch?.fbclid, 300) || null,
+  }
+}
+
+function normalizeAttribution(attribution) {
+  if (!attribution || typeof attribution !== 'object') return null
+  return {
+    firstTouch: normalizeTouch(attribution.firstTouch),
+    lastTouch: normalizeTouch(attribution.lastTouch),
+  }
 }
 
 export function normalizeCheckout(body) {
@@ -195,6 +226,9 @@ export function normalizeCheckout(body) {
       body?.orderDescription || items.map((item) => `${item.name} (${item.option}, ${item.size}) x${item.quantity}`).join(', '),
       127
     ),
+    visitorId: truncate(body?.visitorId, 120) || null,
+    sessionId: truncate(body?.sessionId, 120) || null,
+    attribution: normalizeAttribution(body?.attribution),
   }
 }
 
@@ -257,31 +291,37 @@ export function buildPayPalOrderPayload(checkout) {
     amount.breakdown.discount = { currency_code: CURRENCY, value: moneyString(checkout.discount) }
   }
 
+  const purchaseUnit = {
+    description: checkout.description,
+    amount,
+    items: checkout.items.map((item) => ({
+      name: item.name,
+      unit_amount: { currency_code: CURRENCY, value: moneyString(item.unitPrice) },
+      quantity: String(item.quantity),
+      description: truncate(`${item.option} · ${item.size}`, 127),
+      category: 'PHYSICAL_GOODS',
+    })),
+  }
+
+  if (checkout.customer.deliveryMethod === 'shipping') {
+    purchaseUnit.shipping = {
+      name: { full_name: `${checkout.customer.firstName} ${checkout.customer.lastName}` },
+      address: {
+        address_line_1: checkout.customer.address,
+        admin_area_2: checkout.customer.city,
+        admin_area_1: checkout.customer.state,
+        postal_code: checkout.customer.zip,
+        country_code: 'US',
+      },
+    }
+  }
+
   return {
     intent: 'CAPTURE',
-    purchase_units: [
-      {
-        description: checkout.description,
-        amount,
-        items: checkout.items.map((item) => ({
-          name: item.name,
-          unit_amount: { currency_code: CURRENCY, value: moneyString(item.unitPrice) },
-          quantity: String(item.quantity),
-          description: truncate(`${item.option} · ${item.size}`, 127),
-          category: 'PHYSICAL_GOODS',
-        })),
-        shipping: {
-          name: { full_name: `${checkout.customer.firstName} ${checkout.customer.lastName}` },
-          address: {
-            address_line_1: checkout.customer.address,
-            admin_area_2: checkout.customer.city,
-            admin_area_1: checkout.customer.state,
-            postal_code: checkout.customer.zip,
-            country_code: 'US',
-          },
-        },
-      },
-    ],
+    application_context: {
+      shipping_preference: checkout.customer.deliveryMethod === 'pickup' ? 'NO_SHIPPING' : 'SET_PROVIDED_ADDRESS',
+    },
+    purchase_units: [purchaseUnit],
   }
 }
 
@@ -302,6 +342,8 @@ function responseLooksLikeMissingColumn(status, data, text) {
   const message = `${data?.message || ''} ${data?.error || ''} ${data?.hint || ''} ${text || ''}`.toLowerCase()
   return status === 400 && (
     message.includes('payment_status') ||
+    message.includes('payment_provider') ||
+    message.includes('payment_reference') ||
     message.includes('paypal_capture_id') ||
     message.includes('payment_verified_at') ||
     message.includes('payment_amount') ||
@@ -323,10 +365,10 @@ export async function saveCapturedOrder(orderID, checkout, paypalOrder) {
     customer_last_name: checkout.customer.lastName,
     customer_email: checkout.customer.email,
     customer_phone: checkout.customer.phone,
-    customer_address: checkout.customer.address,
-    customer_city: checkout.customer.city,
-    customer_state: checkout.customer.state,
-    customer_zip: checkout.customer.zip,
+    customer_address: checkout.customer.deliveryMethod === 'pickup' ? 'Local pickup' : checkout.customer.address,
+    customer_city: checkout.customer.deliveryMethod === 'pickup' ? 'Hayward' : checkout.customer.city,
+    customer_state: checkout.customer.deliveryMethod === 'pickup' ? 'CA' : checkout.customer.state,
+    customer_zip: checkout.customer.deliveryMethod === 'pickup' ? '94545' : checkout.customer.zip,
     items: checkout.items.map((item) => ({
       id: item.id,
       name: item.name,
@@ -339,14 +381,20 @@ export async function saveCapturedOrder(orderID, checkout, paypalOrder) {
       shape: item.shape,
       dimensions: item.dimensions,
       artwork: item.artwork,
+      artworkIntent: item.artworkIntent,
     })),
     total: checkout.total,
     status: 'processing',
+    visitor_id: checkout.visitorId,
+    session_id: checkout.sessionId,
+    attribution: checkout.attribution,
   }
 
   const extendedPayload = {
     ...basePayload,
     payment_status: 'captured',
+    payment_provider: 'paypal',
+    payment_reference: orderID,
     paypal_capture_id: completedCapture?.id || null,
     payment_verified_at: new Date().toISOString(),
     payment_amount: completedCapture?.amount?.value || checkout.total,

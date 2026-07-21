@@ -19,11 +19,31 @@ import { getReferrers, saveReferrers, getReferralLog, getReferralShareUrl, type 
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+type AttributionTouch = {
+  source?: string | null
+  medium?: string | null
+  campaign?: string | null
+  landingPage?: string | null
+  referrer?: string | null
+}
+
+type AttributionData = {
+  firstTouch?: AttributionTouch | null
+  lastTouch?: AttributionTouch | null
+} | null
+
+function attributionLabel(attribution: AttributionData | undefined, fallback = 'Unknown') {
+  const touch = attribution?.lastTouch || attribution?.firstTouch
+  if (!touch?.source) return fallback
+  return `${touch.source}${touch.medium && touch.medium !== '(none)' ? ` / ${touch.medium}` : ''}`
+}
+
 interface OrderItem {
   id: string; name: string; size: string; option: string
   price: number; quantity: number
   addOns?: { name: string; price: number }[]
   material?: string; shape?: string
+  artworkIntent?: 'uploaded' | 'send_later' | 'design_help'
   artwork?: {
     path: string
     fileName: string
@@ -44,11 +64,13 @@ interface Order {
   items: OrderItem[]; total: string
   status: OrderStatus
   paymentStatus: PaymentStatus
+  paymentProvider: 'paypal' | 'square'
   paymentCheckedAt?: string
   paymentIssue?: string
   paypalCaptureId?: string
   paymentAmount?: string
   paymentCurrency?: string
+  attribution?: AttributionData
 }
 
 interface CartSession {
@@ -95,6 +117,13 @@ interface ContactInquiry {
   service: string | null
   message: string
   source: string | null
+  visitor_id: string | null
+  session_id: string | null
+  attribution: AttributionData
+  lead_status: 'new' | 'contacted' | 'won' | 'closed' | 'spam'
+  assigned_to: string
+  responded_at: string | null
+  updated_at: string
   created_at: string
 }
 
@@ -157,6 +186,8 @@ interface AbandonedCartRow {
 interface AnalyticsSummary {
   visitors: number; pageViews: number
   leads: number; orders: number; revenue: number; ctaClicks: number
+  phoneClicks: number
+  sourceBreakdown: { source: string; leads: number; orders: number; revenue: number }[]
   topProducts: { name: string; views: number }[]
   topClicks: { element: string; count: number }[]
   funnel: { label: string; count: number; pct: number }[]
@@ -339,9 +370,9 @@ const paymentReviewConfig = {
 }
 
 const paymentConfig: Record<PaymentStatus, { label: string; icon: typeof Package; color: string }> = {
-  captured: { label: 'PayPal captured', icon: CheckCircle, color: 'text-green-400 bg-green-400/10 border-green-400/20' },
+  captured: { label: 'Payment captured', icon: CheckCircle, color: 'text-green-400 bg-green-400/10 border-green-400/20' },
   not_captured: { label: 'No capture found', icon: AlertCircle, color: 'text-red-400 bg-red-400/10 border-red-400/20' },
-  not_found: { label: 'Not in live PayPal', icon: AlertCircle, color: 'text-red-400 bg-red-400/10 border-red-400/20' },
+  not_found: { label: 'Payment not found', icon: AlertCircle, color: 'text-red-400 bg-red-400/10 border-red-400/20' },
   unverified: { label: 'Payment unverified', icon: AlertCircle, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
   checking: { label: 'Checking PayPal', icon: Loader2, color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
   error: { label: 'Verify failed', icon: AlertCircle, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
@@ -458,10 +489,12 @@ function OrdersTab() {
         items: o.items as OrderItem[], total: String(o.total),
         status: normalizeOrderStatus(o.status),
         paymentStatus: normalizePaymentStatus(o.payment_status),
+        paymentProvider: o.payment_provider === 'square' ? 'square' : 'paypal',
         paymentCheckedAt: typeof o.payment_verified_at === 'string' ? o.payment_verified_at : undefined,
         paypalCaptureId: typeof o.paypal_capture_id === 'string' ? o.paypal_capture_id : undefined,
         paymentAmount: o.payment_amount ? String(o.payment_amount) : undefined,
         paymentCurrency: typeof o.payment_currency === 'string' ? o.payment_currency : undefined,
+        attribution: (o.attribution || null) as AttributionData,
       })))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown Supabase error'
@@ -485,6 +518,7 @@ function OrdersTab() {
           total: String(order.total || '0.00'),
           status: normalizeOrderStatus(order.status),
           paymentStatus: normalizePaymentStatus(order.paymentStatus),
+          paymentProvider: order.paymentProvider === 'square' ? 'square' : 'paypal',
           paymentCheckedAt: order.paymentCheckedAt,
           paymentIssue: order.paymentIssue,
           paypalCaptureId: order.paypalCaptureId,
@@ -498,15 +532,19 @@ function OrdersTab() {
   }
 
   const verifyPayment = async (orderId: string, silent = false) => {
+    const currentOrder = orders.find(order => order.id === orderId)
+    const provider = currentOrder?.paymentProvider === 'square' ? 'square' : 'paypal'
     verifyAttempted.current.add(orderId)
     setOrders(prev => prev.map(order => (
       order.id === orderId
-        ? { ...order, paymentStatus: 'checking', paymentIssue: 'Checking live PayPal for a completed capture.' }
+        ? { ...order, paymentStatus: 'checking', paymentIssue: `Checking live ${provider === 'square' ? 'Square' : 'PayPal'} for a completed capture.` }
         : order
     )))
 
     try {
-      const response = await fetch(`/api/paypal/verify-order?orderID=${encodeURIComponent(orderId)}`)
+      const response = provider === 'square'
+        ? await adminApiFetch(`/api/square/verify-payment?paymentID=${encodeURIComponent(orderId)}`)
+        : await fetch(`/api/paypal/verify-order?orderID=${encodeURIComponent(orderId)}`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.error || 'Could not verify PayPal order.')
 
@@ -519,7 +557,7 @@ function OrdersTab() {
               paymentCheckedAt: data.verifiedAt || new Date().toISOString(),
               paymentIssue: paymentStatus === 'captured'
                 ? ''
-                : data.error || 'Live PayPal did not return a completed capture for this order ID.',
+                : data.error || `Live ${provider === 'square' ? 'Square' : 'PayPal'} did not return a completed capture for this payment ID.`,
               paypalCaptureId: typeof data.captureId === 'string' ? data.captureId : order.paypalCaptureId,
               paymentAmount: data.amount ? String(data.amount) : order.paymentAmount,
               paymentCurrency: typeof data.currency === 'string' ? data.currency : order.paymentCurrency,
@@ -529,9 +567,9 @@ function OrdersTab() {
 
       if (!silent) {
         if (paymentStatus === 'captured') {
-          toast.success('PayPal capture verified')
+          toast.success(`${provider === 'square' ? 'Square' : 'PayPal'} capture verified`)
         } else {
-          toast.error('No live PayPal capture found')
+          toast.error(`No live ${provider === 'square' ? 'Square' : 'PayPal'} capture found`)
         }
       }
     } catch (error) {
@@ -631,7 +669,7 @@ function OrdersTab() {
                       <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
                         <div className="flex items-start gap-3">
                           <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-400" />
-                          <p>This order is not counted as paid until live PayPal shows a completed capture for this ID.</p>
+                          <p>This order is not counted as paid until live {order.paymentProvider === 'square' ? 'Square' : 'PayPal'} shows a completed capture for this ID.</p>
                         </div>
                       </div>
                     )}
@@ -645,6 +683,12 @@ function OrdersTab() {
                         <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Shipping</h4>
                         <p className="text-sm">{order.customer.address}</p>
                         <p className="text-sm">{order.customer.city}, {order.customer.state} {order.customer.zip}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Marketing source</h4>
+                        <p className="text-sm">{attributionLabel(order.attribution)}</p>
+                        {order.attribution?.firstTouch?.landingPage && <p className="text-xs text-muted-foreground break-all">First page: {order.attribution.firstTouch.landingPage}</p>}
+                        {order.attribution?.lastTouch?.campaign && <p className="text-xs text-muted-foreground">Campaign: {order.attribution.lastTouch.campaign}</p>}
                       </div>
                     </div>
                     <div>
@@ -680,7 +724,7 @@ function OrdersTab() {
                     </div>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-border">
                       <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground break-all">PayPal ID: {order.id}</p>
+                        <p className="text-xs text-muted-foreground break-all">{order.paymentProvider === 'square' ? 'Square payment' : 'PayPal order'} ID: {order.id}</p>
                         <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold ${payment.color}`}>
                           <PaymentIcon size={12} className={isPaymentChecking ? 'animate-spin' : ''} />
                           {payment.label}
@@ -704,7 +748,7 @@ function OrdersTab() {
                           disabled={isPaymentChecking}
                           className="text-xs px-3 py-1.5 bg-secondary border border-border rounded-lg text-foreground hover:border-primary/40 disabled:opacity-50"
                         >
-                          {isPaymentChecking ? 'Checking...' : 'Recheck PayPal'}
+                          {isPaymentChecking ? 'Checking...' : `Recheck ${order.paymentProvider === 'square' ? 'Square' : 'PayPal'}`}
                         </button>
                         <label htmlFor={`status-${order.id}`} className="text-xs text-muted-foreground">Job Status:</label>
                         <select id={`status-${order.id}`} value={order.status}
@@ -739,6 +783,7 @@ function InquiriesTab() {
   const [search, setSearch] = useState('')
   const [serviceFilter, setServiceFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const fetchInquiries = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true)
@@ -747,7 +792,7 @@ function InquiriesTab() {
     try {
       const { data, error } = await supabase
         .from('contact_submissions')
-        .select('id,name,email,phone,service,message,source,created_at')
+        .select('id,name,email,phone,service,message,source,visitor_id,session_id,attribution,lead_status,assigned_to,responded_at,updated_at,created_at')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -798,6 +843,26 @@ function InquiriesTab() {
     }
   }
 
+  const updateLeadStatus = async (inquiry: ContactInquiry, leadStatus: ContactInquiry['lead_status']) => {
+    const previous = inquiries
+    const respondedAt = leadStatus === 'new' ? null : inquiry.responded_at || new Date().toISOString()
+    setInquiries(current => current.map(item => item.id === inquiry.id
+      ? { ...item, lead_status: leadStatus, responded_at: respondedAt, updated_at: new Date().toISOString() }
+      : item))
+
+    const { error } = await supabase
+      .from('contact_submissions')
+      .update({ lead_status: leadStatus, responded_at: respondedAt, updated_at: new Date().toISOString() })
+      .eq('id', inquiry.id)
+
+    if (error) {
+      setInquiries(previous)
+      toast.error('Could not update lead status')
+      return
+    }
+    toast.success(`Lead marked ${leadStatus}`)
+  }
+
   const normalizedSearch = search.trim().toLowerCase()
   const { unique: uniqueInquiries, duplicateCount } = dedupeInquiries(inquiries)
   const services = Array.from(new Set(uniqueInquiries.map(i => i.service).filter(Boolean) as string[])).sort()
@@ -805,6 +870,7 @@ function InquiriesTab() {
   const filtered = uniqueInquiries.filter(inquiry => {
     if (serviceFilter !== 'all' && inquiry.service !== serviceFilter) return false
     if (sourceFilter !== 'all' && inquiry.source !== sourceFilter) return false
+    if (statusFilter !== 'all' && inquiry.lead_status !== statusFilter) return false
     if (!normalizedSearch) return true
     return [
       inquiry.name,
@@ -819,6 +885,7 @@ function InquiriesTab() {
   const recentCount = uniqueInquiries.filter(i => new Date(i.created_at).getTime() >= weekAgo).length
   const uniqueEmails = new Set(uniqueInquiries.map(i => i.email.toLowerCase())).size
   const quoteCount = uniqueInquiries.filter(i => (i.source || '').includes('quote') || (i.service || '').toLowerCase().includes('quote')).length
+  const newLeadCount = uniqueInquiries.filter(i => i.lead_status === 'new').length
 
   if (loading) return (
     <div className="bg-card border border-border rounded-2xl p-12 text-center">
@@ -849,8 +916,9 @@ function InquiriesTab() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard icon={Send} label="Total Inquiries" value={uniqueInquiries.length} delay={0.1} />
+        <StatCard icon={AlertCircle} label="Needs Response" value={newLeadCount} color="text-orange-400" delay={0.15} />
         <StatCard icon={Clock} label="Last 7 Days" value={recentCount} color="text-blue-400" delay={0.2} />
         <StatCard icon={Users} label="Unique Emails" value={uniqueEmails} color="text-green-400" delay={0.3} />
         <StatCard icon={Mail} label="Quote Leads" value={quoteCount} color="text-yellow-400" delay={0.4} />
@@ -874,6 +942,18 @@ function InquiriesTab() {
           >
             <option value="all">All services</option>
             {services.map(service => <option key={service} value={service}>{service}</option>)}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="px-3 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="all">All statuses</option>
+            <option value="new">Needs response</option>
+            <option value="contacted">Contacted</option>
+            <option value="won">Won</option>
+            <option value="closed">Closed</option>
+            <option value="spam">Spam</option>
           </select>
           <select
             value={sourceFilter}
@@ -925,6 +1005,14 @@ function InquiriesTab() {
                           {inquiry.service}
                         </span>
                       )}
+                      <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                        inquiry.lead_status === 'new' ? 'bg-orange-400/15 text-orange-300' :
+                        inquiry.lead_status === 'won' ? 'bg-green-400/15 text-green-300' :
+                        inquiry.lead_status === 'spam' ? 'bg-red-400/15 text-red-300' :
+                        'bg-blue-400/15 text-blue-300'
+                      }`}>
+                        {inquiry.lead_status === 'new' ? 'Needs response' : inquiry.lead_status}
+                      </span>
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{inquiry.email}{inquiry.phone ? ` / ${inquiry.phone}` : ''}</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -960,8 +1048,11 @@ function InquiriesTab() {
                       </div>
                       <div>
                         <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Lead Source</h4>
-                        <p className="text-sm">{inquiry.source || 'Unknown'}</p>
+                        <p className="text-sm">{attributionLabel(inquiry.attribution, inquiry.source || 'Unknown')}</p>
+                        {inquiry.attribution?.firstTouch?.landingPage && <p className="text-xs text-muted-foreground break-all">First page: {inquiry.attribution.firstTouch.landingPage}</p>}
+                        {inquiry.attribution?.lastTouch?.campaign && <p className="text-xs text-muted-foreground">Campaign: {inquiry.attribution.lastTouch.campaign}</p>}
                         <p className="text-sm text-muted-foreground">{inquiry.service || 'No service selected'}</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground break-all">Lead ID: {inquiry.id}</p>
                       </div>
                     </div>
 
@@ -979,6 +1070,21 @@ function InquiriesTab() {
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary border border-border rounded-lg text-xs font-bold text-foreground hover:border-primary/40">
                         <Copy size={14} /> Copy Inquiry
                       </button>
+                      <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Assigned to {inquiry.assigned_to || 'JP'}</span>
+                        <select
+                          value={inquiry.lead_status || 'new'}
+                          onChange={e => { void updateLeadStatus(inquiry, e.target.value as ContactInquiry['lead_status']) }}
+                          className="rounded-lg border border-border bg-background px-3 py-1.5 font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          aria-label={`Status for ${inquiry.name}`}
+                        >
+                          <option value="new">Needs response</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="won">Won</option>
+                          <option value="closed">Closed</option>
+                          <option value="spam">Spam</option>
+                        </select>
+                      </label>
                     </div>
                   </div>
                 )}
@@ -1554,6 +1660,8 @@ type ClickEventRow = {
   element: string | null
   path: string | null
   visitor_id: string | null
+  event_type: string | null
+  attribution: AttributionData
   created_at: string
 }
 
@@ -1563,6 +1671,7 @@ type LeadContactRow = {
   phone: string | null
   source: string | null
   visitor_id: string | null
+  attribution: AttributionData
   created_at: string
 }
 
@@ -1659,7 +1768,12 @@ function buildAbandonedCarts(
 type OrderAnalyticsRow = {
   total: number | string | null
   payment_status: string | null
+  attribution: AttributionData
   created_at: string
+}
+
+function sourceKey(attribution: AttributionData, fallback = 'Unknown') {
+  return attributionLabel(attribution, fallback)
 }
 
 async function fetchLiveAnalyticsRows<T>(
@@ -1731,7 +1845,7 @@ function AnalyticsTab() {
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const [range, setRange] = useState<'today' | '7d' | '30d' | 'all'>('7d')
+  const [range, setRange] = useState<'today' | '7d' | '30d' | 'all'>('30d')
 
   const fetchAnalytics = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true)
@@ -1767,15 +1881,17 @@ function AnalyticsTab() {
       const {
         rows: clickRows,
         capped: clicksCapped,
-      } = await fetchLiveAnalyticsRows<ClickEventRow>('click_events', 'element, path, visitor_id, created_at', since, true)
+      } = await fetchLiveAnalyticsRows<ClickEventRow>('click_events', 'element, path, visitor_id, event_type, attribution, created_at', since, true)
       const clicks = clickRows.filter(c => !isInternalPath(c.path || ''))
 
       const clickCounts: Record<string, number> = {}
       let ctaClicks = 0
+      let phoneClicks = 0
       clicks.forEach(c => {
         const label = c.element || '—'
         clickCounts[label] = (clickCounts[label] || 0) + 1
         if (isCtaLabel(label)) ctaClicks++
+        if (c.event_type === 'phone_click') phoneClicks++
       })
       const topClicks = Object.entries(clickCounts)
         .sort((a, b) => b[1] - a[1]).slice(0, 8)
@@ -1784,7 +1900,7 @@ function AnalyticsTab() {
       // Leads — contact / quote form submissions (rows also feed the abandoned-cart match)
       let leadQuery = supabase
         .from('contact_submissions')
-        .select('name, email, phone, source, visitor_id, created_at', { count: 'exact' })
+        .select('name, email, phone, source, visitor_id, attribution, created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(ANALYTICS_PAGE_SIZE)
       if (since) leadQuery = leadQuery.gte('created_at', since)
@@ -1799,11 +1915,28 @@ function AnalyticsTab() {
         rows: ordersInRange,
         count: orderCount,
         capped: ordersCapped,
-      } = await fetchLiveAnalyticsRows<OrderAnalyticsRow>('orders', 'total, payment_status, created_at', since)
+      } = await fetchLiveAnalyticsRows<OrderAnalyticsRow>('orders', 'total, payment_status, attribution, created_at', since)
       const orders = orderCount ?? ordersInRange.length
       const revenue = ordersInRange
         .filter(o => o.payment_status === 'captured')
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+
+      const sourceTotals = new Map<string, { source: string; leads: number; orders: number; revenue: number }>()
+      const sourceRow = (source: string) => {
+        const current = sourceTotals.get(source) || { source, leads: 0, orders: 0, revenue: 0 }
+        sourceTotals.set(source, current)
+        return current
+      }
+      ;((leadRows || []) as LeadContactRow[]).forEach(lead => {
+        sourceRow(sourceKey(lead.attribution, lead.source || 'Unknown')).leads++
+      })
+      ordersInRange.forEach(order => {
+        const row = sourceRow(sourceKey(order.attribution))
+        row.orders++
+        if (order.payment_status === 'captured') row.revenue += Number(order.total) || 0
+      })
+      const sourceBreakdown = [...sourceTotals.values()]
+        .sort((a, b) => (b.revenue - a.revenue) || (b.orders - a.orders) || (b.leads - a.leads))
 
       // Conversion funnel (unique visitors per stage; final stage = orders placed)
       const visitorsWho = (predicate: (path: string) => boolean) =>
@@ -1828,6 +1961,8 @@ function AnalyticsTab() {
         orders,
         revenue,
         ctaClicks,
+        phoneClicks,
+        sourceBreakdown,
         topProducts,
         topClicks,
         funnel,
@@ -1845,6 +1980,8 @@ function AnalyticsTab() {
         orders: 0,
         revenue: 0,
         ctaClicks: 0,
+        phoneClicks: 0,
+        sourceBreakdown: [],
         topProducts: [],
         topClicks: [],
         funnel: [],
@@ -1937,12 +2074,35 @@ function AnalyticsTab() {
         </div>
       )}
 
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm">
+        <p className="font-bold">Measurement baseline: {range === 'today' ? 'today' : range === 'all' ? 'all recorded history' : `the last ${range}`}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Use this as the starting line before more SEO traffic arrives. Revenue only counts PayPal-captured orders. Calls count tracked tap-to-call clicks—not answered or completed calls.</p>
+      </div>
+
       {/* Headline business numbers */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={DollarSign} label="Revenue (paid)" value={`$${data.revenue.toFixed(2)}`} color="text-green-400" delay={0.05} />
         <StatCard icon={ShoppingCart} label="Orders" value={data.orders} color="text-green-400" delay={0.1} />
         <StatCard icon={Send} label="Leads (quotes)" value={data.leads} color="text-yellow-400" delay={0.15} />
-        <StatCard icon={Target} label="Buy-intent clicks" value={data.ctaClicks} color="text-orange-400" delay={0.2} />
+        <StatCard icon={Target} label="Tap-to-call clicks" value={data.phoneClicks} color="text-orange-400" delay={0.2} />
+        <StatCard icon={Users} label="Tracked visitors" value={data.visitors} color="text-blue-400" delay={0.25} />
+        <StatCard icon={Eye} label="Page views" value={data.pageViews} color="text-blue-400" delay={0.3} />
+        <StatCard icon={MousePointer} label="Buy-intent clicks" value={data.ctaClicks} color="text-orange-400" delay={0.35} />
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <h3 className="font-bold mb-1 flex items-center gap-2"><Target size={16} className="text-primary" /> Leads and paid orders by source</h3>
+        <p className="text-xs text-muted-foreground mb-4">Last-touch source is used for conversion credit; each record retains both first and last touch.</p>
+        {data.sourceBreakdown.length === 0 ? <p className="text-sm text-muted-foreground">No attributed leads or orders in this period.</p> : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead><tr className="border-b border-border text-left text-xs uppercase text-muted-foreground"><th className="pb-2">Source</th><th className="pb-2 text-right">Leads</th><th className="pb-2 text-right">Orders</th><th className="pb-2 text-right">Paid revenue</th></tr></thead>
+              <tbody>{data.sourceBreakdown.map(row => (
+                <tr key={row.source} className="border-b border-border/50 last:border-0"><td className="py-3 font-medium">{row.source}</td><td className="py-3 text-right">{row.leads}</td><td className="py-3 text-right">{row.orders}</td><td className="py-3 text-right font-bold text-green-400">${row.revenue.toFixed(2)}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Conversion funnel */}
@@ -2724,6 +2884,7 @@ function SquareTab() {
   }
 
   const connected = !!status?.connected
+  const cardCheckoutReady = connected && !!status?.connection?.scopes?.includes('PAYMENTS_WRITE')
   const missing = status?.missing || []
 
   if (loading) return (
@@ -2756,6 +2917,23 @@ function SquareTab() {
         </div>
       )}
 
+      {connected && !cardCheckoutReady && (
+        <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={20} className="mt-0.5 shrink-0 text-yellow-400" />
+              <div>
+                <h3 className="font-bold text-yellow-300">Reconnect once to turn on website card checkout</h3>
+                <p className="mt-1 text-sm text-muted-foreground">The current Square connection can send invoices, but it was authorized before the website requested permission to charge cards.</p>
+              </div>
+            </div>
+            <button onClick={startConnect} disabled={connecting} className="btn-primary shrink-0 text-sm disabled:opacity-50">
+              {connecting ? <><Loader2 size={16} className="animate-spin" /> Opening Square...</> : <><CreditCard size={16} /> Reauthorize Square</>}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -2771,9 +2949,12 @@ function SquareTab() {
           </div>
           <div className="flex shrink-0 gap-2">
             {connected ? (
-              <button onClick={disconnect} disabled={disconnecting} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-50">
-                {disconnecting ? <Loader2 size={16} className="animate-spin" /> : <Unplug size={16} />} Disconnect
-              </button>
+              <>
+                {cardCheckoutReady && <span className="inline-flex items-center gap-2 rounded-xl border border-green-400/20 bg-green-400/10 px-4 py-2 text-sm font-bold text-green-300"><CheckCircle size={16} /> Website cards on</span>}
+                <button onClick={disconnect} disabled={disconnecting} className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-50">
+                  {disconnecting ? <Loader2 size={16} className="animate-spin" /> : <Unplug size={16} />} Disconnect
+                </button>
+              </>
             ) : (
               <button onClick={startConnect} disabled={connecting || missing.length > 0} className="btn-primary text-sm disabled:opacity-50">
                 {connecting ? <><Loader2 size={16} className="animate-spin" /> Opening Square...</> : <><CreditCard size={16} /> Connect Square</>}

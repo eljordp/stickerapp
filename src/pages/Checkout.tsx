@@ -2,19 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
-import { ArrowLeft, Lock, ShieldCheck, Loader2, Tag, X, Check } from 'lucide-react'
+import { ArrowLeft, Lock, ShieldCheck, Tag, X, Check, MapPin, Truck } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import SquareCardPayment from '@/components/SquareCardPayment'
 import { checkoutSchema, type CheckoutFormErrors } from '@/lib/validation'
 import { supabase } from '@/lib/supabase'
 import { linkReferral } from '@/lib/referrals'
 import { isReferralCode, processReferralConversion } from '@/lib/referralRewards'
 import { sendOrderEmail } from '@/lib/email'
-import { trackCheckoutStarted, trackPayPalCapture } from '@/lib/analytics'
+import { getAnalyticsIdentity, trackCheckoutStarted, trackPaymentCapture } from '@/lib/analytics'
 import { toast } from 'sonner'
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID
 
 interface CustomerInfo {
+  deliveryMethod: 'shipping' | 'pickup'
   firstName: string
   lastName: string
   email: string
@@ -29,6 +31,7 @@ export default function Checkout() {
   const { items, total, clearCart, markConverted, setCartEmail, promoCode, promoDiscount, promoLabel, applyPromo, removePromo, finalizePromo } = useCart()
   const navigate = useNavigate()
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
+    deliveryMethod: 'shipping',
     firstName: '', lastName: '', email: '', phone: '',
     address: '', city: '', state: '', zip: '',
   })
@@ -36,6 +39,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState<CheckoutFormErrors>({})
   const [paymentError, setPaymentError] = useState('')
   const [processing, setProcessing] = useState(false)
+  const [squareAvailable, setSquareAvailable] = useState(false)
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
   const [promoSuccess, setPromoSuccess] = useState(false)
@@ -89,6 +93,23 @@ export default function Checkout() {
     }
   }
 
+  const handleDeliveryMethod = (deliveryMethod: CustomerInfo['deliveryMethod']) => {
+    const updated = { ...customerInfo, deliveryMethod }
+    setCustomerInfo(updated)
+    const result = checkoutSchema.safeParse(updated)
+    setFormValid(result.success)
+    if (deliveryMethod === 'pickup') {
+      setErrors(prev => {
+        const next = { ...prev }
+        delete next.address
+        delete next.city
+        delete next.state
+        delete next.zip
+        return next
+      })
+    }
+  }
+
   const handleBlur = (field: keyof CustomerInfo) => {
     const result = checkoutSchema.safeParse(customerInfo)
     if (!result.success) {
@@ -120,16 +141,24 @@ export default function Checkout() {
     .join(', ')
 
   const customerName = `${customerInfo.firstName} ${customerInfo.lastName}`.trim()
-  const shippingAddress = `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zip}`
+  const shippingAddress = customerInfo.deliveryMethod === 'pickup'
+    ? 'Local pickup — 23673 Connecticut St, Hayward, CA 94545'
+    : `${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} ${customerInfo.zip}`
 
-  const checkoutPayload = () => ({
-    items: items.map(item => ({ ...item })),
-    customerInfo: { ...customerInfo },
-    promoCode,
-    promoDiscount,
-    total: finalTotal.toFixed(2),
-    orderDescription,
-  })
+  const checkoutPayload = () => {
+    const identity = getAnalyticsIdentity()
+    return {
+      items: items.map(item => ({ ...item })),
+      customerInfo: { ...customerInfo },
+      promoCode,
+      promoDiscount,
+      total: finalTotal.toFixed(2),
+      orderDescription,
+      visitorId: identity.visitorId,
+      sessionId: identity.sessionId,
+      attribution: identity.attribution,
+    }
+  }
 
   const readCheckoutApiResponse = async (response: Response) => {
     const data = await response.json().catch(() => ({}))
@@ -172,7 +201,36 @@ export default function Checkout() {
     }
   }
 
-  const formatOrderRecoveryMessage = (orderId: string, reason: string) => {
+  const captureSquarePayment = async (sourceId: string, attemptId: string) => {
+    setProcessing(true)
+    setPaymentError('')
+    try {
+      const response = await fetch('/api/square/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...checkoutPayload(), sourceId, attemptId }),
+      })
+      const data = await readCheckoutApiResponse(response)
+      const paymentId = String(data.paymentId || '').trim()
+      if (!paymentId) throw new Error('Square did not return a payment ID.')
+      await completeSuccessfulOrder({
+        orderId: paymentId,
+        provider: 'square',
+        orderSaved: data.orderSaved === true,
+        orderSaveIssue: typeof data.orderSaveIssue === 'string' ? data.orderSaveIssue : '',
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'The card payment could not be processed.'
+      console.error('Square payment error:', error)
+      setPaymentError(message)
+      toast.error('Card payment failed')
+      throw error
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const formatOrderRecoveryMessage = (orderId: string, reason: string, provider: 'paypal' | 'square') => {
     const itemLines = items.map(item => {
       const addOnText = item.addOns?.length
         ? `, add-ons: ${item.addOns.map(addOn => `${addOn.name} (+$${addOn.price.toFixed(2)})`).join('; ')}`
@@ -181,32 +239,37 @@ export default function Checkout() {
     }).join('\n')
 
     return [
-      'Paid PayPal order needs manual recovery.',
-      `PayPal order ID: ${orderId}`,
+      `Paid ${provider === 'square' ? 'Square' : 'PayPal'} order needs manual recovery.`,
+      `Payment ID: ${orderId}`,
       `Reason: ${reason}`,
       `Customer: ${customerName || 'Unknown'}`,
       `Email: ${customerInfo.email.trim()}`,
       `Phone: ${customerInfo.phone.trim()}`,
-      `Shipping: ${shippingAddress}`,
+      `Delivery: ${shippingAddress}`,
       `Total paid: $${finalTotal.toFixed(2)}`,
       `Items:\n${itemLines}`,
     ].join('\n')
   }
 
-  const recordOrderRecovery = async (orderId: string, reason: string) => {
+  const recordOrderRecovery = async (orderId: string, reason: string, provider: 'paypal' | 'square') => {
+    const identity = getAnalyticsIdentity()
     const { error } = await supabase.from('contact_submissions').insert({
       name: customerName || 'Paid checkout customer',
       email: customerInfo.email.trim(),
       phone: customerInfo.phone.trim(),
       service: 'Paid order recovery',
       source: 'checkout-post-payment-fallback',
-      message: formatOrderRecoveryMessage(orderId, reason),
+      message: formatOrderRecoveryMessage(orderId, reason, provider),
+      visitor_id: identity.visitorId,
+      session_id: identity.sessionId,
+      attribution: identity.attribution,
     })
 
     if (error) throw error
   }
 
-  const saveOrder = async (orderId: string, skipRemoteInsert = false) => {
+  const saveOrder = async (orderId: string, skipRemoteInsert = false, provider: 'paypal' | 'square' = 'paypal') => {
+    const identity = getAnalyticsIdentity()
     const order = {
       id: orderId,
       date: new Date().toISOString(),
@@ -218,6 +281,7 @@ export default function Checkout() {
       promoDiscount: promoDiscount > 0 ? promoDiscount.toFixed(2) : undefined,
       status: 'processing' as const,
       paymentStatus: 'captured' as const,
+      paymentProvider: provider,
     }
 
     const prev = JSON.parse(localStorage.getItem('tss-orders') || '[]')
@@ -231,19 +295,117 @@ export default function Checkout() {
       customer_last_name: customerInfo.lastName.trim(),
       customer_email: customerInfo.email.trim(),
       customer_phone: customerInfo.phone.trim(),
-      customer_address: customerInfo.address.trim(),
-      customer_city: customerInfo.city.trim(),
-      customer_state: customerInfo.state.trim(),
-      customer_zip: customerInfo.zip.trim(),
+      customer_address: customerInfo.deliveryMethod === 'pickup' ? 'Local pickup' : customerInfo.address.trim(),
+      customer_city: customerInfo.deliveryMethod === 'pickup' ? 'Hayward' : customerInfo.city.trim(),
+      customer_state: customerInfo.deliveryMethod === 'pickup' ? 'CA' : customerInfo.state.trim(),
+      customer_zip: customerInfo.deliveryMethod === 'pickup' ? '94545' : customerInfo.zip.trim(),
       items: items.map(i => ({ ...i })),
       total: parseFloat(finalTotal.toFixed(2)),
       status: 'processing',
+      payment_provider: provider,
+      payment_reference: orderId,
+      visitor_id: identity.visitorId,
+      session_id: identity.sessionId,
+      attribution: identity.attribution,
     })
 
     if (error) {
       if (error.code === '23505' || error.message?.toLowerCase().includes('duplicate')) return
       throw error
     }
+  }
+
+  const completeSuccessfulOrder = async ({
+    orderId,
+    provider,
+    orderSaved,
+    orderSaveIssue,
+  }: {
+    orderId: string
+    provider: 'paypal' | 'square'
+    orderSaved: boolean
+    orderSaveIssue?: string
+  }) => {
+    finalizePromo()
+    trackPaymentCapture({
+      provider,
+      orderId,
+      items,
+      value: finalTotal,
+      subtotal: total,
+      promoCode,
+      promoDiscount,
+    })
+
+    let processingIssue = ''
+    try {
+      await saveOrder(orderId, orderSaved, provider)
+      if (orderSaveIssue) console.warn('Server order save warning:', orderSaveIssue)
+
+      try {
+        const { data: customerId } = await supabase.rpc('get_or_create_customer', {
+          _email: customerInfo.email.trim(),
+          _first_name: customerInfo.firstName.trim(),
+          _last_name: customerInfo.lastName.trim(),
+          _phone: customerInfo.phone.trim(),
+          _source: 'checkout',
+        })
+        if (customerId) {
+          await linkReferral(customerId)
+          await supabase.rpc('record_purchase', {
+            _email: customerInfo.email.trim(),
+            _order_id: orderId,
+            _total: parseFloat(finalTotal.toFixed(2)),
+          })
+        }
+      } catch { /* CRM is non-blocking */ }
+
+      if (promoCode && isReferralCode(promoCode)) {
+        try {
+          processReferralConversion(
+            promoCode,
+            customerInfo.email.trim(),
+            customerName,
+            orderId,
+            parseFloat(finalTotal.toFixed(2))
+          )
+        } catch { /* referral rewards are non-blocking */ }
+      }
+
+      await sendOrderEmail({
+        orderId,
+        customerName: customerName || customerInfo.email.trim(),
+        email: customerInfo.email.trim(),
+        items: items.map(i => ({ ...i })),
+        total: finalTotal.toFixed(2),
+        address: shippingAddress,
+      })
+    } catch (postPaymentError) {
+      const reason = postPaymentError instanceof Error ? postPaymentError.message : 'Unknown post-payment error'
+      console.error('Post-payment order processing error:', postPaymentError)
+      try {
+        await recordOrderRecovery(orderId, reason, provider)
+        processingIssue = 'Payment received, but our confirmation system needs manual review. We saved your order details for the team.'
+      } catch (recoveryError) {
+        console.error('Order recovery lead failed:', recoveryError)
+        processingIssue = `Payment received, but the automatic order record failed. Please email us with payment ID ${orderId}.`
+      }
+    }
+
+    await markConverted()
+    clearCart()
+    localStorage.setItem('tss_order_completed', 'true')
+
+    toast.success(processingIssue ? 'Payment received — order needs review' : 'Payment successful!')
+    navigate('/order-confirmation', {
+      state: {
+        orderId,
+        payerName: customerName,
+        email: customerInfo.email,
+        total: finalTotal.toFixed(2),
+        processingIssue,
+      },
+    })
   }
 
   const inputClass = (field: keyof CustomerInfo) =>
@@ -303,7 +465,7 @@ export default function Checkout() {
                     {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
                   </div>
                   <div>
-                    <label htmlFor="checkout-phone" className="block text-sm font-medium text-muted-foreground mb-1.5">Phone *</label>
+                    <label htmlFor="checkout-phone" className="block text-sm font-medium text-muted-foreground mb-1.5">Phone <span className="text-xs">(optional)</span></label>
                     <input
                       id="checkout-phone"
                       type="tel" name="phone" value={customerInfo.phone}
@@ -316,9 +478,32 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-card border border-border rounded-2xl p-6">
-                <h2 className="text-xl font-bold mb-6">Shipping Address</h2>
-                <div className="space-y-4">
+              <fieldset className="bg-card border border-border rounded-2xl p-6">
+                <legend className="px-1 text-xl font-bold">Delivery</legend>
+                <p className="mb-4 mt-1 text-sm text-muted-foreground">Choose free shipping or pick up from the Hayward shop.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDeliveryMethod('shipping')}
+                    aria-pressed={customerInfo.deliveryMethod === 'shipping'}
+                    className={`flex min-h-16 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${customerInfo.deliveryMethod === 'shipping' ? 'border-primary bg-primary/10' : 'border-border bg-background hover:border-primary/40'}`}
+                  >
+                    <Truck size={20} className="shrink-0 text-primary" />
+                    <span><span className="block font-bold">Free shipping</span><span className="text-xs text-muted-foreground">USPS or UPS</span></span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeliveryMethod('pickup')}
+                    aria-pressed={customerInfo.deliveryMethod === 'pickup'}
+                    className={`flex min-h-16 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${customerInfo.deliveryMethod === 'pickup' ? 'border-primary bg-primary/10' : 'border-border bg-background hover:border-primary/40'}`}
+                  >
+                    <MapPin size={20} className="shrink-0 text-primary" />
+                    <span><span className="block font-bold">Hayward pickup</span><span className="text-xs text-muted-foreground">23673 Connecticut St</span></span>
+                  </button>
+                </div>
+
+                {customerInfo.deliveryMethod === 'shipping' ? (
+                <div className="mt-6 space-y-4">
                   <div>
                     <label htmlFor="checkout-address" className="block text-sm font-medium text-muted-foreground mb-1.5">Street Address *</label>
                     <input
@@ -326,7 +511,7 @@ export default function Checkout() {
                       type="text" name="address" value={customerInfo.address}
                       onChange={handleChange} onBlur={() => handleBlur('address')}
                       className={inputClass('address')}
-                      placeholder="123 Main St" autoComplete="street-address"
+                      placeholder="123 Main St" autoComplete="shipping street-address"
                     />
                     {errors.address && <p className="text-sm text-destructive mt-1">{errors.address}</p>}
                   </div>
@@ -338,7 +523,7 @@ export default function Checkout() {
                         type="text" name="city" value={customerInfo.city}
                         onChange={handleChange} onBlur={() => handleBlur('city')}
                         className={inputClass('city')}
-                        placeholder="Sacramento" autoComplete="address-level2"
+                        placeholder="Sacramento" autoComplete="shipping address-level2"
                       />
                       {errors.city && <p className="text-sm text-destructive mt-1">{errors.city}</p>}
                     </div>
@@ -349,7 +534,7 @@ export default function Checkout() {
                         type="text" name="state" value={customerInfo.state}
                         onChange={handleChange} onBlur={() => handleBlur('state')}
                         className={inputClass('state')}
-                        placeholder="CA" autoComplete="address-level1"
+                        placeholder="CA" autoComplete="shipping address-level1"
                       />
                       {errors.state && <p className="text-sm text-destructive mt-1">{errors.state}</p>}
                     </div>
@@ -360,13 +545,19 @@ export default function Checkout() {
                         type="text" name="zip" value={customerInfo.zip}
                         onChange={handleChange} onBlur={() => handleBlur('zip')}
                         className={inputClass('zip')}
-                        placeholder="95814" autoComplete="postal-code"
+                        placeholder="95814" autoComplete="shipping postal-code"
                       />
                       {errors.zip && <p className="text-sm text-destructive mt-1">{errors.zip}</p>}
                     </div>
                   </div>
                 </div>
-              </div>
+                ) : (
+                  <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+                    <p className="font-bold">Pickup in Hayward</p>
+                    <p className="mt-1 text-muted-foreground">We will email you when the proof is approved and the order is ready. Do not arrive before receiving the ready-for-pickup message.</p>
+                  </div>
+                )}
+              </fieldset>
 
               {/* Promo Code */}
               <div className="bg-card border border-border rounded-2xl p-6">
@@ -415,16 +606,16 @@ export default function Checkout() {
                 )}
               </div>
 
-              {/* PayPal Payment */}
+              {/* Payment */}
               <div className="bg-card border border-border rounded-2xl p-6">
                 <h2 className="text-xl font-bold mb-2">Payment</h2>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                  <Lock size={14} aria-hidden="true" /> Secured by PayPal
+                  <Lock size={14} aria-hidden="true" /> {squareAvailable ? 'Secure card checkout by Square or continue with PayPal' : 'Secure checkout with PayPal'}
                 </div>
 
                 {!formValid && (
                   <p className="text-sm text-muted-foreground mb-4 bg-muted/50 rounded-xl p-4">
-                    Fill out all fields above to enable payment.
+                    Fill out the required fields above to enable payment.
                   </p>
                 )}
 
@@ -434,15 +625,23 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {processing && (
-                  <div className="flex items-center justify-center gap-3 py-6">
-                    <Loader2 size={24} className="animate-spin text-primary" />
-                    <span className="text-muted-foreground">Processing payment...</span>
-                  </div>
-                )}
+                <SquareCardPayment
+                  amount={finalTotal}
+                  customer={customerInfo}
+                  disabled={!formValid}
+                  processing={processing}
+                  onAvailabilityChange={setSquareAvailable}
+                  onPaymentToken={captureSquarePayment}
+                  onError={setPaymentError}
+                />
 
                 {PAYPAL_CLIENT_ID ? (
-                  <div className={!formValid || processing ? 'opacity-40 pointer-events-none' : ''}>
+                  <div className={`${squareAvailable ? 'mt-5 border-t border-border pt-5' : ''} ${!formValid || processing ? 'opacity-40 pointer-events-none' : ''}`}>
+                    {squareAvailable && (
+                      <div className="mb-4 flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        <span className="h-px flex-1 bg-border" /> or use PayPal <span className="h-px flex-1 bg-border" />
+                      </div>
+                    )}
                     <PayPalButtons
                       style={{ layout: 'vertical', color: 'gold', shape: 'pill', label: 'pay', height: 50 }}
                       disabled={!formValid}
@@ -462,91 +661,11 @@ export default function Checkout() {
 
                           const orderId = capture.orderId
                           if (!orderId) throw new Error('PayPal did not return an order ID.')
-                          finalizePromo()
-                          trackPayPalCapture({
+                          await completeSuccessfulOrder({
                             orderId,
-                            items,
-                            value: finalTotal,
-                            subtotal: total,
-                            promoCode,
-                            promoDiscount,
-                          })
-
-                          let processingIssue = ''
-
-                          try {
-                            await saveOrder(orderId, capture.orderSaved)
-                            if (capture.orderSaveIssue) {
-                              console.warn('Server order save warning:', capture.orderSaveIssue)
-                            }
-
-                            // CRM: create/update customer + link referral
-                            try {
-                              const { data: customerId } = await supabase.rpc('get_or_create_customer', {
-                                _email: customerInfo.email.trim(),
-                                _first_name: customerInfo.firstName.trim(),
-                                _last_name: customerInfo.lastName.trim(),
-                                _phone: customerInfo.phone.trim(),
-                                _source: 'checkout',
-                              })
-                              if (customerId) {
-                                await linkReferral(customerId)
-                                await supabase.rpc('record_purchase', {
-                                  _email: customerInfo.email.trim(),
-                                  _order_id: orderId,
-                                  _total: parseFloat(finalTotal.toFixed(2)),
-                                })
-                              }
-                            } catch { /* CRM is non-blocking */ }
-
-                            // Referral reward: if promo code used was a referral code, reward the referrer
-                            if (promoCode && isReferralCode(promoCode)) {
-                              try {
-                                processReferralConversion(
-                                  promoCode,
-                                  customerInfo.email.trim(),
-                                  customerName,
-                                  orderId,
-                                  parseFloat(finalTotal.toFixed(2))
-                                )
-                              } catch { /* non-blocking */ }
-                            }
-
-                            await sendOrderEmail({
-                              orderId,
-                              customerName: customerName || customerInfo.email.trim(),
-                              email: customerInfo.email.trim(),
-                              items: items.map(i => ({ ...i })),
-                              total: finalTotal.toFixed(2),
-                              address: shippingAddress,
-                            })
-                          } catch (postPaymentError) {
-                            const reason = postPaymentError instanceof Error ? postPaymentError.message : 'Unknown post-payment error'
-                            console.error('Post-payment order processing error:', postPaymentError)
-
-                            try {
-                              await recordOrderRecovery(orderId, reason)
-                              processingIssue = 'Payment received, but our confirmation system needs manual review. We saved your order details for the team.'
-                            } catch (recoveryError) {
-                              console.error('Order recovery lead failed:', recoveryError)
-                              processingIssue = 'Payment received, but the automatic order record failed. Please email us with your PayPal order ID.'
-                            }
-                          }
-
-                          await markConverted()
-                          clearCart()
-                          // Mark that this visitor has completed an order — no more auto-discount
-                          localStorage.setItem('tss_order_completed', 'true')
-
-                          toast.success(processingIssue ? 'Payment received — order needs review' : 'Payment successful!')
-                          navigate('/order-confirmation', {
-                            state: {
-                              orderId,
-                              payerName: customerName,
-                              email: customerInfo.email,
-                              total: finalTotal.toFixed(2),
-                              processingIssue,
-                            },
+                            provider: 'paypal',
+                            orderSaved: capture.orderSaved,
+                            orderSaveIssue: capture.orderSaveIssue,
                           })
                         } catch (err) {
                           console.error('Payment capture error:', err)
@@ -564,7 +683,7 @@ export default function Checkout() {
                     />
                   </div>
                 ) : (
-                  <div className="text-sm text-destructive bg-destructive/10 rounded-xl p-4" role="alert">
+                  !squareAvailable && <div className="text-sm text-destructive bg-destructive/10 rounded-xl p-4" role="alert">
                     Online checkout is temporarily unavailable. Please contact us to complete your order.
                   </div>
                 )}
@@ -587,6 +706,9 @@ export default function Checkout() {
                           {item.addOns && item.addOns.length > 0 && (
                             <p className="text-xs text-muted-foreground mt-1">+ {item.addOns.map(a => a.name).join(', ')}</p>
                           )}
+                          {item.artworkIntent === 'send_later' && <p className="text-xs text-primary mt-1">Artwork after checkout</p>}
+                          {item.artworkIntent === 'design_help' && <p className="text-xs text-primary mt-1">Design help requested</p>}
+                          {item.artworkIntent === 'uploaded' && item.artwork && <p className="text-xs text-green-400 mt-1">Artwork attached</p>}
                         </div>
                         <span className="font-bold text-primary shrink-0">${itemTotal.toFixed(2)}</span>
                       </div>
@@ -604,12 +726,12 @@ export default function Checkout() {
                       <span>-${promoDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-muted-foreground"><span>Shipping</span><span className="text-green-400">Free</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>{customerInfo.deliveryMethod === 'pickup' ? 'Pickup' : 'Shipping'}</span><span className="text-green-400">Free</span></div>
                   <div className="flex justify-between text-xl font-black pt-2 border-t border-border"><span>Total</span><span className="text-primary">${finalTotal.toFixed(2)}</span></div>
                 </div>
                 <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
                   <ShieldCheck size={16} className="text-green-400 shrink-0" aria-hidden="true" />
-                  <span>Your payment is protected by PayPal Buyer Protection</span>
+                  <span>{squareAvailable ? 'Card details are handled by Square; PayPal remains available as a separate option.' : 'Payment details are handled securely by PayPal.'}</span>
                 </div>
               </div>
             </div>

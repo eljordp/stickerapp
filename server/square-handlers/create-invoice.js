@@ -7,7 +7,7 @@ import {
   requireEnv,
   sendJson,
   squareFetch,
-} from '../../server/square-api.js'
+} from '../square-api.js'
 
 function splitName(name) {
   const parts = String(name || '').trim().split(/\s+/).filter(Boolean)

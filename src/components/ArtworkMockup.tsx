@@ -53,6 +53,8 @@ export default function ArtworkMockup({
   const [internalActiveKey, setInternalActiveKey] = useState(scenes[0]?.key ?? '')
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null)
   const [artworkName, setArtworkName] = useState<string | null>(null)
+  const [artworkFit, setArtworkFit] = useState<'contain' | 'cover'>('contain')
+  const [artworkScale, setArtworkScale] = useState(100)
   const [loadedScenes, setLoadedScenes] = useState<Set<string>>(new Set())
   const [failedScenes, setFailedScenes] = useState<Set<string>>(new Set())
   const fileRef = useRef<HTMLInputElement>(null)
@@ -80,6 +82,8 @@ export default function ArtworkMockup({
     if (!f) return
     setArtworkUrl(canPreviewArtwork(f) ? URL.createObjectURL(f) : null)
     setArtworkName(f.name)
+    setArtworkFit('contain')
+    setArtworkScale(100)
   }
 
   const clear = () => {
@@ -100,14 +104,14 @@ export default function ArtworkMockup({
 
       {/* Scene switcher */}
       {scenes.length > 1 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
+        <div className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
           {scenes.map((s) => {
             const active = s.key === activeKey
             return (
               <button
                 key={s.key}
                 onClick={() => setActiveKey(s.key)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
                   active
                     ? 'bg-primary text-white border-primary'
                     : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
@@ -120,8 +124,9 @@ export default function ArtworkMockup({
         </div>
       )}
 
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
       {/* Mockup canvas */}
-      <div className="relative overflow-hidden rounded-lg border border-border bg-black shadow-2xl aspect-[4/3] md:aspect-[16/9]">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-black shadow-2xl aspect-[4/3] md:aspect-[16/9] lg:aspect-[4/3]">
         <AnimatePresence mode="wait">
           <motion.div
             key={scene.key}
@@ -219,10 +224,12 @@ export default function ArtworkMockup({
                   alt="Your artwork"
                     className="relative z-10 h-full w-full"
                   style={{
-                      padding: scene.slot.artworkPadding ?? '5%',
-                      objectFit: scene.slot.imageFit ?? surface.objectFit,
+                      padding: artworkFit === 'contain' ? (scene.slot.artworkPadding ?? '5%') : 0,
+                      objectFit: artworkFit,
                       objectPosition: scene.slot.imagePosition ?? 'center',
                       filter: surface.artworkFilter,
+                      transform: `scale(${artworkScale / 100})`,
+                      transformOrigin: 'center',
                   }}
                 />
               ) : (
@@ -242,8 +249,11 @@ export default function ArtworkMockup({
         </AnimatePresence>
       </div>
 
-      {/* Upload bar */}
-      <div className="mt-5 flex flex-col sm:flex-row items-center gap-3 bg-card border border-border rounded-lg p-3">
+      {/* Upload and artwork controls */}
+      <aside className="rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24">
+        <p className="text-xs font-bold uppercase tracking-widest text-primary">Make it yours</p>
+        <h3 className="mt-2 text-xl font-black">Use your actual artwork</h3>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Upload a logo or finished design, then switch products without uploading again.</p>
         <input
           ref={fileRef}
           type="file"
@@ -252,36 +262,73 @@ export default function ArtworkMockup({
           onChange={handleFile}
         />
         <button
+          type="button"
           onClick={() => fileRef.current?.click()}
-          className="btn-primary w-full sm:w-auto"
+          className="btn-primary mt-5 min-h-12 w-full justify-center"
         >
           <Upload size={16} /> {artworkName ? 'Change file' : 'Upload your artwork'}
         </button>
         {artworkName ? (
-          <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-primary font-semibold truncate max-w-[200px]">{artworkName}</span>
+          <div className="mt-3 text-sm">
+            <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2">
+              <span className="truncate font-semibold text-primary">{artworkName}</span>
               <button
+                type="button"
                 onClick={clear}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                 aria-label="Remove artwork"
               >
                 <X size={14} />
               </button>
             </div>
             {!artworkUrl && (
-              <span className="text-xs text-muted-foreground">Proof file received. Upload PNG, JPG, or SVG for live preview.</span>
+              <p className="mt-2 text-xs text-muted-foreground">Proof file received. Upload PNG, JPG, or SVG for a live preview.</p>
             )}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground text-center sm:text-left">
-            PNG, JPG, SVG preview · PDF, AI, EPS accepted for proof
+          <p className="mt-3 text-xs text-muted-foreground">
+            PNG, JPG, or SVG for live preview. PDF, AI, and EPS are still accepted for the production proof.
           </p>
         )}
+
+        {artworkUrl && (
+          <div className="mt-5 space-y-5 border-t border-border pt-5">
+            <fieldset>
+              <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Artwork layout</legend>
+              <div className="grid grid-cols-2 rounded-lg border border-border bg-background p-1">
+                {(['contain', 'cover'] as const).map((fit) => (
+                  <button
+                    type="button"
+                    key={fit}
+                    onClick={() => setArtworkFit(fit)}
+                    aria-pressed={artworkFit === fit}
+                    className={`rounded-md px-3 py-2 text-xs font-bold transition-colors ${artworkFit === fit ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    {fit === 'contain' ? 'Fit logo' : 'Fill area'}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Artwork size <span className="float-right text-foreground">{artworkScale}%</span>
+              <input
+                type="range"
+                min="70"
+                max="140"
+                step="5"
+                value={artworkScale}
+                onChange={(event) => setArtworkScale(Number(event.target.value))}
+                className="mt-3 w-full accent-[var(--color-primary)]"
+              />
+            </label>
+          </div>
+        )}
+
+        <p className="mt-5 border-t border-border pt-4 font-mono text-[10px] uppercase leading-relaxed tracking-widest text-muted-foreground">
+          Preview only. The production proof confirms crop, scale, color, and placement before printing.
+        </p>
+      </aside>
       </div>
-      <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        We adjust scale, crop, and placement in the real proof before production.
-      </p>
     </div>
   )
 }
@@ -357,23 +404,58 @@ function SampleArtwork({
   const glass = surface === 'glass'
   const primary = glass ? 'text-white' : light ? 'text-neutral-950' : 'text-white'
   const secondary = glass ? 'text-white/70' : light ? 'text-neutral-600' : 'text-white/70'
-  const accent = lower.includes('event') || lower.includes('flag') || lower.includes('canopy')
-    ? 'bg-yellow-400'
-    : lower.includes('window') || lower.includes('glass')
-      ? 'bg-white/60'
-      : 'bg-cyan-400'
+  const eventScene = lower.includes('event') || lower.includes('flag') || lower.includes('canopy') || lower.includes('backdrop') || lower.includes('table')
+  const accent = eventScene ? 'bg-amber-400' : lower.includes('window') || lower.includes('glass') ? 'bg-white/70' : 'bg-cyan-400'
+
+  if (lower.includes('flag')) {
+    return (
+      <div className={`relative z-10 flex h-full w-full flex-col items-center justify-center px-[12%] text-center ${primary}`}>
+        <div className={`mb-[12%] flex aspect-square w-[42%] items-center justify-center rounded-full ${accent} text-[clamp(9px,1.5vw,20px)] font-black text-neutral-950 shadow-lg`}>BC</div>
+        <p className="text-[clamp(8px,1.25vw,17px)] font-black uppercase leading-[0.9] tracking-tight">Bay City</p>
+        <p className={`${secondary} mt-[8%] text-[clamp(5px,0.65vw,9px)] font-bold uppercase leading-tight tracking-[0.16em]`}>Coffee<br />+ Goods</p>
+      </div>
+    )
+  }
+
+  if (lower.includes('aframe')) {
+    return (
+      <div className={`relative z-10 flex h-full w-full flex-col items-center justify-center p-[8%] text-center ${primary}`}>
+        <p className={`${secondary} text-[clamp(6px,0.65vw,10px)] font-black uppercase tracking-[0.22em]`}>Cypress Coffee</p>
+        <p className="mt-[5%] text-[clamp(13px,2.8vw,34px)] font-black uppercase leading-[0.78] tracking-tighter">Open<br />Today</p>
+        <div className={`my-[7%] h-1 w-1/2 rounded-full ${accent}`} />
+        <p className={`${secondary} text-[clamp(5px,0.65vw,9px)] font-bold uppercase tracking-wider`}>Coffee · pastries · pickup</p>
+      </div>
+    )
+  }
+
+  if (lower.includes('retractable')) {
+    return (
+      <div className={`relative z-10 flex h-full w-full flex-col justify-between p-[10%] ${primary}`}>
+        <div className={`flex aspect-square w-[26%] items-center justify-center rounded-full ${accent} text-[clamp(7px,1vw,14px)] font-black text-neutral-950`}>TS</div>
+        <div>
+          <p className="text-[clamp(11px,2.1vw,28px)] font-black uppercase leading-[0.86] tracking-tighter">Make<br />Your Mark.</p>
+          <div className={`my-[8%] h-1 w-2/3 rounded-full ${accent}`} />
+          <p className={`${secondary} text-[clamp(5px,0.55vw,8px)] font-bold uppercase leading-relaxed tracking-[0.16em]`}>Stickers<br />Signage<br />Displays</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className={`relative z-10 flex h-full w-full items-center justify-center p-[7%] ${glass ? 'backdrop-blur-[1px]' : ''}`}>
-      <div className="absolute inset-[8%] rounded-md border border-current opacity-10" />
-      <div className="text-center">
-        <div className={`mx-auto mb-2 h-2 w-16 rounded-full ${accent} shadow-[0_0_14px_rgba(56,189,248,0.35)]`} />
-        <p className={`${primary} text-[clamp(10px,1.8vw,24px)] font-black uppercase leading-none tracking-wide`}>
-          Your Brand
-        </p>
-        <p className={`${secondary} mt-1 text-[clamp(7px,0.9vw,12px)] font-bold uppercase tracking-[0.22em]`}>
-          Est. 2026
-        </p>
+    <div className={`relative z-10 flex h-full w-full items-center justify-center overflow-hidden p-[6%] ${glass ? 'backdrop-blur-[1px]' : ''}`}>
+      <div className={`absolute -right-[8%] -top-[34%] aspect-square h-[120%] rounded-full ${accent} opacity-15`} />
+      <div className="relative flex w-full items-center justify-center gap-[5%]">
+        <div className={`flex aspect-square w-[18%] shrink-0 items-center justify-center rounded-full ${accent} text-[clamp(7px,1.4vw,18px)] font-black text-neutral-950 shadow-lg`}>
+          {eventScene ? 'BC' : 'CC'}
+        </div>
+        <div className="text-left">
+          <p className={`${primary} text-[clamp(9px,1.8vw,24px)] font-black uppercase leading-[0.9] tracking-tight`}>
+            {eventScene ? 'Bay City Goods' : 'Cypress Coffee Co.'}
+          </p>
+          <p className={`${secondary} mt-[4%] text-[clamp(5px,0.75vw,10px)] font-bold uppercase tracking-[0.2em]`}>
+            {eventScene ? 'Made for the Bay' : 'Hayward · California'}
+          </p>
+        </div>
       </div>
     </div>
   )

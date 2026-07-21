@@ -125,6 +125,7 @@ export async function submitContactRequest(data: ContactRequest): Promise<Contac
     source: data.source || 'contact',
     visitor_id: identity.visitorId,
     session_id: identity.sessionId,
+    attribution: identity.attribution,
   }
 
   const fingerprint = contactFingerprint(payload)

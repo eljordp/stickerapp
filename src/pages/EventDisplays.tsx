@@ -60,6 +60,7 @@ const eventFaqs = [
 
 export default function EventCanopies() {
   const [activeMockup, setActiveMockup] = useState('canopy')
+  const [estimateSelection, setEstimateSelection] = useState('')
   const handleCategoryChange = useCallback((categoryName: string) => {
     const map: Record<string, string> = {
       'Event Displays': 'canopy',
@@ -82,6 +83,8 @@ export default function EventCanopies() {
             <ProductOrder
               categoryNames={['Event Displays', 'Backdrops & Displays', 'Table Covers']}
               onCategoryChange={handleCategoryChange}
+              checkoutMode="estimate"
+              onEstimateRequest={setEstimateSelection}
             />
           </div>
 
@@ -222,6 +225,7 @@ export default function EventCanopies() {
             service="Event Displays"
             title="Get an Event Display Estimate"
             subtitle="Trade show, pop-up, conference — give us the event date and scope, we'll make sure it arrives on time."
+            initialProject={estimateSelection}
             fields={[
               {
                 name: 'displayType',

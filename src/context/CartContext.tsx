@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { validatePromoCode, applyPromoCode, type PromoResult, AUTO_DISCOUNT_CODE, AUTO_APPLIED_KEY } from '@/lib/promoCodes'
+import { getAnalyticsIdentity } from '@/lib/analytics'
 
 interface CartItem {
   id: string
@@ -12,6 +13,7 @@ interface CartItem {
   material?: string
   shape?: string
   dimensions?: string
+  artworkIntent?: 'uploaded' | 'send_later' | 'design_help'
   artwork?: {
     bucket: string
     path: string
@@ -82,6 +84,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const syncSession = useCallback(async (currentItems: CartItem[], email: string | null) => {
     if (currentItems.length === 0) return
     const supabase = await getSupabaseClient()
+    const identity = getAnalyticsIdentity()
 
     const sessionId = localStorage.getItem('tss-cart-session-id')
     const totalPrice = currentItems.reduce((sum, i) => {
@@ -94,6 +97,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         email,
         items: currentItems,
         total_price: totalPrice,
+        visitor_id: identity.visitorId,
+        session_id: identity.sessionId,
+        attribution: identity.attribution,
         updated_at: new Date().toISOString(),
       }).eq('id', sessionId)
       if (error) console.error('[cart_sessions] update failed:', error)
@@ -102,6 +108,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         email,
         items: currentItems,
         total_price: totalPrice,
+        visitor_id: identity.visitorId,
+        session_id: identity.sessionId,
+        attribution: identity.attribution,
       }).select('id').single()
       if (error) {
         console.error('[cart_sessions] insert failed:', error)

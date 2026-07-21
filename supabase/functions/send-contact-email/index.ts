@@ -2,7 +2,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'The Sticker Smith <noreply@thestickersmith.com>'
-const CONTACT_OWNER_EMAIL = Deno.env.get('CONTACT_OWNER_EMAIL') || 'mrjxrdip@icloud.com'
+const CONTACT_NOTIFICATION_EMAILS = (Deno.env.get('CONTACT_NOTIFICATION_EMAILS') || Deno.env.get('CONTACT_OWNER_EMAIL') || 'mrjxrdip@icloud.com,thestickersmith@gmail.com')
+  .split(',')
+  .map((email) => email.trim())
+  .filter(Boolean)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,7 +58,7 @@ serve(async (req) => {
 
     await sendResendEmail({
       from: FROM_EMAIL,
-      to: [CONTACT_OWNER_EMAIL],
+      to: CONTACT_NOTIFICATION_EMAILS,
       reply_to: email,
       subject: `New Quote Request from ${name}`,
       html: `
@@ -83,7 +86,7 @@ serve(async (req) => {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Thanks for reaching out, ${safeName}!</h2>
-          <p>We've received your quote request and will get back to you within 24 hours.</p>
+          <p>We've received your quote request. The team now has your project details and will reply by email with availability and next steps.</p>
           <p style="color: #666;">Here's what you sent us:</p>
           <div style="padding: 16px; background: #f5f5f5; border-radius: 8px; margin: 16px 0;">
             <p style="margin: 0; white-space: pre-wrap;">${safeMessage}</p>

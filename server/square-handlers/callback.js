@@ -1,4 +1,4 @@
-import { consumeOauthState, exchangeSquareCode, saveSquareConnection } from '../../server/square-api.js'
+import { consumeOauthState, exchangeSquareCode, saveSquareConnection } from '../square-api.js'
 
 function envValue(name) {
   const raw = process.env[name]

@@ -109,6 +109,12 @@ export default function Cart() {
                     Artwork attached: {item.artwork.fileName}
                   </p>
                 )}
+                {!item.artwork && item.artworkIntent === 'send_later' && (
+                  <p className="mt-2 text-xs font-medium text-primary">Artwork will be sent after checkout</p>
+                )}
+                {item.artworkIntent === 'design_help' && (
+                  <p className="mt-2 text-xs font-medium text-primary">Design help requested</p>
+                )}
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -219,7 +225,7 @@ export default function Cart() {
               </div>
               <div>
                 <p className="font-bold text-sm">Email this quote to me</p>
-                <p className="text-xs text-muted-foreground">Hold the price, decide later — we'll follow up within 24 hrs.</p>
+                <p className="text-xs text-muted-foreground">Hold the price, decide later — the request goes into the follow-up queue.</p>
               </div>
             </div>
             <span className="text-xs text-muted-foreground font-mono">{quoteOpen ? '−' : '+'}</span>

@@ -32,6 +32,26 @@ declare global {
 // ─── Visitor / session identity (for the in-app Admin Analytics tab) ──────────
 const VISITOR_KEY = 'tss_visitor_id'
 const SESSION_KEY = 'tss_session_id'
+const ATTRIBUTION_KEY = 'tss_marketing_attribution'
+
+export type MarketingTouch = {
+  capturedAt: string
+  landingPage: string
+  referrer: string | null
+  source: string
+  medium: string
+  campaign: string | null
+  content: string | null
+  term: string | null
+  gclid: string | null
+  msclkid: string | null
+  fbclid: string | null
+}
+
+export type MarketingAttribution = {
+  firstTouch: MarketingTouch
+  lastTouch: MarketingTouch
+}
 
 function randomId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
@@ -63,7 +83,88 @@ function getSessionId(): string {
 // Lets lead submissions carry the same identity as page_views/click_events,
 // so the admin can link a contact form back to that shopper's cart activity.
 export function getAnalyticsIdentity() {
-  return { visitorId: getVisitorId(), sessionId: getSessionId() }
+  return {
+    visitorId: getVisitorId(),
+    sessionId: getSessionId(),
+    attribution: getMarketingAttribution(),
+  }
+}
+
+function organicSource(hostname: string) {
+  if (hostname.includes('google.')) return 'google'
+  if (hostname.includes('bing.')) return 'bing'
+  if (hostname.includes('yahoo.')) return 'yahoo'
+  if (hostname.includes('duckduckgo.')) return 'duckduckgo'
+  return null
+}
+
+function currentMarketingTouch(): MarketingTouch {
+  const params = new URLSearchParams(window.location.search)
+  const referrer = document.referrer || null
+  let source = params.get('utm_source')?.trim().toLowerCase() || ''
+  let medium = params.get('utm_medium')?.trim().toLowerCase() || ''
+
+  if (!source && params.get('gclid')) { source = 'google'; medium = 'cpc' }
+  if (!source && params.get('msclkid')) { source = 'microsoft'; medium = 'cpc' }
+  if (!source && params.get('fbclid')) { source = 'meta'; medium = 'paid-social' }
+
+  if (!source && referrer) {
+    try {
+      const hostname = new URL(referrer).hostname.toLowerCase()
+      if (!hostname.includes('tssprint.com')) {
+        const organic = organicSource(hostname)
+        source = organic || hostname.replace(/^www\./, '')
+        medium = organic ? 'organic' : 'referral'
+      }
+    } catch { /* malformed referrer; treat as direct */ }
+  }
+
+  return {
+    capturedAt: new Date().toISOString(),
+    landingPage: `${window.location.pathname}${window.location.search}`,
+    referrer,
+    source: source || 'direct',
+    medium: medium || '(none)',
+    campaign: params.get('utm_campaign'),
+    content: params.get('utm_content'),
+    term: params.get('utm_term'),
+    gclid: params.get('gclid'),
+    msclkid: params.get('msclkid'),
+    fbclid: params.get('fbclid'),
+  }
+}
+
+function hasNewMarketingSignal(touch: MarketingTouch) {
+  return touch.source !== 'direct'
+    || !!touch.campaign
+    || !!touch.gclid
+    || !!touch.msclkid
+    || !!touch.fbclid
+}
+
+export function captureMarketingAttribution(): MarketingAttribution | null {
+  if (typeof window === 'undefined') return null
+  const touch = currentMarketingTouch()
+  try {
+    const saved = JSON.parse(localStorage.getItem(ATTRIBUTION_KEY) || 'null') as MarketingAttribution | null
+    const attribution = saved?.firstTouch
+      ? { firstTouch: saved.firstTouch, lastTouch: hasNewMarketingSignal(touch) ? touch : saved.lastTouch || saved.firstTouch }
+      : { firstTouch: touch, lastTouch: touch }
+    localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(attribution))
+    return attribution
+  } catch {
+    return { firstTouch: touch, lastTouch: touch }
+  }
+}
+
+export function getMarketingAttribution(): MarketingAttribution | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return JSON.parse(localStorage.getItem(ATTRIBUTION_KEY) || 'null') as MarketingAttribution | null
+      || captureMarketingAttribution()
+  } catch {
+    return captureMarketingAttribution()
+  }
 }
 
 // Fire-and-forget insert. Must NEVER block or throw into a UI action.
@@ -166,6 +267,7 @@ function toGa4Items(items: AnalyticsCartItem[]) {
 
 export function trackPageView(path: string) {
   if (shouldSuppressAnalytics()) return
+  captureMarketingAttribution()
   // Vercel Analytics auto-tracks page views via route changes.
   sendGa4Event('page_view', {
     page_path: path,
@@ -237,6 +339,8 @@ export function trackClick(path: string, element: string, x: number, y: number) 
     y_percent: y,
     session_id: getSessionId(),
     visitor_id: getVisitorId(),
+    attribution: getMarketingAttribution(),
+    event_type: 'tracked_click',
   })
 }
 
@@ -298,7 +402,8 @@ export function trackAddToCart({
   })
 }
 
-export function trackPayPalCapture({
+export function trackPaymentCapture({
+  provider,
   orderId,
   items,
   value,
@@ -306,6 +411,7 @@ export function trackPayPalCapture({
   promoCode,
   promoDiscount,
 }: {
+  provider: 'paypal' | 'square'
   orderId: string
   items: AnalyticsCartItem[]
   value: number
@@ -314,7 +420,8 @@ export function trackPayPalCapture({
   promoDiscount?: number
 }) {
   const gaItems = toGa4Items(items)
-  trackEvent('paypal_capture', {
+  trackEvent(`${provider}_capture`, {
+    payment_provider: provider,
     order_id: orderId,
     value,
     subtotal,
@@ -353,6 +460,10 @@ export function setupClickTracking() {
       y_percent: window.innerHeight ? +((event.clientY / window.innerHeight) * 100).toFixed(2) : null,
       session_id: getSessionId(),
       visitor_id: getVisitorId(),
+      attribution: getMarketingAttribution(),
+      event_type: clickable instanceof HTMLAnchorElement && clickable.getAttribute('href')?.startsWith('tel:')
+        ? 'phone_click'
+        : 'click',
     })
 
     // Vercel/GA4 conversion events for the high-intent link types.

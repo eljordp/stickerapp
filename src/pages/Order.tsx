@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText, ArrowRight } from 'lucide-react'
+import { ShoppingCart, Sparkles, FileUp, Check, Clock, MapPin, Shield, Zap, Palette, Droplets, Sticker as StickerIcon, Hand, PanelsTopLeft, ScrollText, ArrowRight, Send } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
 import { getPricing, loadPricing, getBasePrice, getMaterialMultiplier, getSizeMultiplier } from '@/lib/pricing'
@@ -45,6 +45,8 @@ interface ArtworkAttachment {
   size: number
   uploadedAt: string
 }
+
+type ArtworkIntent = 'upload' | 'send_later' | 'design_help'
 
 const materialData = [
   { value: 'Matte Vinyl', label: 'Matte', bg: 'radial-gradient(circle at 35% 35%, #f0ece8, #ccc7c0)' },
@@ -227,6 +229,8 @@ export default function Order() {
   const [artworkUpload, setArtworkUpload] = useState<ArtworkAttachment | null>(null)
   const [artworkStatus, setArtworkStatus] = useState<'idle' | 'uploading' | 'uploaded' | 'error'>('idle')
   const [artworkError, setArtworkError] = useState('')
+  const [artworkIntent, setArtworkIntent] = useState<ArtworkIntent | null>(null)
+  const [artworkChoiceError, setArtworkChoiceError] = useState('')
   const [added, setAdded] = useState(false)
   const [rushAddon, setRushAddon] = useState(false)
   const [designAddon, setDesignAddon] = useState(false)
@@ -350,9 +354,31 @@ export default function Order() {
   }
 
   const handleFile = (file: File) => {
+    setArtworkIntent('upload')
+    setArtworkChoiceError('')
+    setDesignAddon(false)
     setArtworkFile(file)
     setArtworkUrl(canPreviewArtwork(file) ? URL.createObjectURL(file) : '')
     void uploadArtwork(file)
+  }
+
+  const chooseArtworkIntent = (intent: ArtworkIntent) => {
+    setArtworkIntent(intent)
+    setArtworkChoiceError('')
+    setDesignAddon(intent === 'design_help')
+
+    if (intent !== 'upload') {
+      setArtworkFile(null)
+      setArtworkUrl('')
+      setArtworkUpload(null)
+      setArtworkStatus('idle')
+      setArtworkError('')
+    }
+
+    if (intent === 'upload' && fileRef.current) {
+      fileRef.current.value = ''
+      fileRef.current.click()
+    }
   }
 
   useEffect(() => {
@@ -363,6 +389,15 @@ export default function Order() {
 
   const handleAddToCart = () => {
     if (effectiveQty < MIN_QTY) return
+    if (!artworkIntent) {
+      setArtworkChoiceError('Choose how you will provide artwork before adding this order.')
+      return
+    }
+    if (artworkIntent === 'upload' && !artworkFile) {
+      setArtworkChoiceError('Select an artwork file, or choose to send it after checkout.')
+      fileRef.current?.click()
+      return
+    }
     if (artworkFile && artworkStatus !== 'uploaded') return
     const addOns: { name: string; price: number }[] = []
     if (rushAddon) addOns.push({ name: ADDON_RUSH.label, price: ADDON_RUSH.price })
@@ -377,6 +412,7 @@ export default function Order() {
       material,
       shape,
       dimensions: size,
+      artworkIntent: artworkIntent === 'upload' ? 'uploaded' : artworkIntent,
       addOns: addOns.length > 0 ? addOns : undefined,
       artwork: artworkUpload || undefined,
     })
@@ -544,26 +580,48 @@ export default function Order() {
             className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6"
           >
             {/* Artwork card */}
-            <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-              <h3 className="font-bold text-lg mb-1">Do you have artwork ready?</h3>
-              <p className="text-sm text-muted-foreground mb-6">Let us know so we can help you best</p>
+            <fieldset className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+              <legend className="sr-only">Choose how you will provide artwork</legend>
+              <h3 className="font-bold text-lg mb-1">How will you provide artwork?</h3>
+              <p className="text-sm text-muted-foreground mb-6">Choose one. Every order gets a proof before printing.</p>
               <div className="space-y-3 w-full max-w-xs">
                 <button
-                  onClick={() => setDesignAddon(!designAddon)}
+                  type="button"
+                  onClick={() => chooseArtworkIntent('upload')}
                   className={`w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl border text-sm font-medium transition-all ${
-                    designAddon
+                    artworkIntent === 'upload'
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'bg-muted border-border hover:border-primary/30'
                   }`}
+                  aria-pressed={artworkIntent === 'upload'}
                 >
-                  <Sparkles size={16} className={designAddon ? 'text-primary' : 'text-primary'} />
-                  {designAddon ? <span>Design help added · +${ADDON_DESIGN.price}</span> : <span>I need a design · +${ADDON_DESIGN.price}</span>}
+                  <FileUp size={16} className="text-primary" />
+                  <span>{artworkFile ? 'Replace uploaded artwork' : 'Upload my artwork now'}</span>
                 </button>
                 <button
-                  onClick={() => fileRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl bg-muted border border-border text-sm font-medium hover:border-primary/30 transition-all"
+                  type="button"
+                  onClick={() => chooseArtworkIntent('send_later')}
+                  className={`w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl border text-sm font-medium transition-all ${
+                    artworkIntent === 'send_later'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-muted border-border hover:border-primary/30'
+                  }`}
+                  aria-pressed={artworkIntent === 'send_later'}
                 >
-                  <FileUp size={16} className="text-primary" /> I have a design
+                  <Send size={16} className="text-primary" /> Send artwork after checkout
+                </button>
+                <button
+                  type="button"
+                  onClick={() => chooseArtworkIntent('design_help')}
+                  className={`w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl border text-sm font-medium transition-all ${
+                    artworkIntent === 'design_help'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-muted border-border hover:border-primary/30'
+                  }`}
+                  aria-pressed={artworkIntent === 'design_help'}
+                >
+                  <Sparkles size={16} className="text-primary" />
+                  <span>I need design help · +${ADDON_DESIGN.price}</span>
                 </button>
                 <input
                   ref={fileRef}
@@ -597,8 +655,17 @@ export default function Order() {
                     File received for proof. Upload PNG, JPG, or SVG for live preview.
                   </p>
                 )}
+                {artworkIntent === 'send_later' && (
+                  <p className="text-xs font-medium text-primary">We will email you where to send the final file.</p>
+                )}
+                {artworkIntent === 'design_help' && (
+                  <p className="text-xs font-medium text-primary">Design help is included in the total below.</p>
+                )}
+                {artworkChoiceError && (
+                  <p className="text-xs font-medium text-destructive" role="alert" aria-live="polite">{artworkChoiceError}</p>
+                )}
               </div>
-            </div>
+            </fieldset>
 
             {/* Mockup preview */}
             <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center">

@@ -1,4 +1,4 @@
-import { getSquareConnection, missingServerEnv, redirectUri, requireAdmin, sendJson } from '../../server/square-api.js'
+import { getSquareConnection, missingServerEnv, redirectUri, requireAdmin, sendJson } from '../square-api.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' })

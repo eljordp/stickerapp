@@ -152,8 +152,8 @@ export default function Footer() {
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between md:gap-6">
             <p className="text-muted-foreground text-xs md:text-sm text-center">&copy; {new Date().getFullYear()} The Sticker Smith. All rights reserved.</p>
             <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
-              <span className="text-[10px] md:text-xs text-muted-foreground mr-1">We accept</span>
-              {['Visa', 'MC', 'Amex', 'PayPal', 'Apple Pay'].map((m) => (<div key={m} className="px-1.5 md:px-2 py-1 rounded bg-white/5 border border-border text-[9px] md:text-[10px] text-muted-foreground font-medium">{m}</div>))}
+              <span className="text-[10px] md:text-xs text-muted-foreground">Secure checkout</span>
+              <div className="px-2 py-1 rounded bg-white/5 border border-border text-[10px] text-muted-foreground font-bold">PayPal</div>
             </div>
             <div className="flex items-center gap-2 text-xs md:text-sm">
               <span className="text-muted-foreground">Website by</span>

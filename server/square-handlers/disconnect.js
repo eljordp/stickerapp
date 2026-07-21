@@ -1,4 +1,4 @@
-import { disconnectSquare, requireAdmin, requireEnv, sendJson } from '../../server/square-api.js'
+import { disconnectSquare, requireAdmin, requireEnv, sendJson } from '../square-api.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed' })

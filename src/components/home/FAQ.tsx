@@ -9,7 +9,7 @@ const faqCategories = [
       { question: 'How do I place an order?', answer: 'Browse our products, customize your options (size, material, quantity), and add to cart. At checkout, fill out your info and pay via PayPal. You\'ll receive an order confirmation immediately.' },
       { question: 'Is there a minimum order quantity?', answer: 'For custom stickers, our minimum is 50 pieces. For business print (cards, flyers), minimums vary by product. Large format items like vehicle wraps and signage are per-project pricing with no minimum.' },
       { question: 'Do you offer bulk discounts?', answer: 'Yes! Our pricing is tiered — the more you order, the lower the per-unit price. You\'ll see the price breaks automatically when selecting quantities. For orders over 1,000 units, contact us for custom quotes.' },
-      { question: 'What payment methods do you accept?', answer: 'We accept all major credit cards, PayPal, Apple Pay, and Google Pay through our secure PayPal checkout. For large orders ($500+), we can arrange invoicing or payment plans.' },
+      { question: 'What payment methods do you accept?', answer: 'Pay securely through PayPal. Any additional card or wallet options available for your device are shown directly by PayPal. For large or custom orders, we can send an invoice.' },
       { question: 'Do you have promo codes or discounts?', answer: 'Yes! We offer promo codes for friends & family, first-time customers, and special events/trade shows. Enter your code at checkout to see your discount applied instantly.' },
     ],
   },

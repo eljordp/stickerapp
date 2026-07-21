@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Check, Plus, Sparkles } from 'lucide-react'
+import { ShoppingCart, Check, Plus, Sparkles, ArrowRight } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { getPricing, loadPricing, type ProductCategory, type ProductTier } from '@/lib/pricing'
 
 interface Props {
   categoryNames: string[]
   onCategoryChange?: (categoryName: string) => void
+  checkoutMode?: 'cart' | 'estimate'
+  onEstimateRequest?: (summary: string) => void
 }
 
 /** Group items by their prefix before " – " */
@@ -55,7 +57,7 @@ function createCartItemId(categoryName: string, size: string) {
   return `${categoryName}-${size}-${Date.now()}`
 }
 
-export default function ProductOrder({ categoryNames, onCategoryChange }: Props) {
+export default function ProductOrder({ categoryNames, onCategoryChange, checkoutMode = 'cart', onEstimateRequest }: Props) {
   const { addItem } = useCart()
   const [pricing, setPricing] = useState(() => getPricing())
 
@@ -140,6 +142,17 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
     setTimeout(() => setAdded(false), 2000)
   }
 
+  const handleEstimateRequest = () => {
+    const summary = [
+      `${category.name}: ${item.size}`,
+      effectiveQty > 1 ? `Quantity: ${effectiveQty}` : null,
+      selectedAddOns.size > 0 ? `Options: ${Array.from(selectedAddOns).join(', ')}` : null,
+      `Price guide shown: $${totalPrice.toFixed(2)}`,
+    ].filter(Boolean).join('\n')
+    onEstimateRequest?.(summary)
+    document.getElementById('quote')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const resetSelections = (catIdx: number) => {
     setActiveCategory(catIdx)
     setSelectedItem(0)
@@ -161,7 +174,14 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
       transition={{ delay: 0.2 }}
       className="max-w-5xl mx-auto"
     >
-      <h2 className="text-2xl md:text-3xl font-black mb-6 text-center">Shop Products</h2>
+      <h2 className="text-2xl md:text-3xl font-black mb-2 text-center">
+        {checkoutMode === 'estimate' ? 'Build a Price Guide' : 'Shop Products'}
+      </h2>
+      {checkoutMode === 'estimate' && (
+        <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-muted-foreground">
+          Choose what looks closest. Final pricing depends on artwork, dimensions, location, hardware, and timing.
+        </p>
+      )}
 
       {/* Category tabs */}
       {categories.length > 1 && (
@@ -345,7 +365,7 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
         {/* Right: Order summary */}
         <div>
           <div className="bg-card border border-border rounded-2xl p-6 sticky top-24">
-            <h3 className="font-bold text-lg mb-4">Order Summary</h3>
+            <h3 className="font-bold text-lg mb-4">{checkoutMode === 'estimate' ? 'Estimate Summary' : 'Order Summary'}</h3>
             <div className="space-y-2 text-sm mb-6">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Product</span>
@@ -377,21 +397,35 @@ export default function ProductOrder({ categoryNames, onCategoryChange }: Props)
                 </>
               )}
               <div className="border-t border-border pt-2 flex justify-between font-bold text-lg">
-                <span>Est. Total</span>
+                <span>{checkoutMode === 'estimate' ? 'Price Guide' : 'Est. Total'}</span>
                 <span className="text-primary">${totalPrice.toFixed(2)}</span>
               </div>
             </div>
-            <button
-              onClick={handleAddToCart}
-              disabled={bulk && customQty <= 0}
-              className={`btn-primary w-full ${added ? 'bg-green-600' : ''}`}
-            >
-              {added ? (
-                <>Added to Cart! <Check size={18} /></>
-              ) : (
-                <>Add to Cart — ${totalPrice.toFixed(2)} <ShoppingCart size={18} /></>
-              )}
-            </button>
+            {checkoutMode === 'estimate' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleEstimateRequest}
+                  disabled={bulk && customQty <= 0}
+                  className="btn-primary w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Get Exact Estimate <ArrowRight size={18} />
+                </button>
+                <p className="mt-3 text-center text-xs text-muted-foreground">No payment now. We confirm the exact scope first.</p>
+              </>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                disabled={bulk && customQty <= 0}
+                className={`btn-primary w-full ${added ? 'bg-green-600' : ''}`}
+              >
+                {added ? (
+                  <>Added to Cart! <Check size={18} /></>
+                ) : (
+                  <>Add to Cart — ${totalPrice.toFixed(2)} <ShoppingCart size={18} /></>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -26,7 +26,16 @@ export const SQUARE_SCOPES = [
   'INVOICES_READ',
   'INVOICES_WRITE',
   'PAYMENTS_READ',
+  'PAYMENTS_WRITE',
 ]
+
+export function squareConnectionHasScope(connection, scope) {
+  return Array.isArray(connection?.scopes) && connection.scopes.includes(scope)
+}
+
+export function squareEnvironment() {
+  return SQUARE_APPLICATION_ID.startsWith('sandbox-') ? 'sandbox' : 'production'
+}
 
 export function missingServerEnv() {
   return [
@@ -351,6 +360,71 @@ export async function logSquareInvoice(payload) {
   const rows = await supabaseFetch('/rest/v1/square_invoices', {
     method: 'POST',
     body: JSON.stringify(payload),
+  })
+  return rows?.[0] || null
+}
+
+export async function saveSquareCapturedOrder(checkout, payment) {
+  const amount = payment?.amount_money?.amount
+  const currency = payment?.amount_money?.currency || 'USD'
+  const payload = {
+    id: payment.id,
+    customer_first_name: checkout.customer.firstName,
+    customer_last_name: checkout.customer.lastName,
+    customer_email: checkout.customer.email,
+    customer_phone: checkout.customer.phone,
+    customer_address: checkout.customer.deliveryMethod === 'pickup' ? 'Local pickup' : checkout.customer.address,
+    customer_city: checkout.customer.deliveryMethod === 'pickup' ? 'Hayward' : checkout.customer.city,
+    customer_state: checkout.customer.deliveryMethod === 'pickup' ? 'CA' : checkout.customer.state,
+    customer_zip: checkout.customer.deliveryMethod === 'pickup' ? '94545' : checkout.customer.zip,
+    items: checkout.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      size: item.size,
+      option: item.option,
+      price: item.price,
+      quantity: item.quantity,
+      addOns: item.addOns,
+      material: item.material,
+      shape: item.shape,
+      dimensions: item.dimensions,
+      artwork: item.artwork,
+      artworkIntent: item.artworkIntent,
+    })),
+    total: checkout.total,
+    status: 'processing',
+    payment_status: payment.status === 'COMPLETED' ? 'captured' : 'unverified',
+    payment_provider: 'square',
+    payment_reference: payment.id,
+    payment_verified_at: payment.status === 'COMPLETED' ? new Date().toISOString() : null,
+    payment_amount: Number.isFinite(Number(amount)) ? Number(amount) / 100 : checkout.total,
+    payment_currency: currency,
+    visitor_id: checkout.visitorId,
+    session_id: checkout.sessionId,
+    attribution: checkout.attribution,
+  }
+
+  const rows = await supabaseFetch('/rest/v1/orders?on_conflict=id', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+  })
+  return rows?.[0] || null
+}
+
+export async function updateSquarePaymentVerification(payment) {
+  const captured = payment?.status === 'COMPLETED'
+  const amount = payment?.amount_money?.amount
+  const rows = await supabaseFetch(`/rest/v1/orders?id=eq.${encodeURIComponent(payment.id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      payment_status: captured ? 'captured' : 'not_captured',
+      payment_provider: 'square',
+      payment_reference: payment.id,
+      payment_verified_at: new Date().toISOString(),
+      payment_amount: Number.isFinite(Number(amount)) ? Number(amount) / 100 : null,
+      payment_currency: payment?.amount_money?.currency || 'USD',
+    }),
   })
   return rows?.[0] || null
 }

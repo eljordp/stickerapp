@@ -56,6 +56,7 @@ const signageFaqs = [
 
 export default function BusinessSignage() {
   const [activeMockup, setActiveMockup] = useState('storefront')
+  const [estimateSelection, setEstimateSelection] = useState('')
   const handleCategoryChange = useCallback((categoryName: string) => {
     const map: Record<string, string> = {
       'Storefront Graphics': 'storefront',
@@ -79,6 +80,8 @@ export default function BusinessSignage() {
             <ProductOrder
               categoryNames={['Storefront Graphics', 'A-Frame Signs', 'Retractable Banners', 'Wall Graphics']}
               onCategoryChange={handleCategoryChange}
+              checkoutMode="estimate"
+              onEstimateRequest={setEstimateSelection}
             />
           </div>
 
@@ -209,7 +212,8 @@ export default function BusinessSignage() {
           <EstimateForm
             service="Business Signage"
             title="Get a Custom Signage Estimate"
-            subtitle="Storefront, wall, window — tell us the scope and we'll send a tailored estimate in 24 hours."
+            subtitle="Storefront, wall, window — tell us the scope and we'll reply with availability, questions, and an exact estimate."
+            initialProject={estimateSelection}
             fields={[
               {
                 name: 'signageType',

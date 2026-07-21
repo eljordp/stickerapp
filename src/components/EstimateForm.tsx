@@ -14,14 +14,16 @@ type Props = {
   title?: string
   subtitle?: string
   fields: EstimateField[]
+  initialProject?: string
 }
 
 export default function EstimateForm({
   service,
   eyebrow = 'Custom Quote',
   title,
-  subtitle = "Every project is different. Fill out the form and we'll send a tailored estimate within 24 hours.",
+  subtitle = "Every project is different. Send the scope and we'll reply by email with availability, questions, and an exact estimate.",
   fields,
+  initialProject,
 }: Props) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -46,6 +48,7 @@ export default function EstimateForm({
         return val ? `${f.label}: ${val}` : null
       })
       .filter(Boolean) as string[]
+    if (initialProject) lines.unshift(`Selected price guide:\n${initialProject}`)
     if (notes.trim()) lines.push(`\nNotes:\n${notes.trim()}`)
     const message = lines.length ? lines.join('\n') : 'No additional details provided.'
 
@@ -80,7 +83,7 @@ export default function EstimateForm({
         <h3 className="text-2xl font-black mb-2">Request received.</h3>
         <p className="text-muted-foreground">
           We sent a confirmation to <span className="text-foreground font-semibold">{email}</span>.
-          JP or the team will respond within 24 hours with your {service.toLowerCase()} estimate.
+          The request is in the lead queue. JP or the team will reply by email with availability and next steps for your {service.toLowerCase()} estimate.
         </p>
       </motion.div>
     )
@@ -102,6 +105,12 @@ export default function EstimateForm({
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        {initialProject && (
+          <div className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm" aria-live="polite">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">Your selected starting point</p>
+            <p className="whitespace-pre-line text-foreground">{initialProject}</p>
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="Name" required>
             <input

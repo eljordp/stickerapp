@@ -96,8 +96,8 @@ export default function Contact() {
           </h1>
           <p className="text-white/80 text-lg">
             {isQuotePage
-              ? 'Stickers, signage, wraps, event displays, packaging, and print. Send the basics and we will reply within 24 hours.'
-              : "Tell us about your project and we'll get back within 24 hours."}
+              ? 'Stickers, signage, wraps, event displays, packaging, and print. Send the basics and we will reply by email with availability and next steps.'
+              : "Tell us about your project and we'll reply by email with availability and next steps."}
           </p>
         </motion.div>
       </div>
@@ -109,7 +109,7 @@ export default function Contact() {
                 <div className="text-center py-16">
                   <Send size={48} className="mx-auto text-primary mb-4" />
                   <h2 className="text-2xl font-bold mb-2">Quote Request Sent!</h2>
-                  <p className="text-muted-foreground">We'll get back to you within 24 hours.</p>
+                  <p className="text-muted-foreground">Your request goes directly into the team lead queue.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -230,7 +230,7 @@ export default function Contact() {
               <div className="bg-card border border-border rounded-2xl p-6">
                 <Send className="text-primary mb-3" size={24} aria-hidden="true" />
                 <h3 className="font-bold mb-1">Response Time</h3>
-                <p className="text-sm text-muted-foreground">Within 24 hours, every business day.</p>
+                <p className="text-sm text-muted-foreground">Replies are tracked in the team lead queue.</p>
               </div>
             </div>
           </div>
